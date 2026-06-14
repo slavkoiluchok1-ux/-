@@ -1,0 +1,36 @@
+{% extends 'base.html' %} {% block content %}
+<div class="form-card" style="max-width: 640px; margin: 40px auto">
+  <h2 style="text-align: center; margin-bottom: 20px">
+    Відправка відповіді клієнту
+  </h2>
+  {% if message %}
+  <p
+    style="
+      color: #10b981;
+      text-align: center;
+      margin-bottom: 15px;
+      font-weight: 600;
+    "
+  >
+    {{ message }}
+  </p>
+  {% endif %}
+  <form action="/add_answer" method="post">
+    <input type="hidden" name="problem_id" value="{{ id }}" />
+    <div class="form-group">
+      <label for="message">Повідомлення</label>
+      <textarea
+        id="message"
+        name="message"
+        class="form-control"
+        rows="6"
+        placeholder="Напишіть відповідь клієнту..."
+        required
+      ></textarea>
+    </div>
+    <button type="submit" class="btn" style="width: 100%">
+      Надіслати відповідь
+    </button>
+  </form>
+</div>
+{% endblock %}

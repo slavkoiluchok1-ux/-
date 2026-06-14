@@ -1,0 +1,68 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container" style="margin-top: 30px">
+  <h2>Запити до підтримки</h2>
+  <p style="color: #64748b; margin-bottom: 24px">
+    Тут відображаються звернення користувачів, які потребують допомоги з роботою
+    сайту.
+  </p>
+
+  {% if not support_requests %}
+  <p style="color: #64748b">Поки що немає жодного запиту.</p>
+  {% else %}
+  <div class="grid">
+    {% for req in support_requests %}
+    <div
+      class="ticket-card {{ 'waiting' if req.status == 'Нова' else 'processing' if req.status == 'В обробці' else 'completed' }}"
+    >
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+        "
+      >
+        <strong>{{ req.title }}</strong>
+        <span
+          class="badge {{ 'badge-waiting' if req.status == 'Нова' else 'badge-processing' if req.status == 'В обробці' else 'badge-completed' }}"
+          >{{ req.status }}</span
+        >
+      </div>
+      <p style="color: #475569; white-space: pre-wrap">{{ req.message }}</p>
+      <p style="color: #64748b; font-size: 0.9rem; margin-top: 10px">
+        <strong>Користувач:</strong>
+        {{ req.author_name or 'ID ' ~ req.user_id }}<br />
+        {% if req.contact_phone %}<strong>Телефон:</strong> {{ req.contact_phone }}<br />{% endif %}
+        {% if req.contact_email %}<strong>Email:</strong> {{ req.contact_email }}<br />{% endif %}
+        {% if req.contact_other %}<strong>Інше:</strong> {{ req.contact_other }}<br />{% endif %}
+        <strong>Дата:</strong> {{ req.date_created | format_dt }}
+      </p>
+
+      {% if req.response_message %}
+      <p style="color: #16a34a; font-weight: 600; margin-top: 10px">
+        Відповідь: {{ req.response_message }}
+      </p>
+      {% else %}
+      <form
+        action="/admin/support/{{ req.id }}/respond"
+        method="post"
+        style="margin-top: 14px"
+      >
+        <textarea
+          name="response_message"
+          class="form-control"
+          rows="3"
+          placeholder="Відповідь користувачу..."
+          required
+        ></textarea>
+        <button type="submit" class="btn" style="margin-top: 8px; width: 100%">
+          Відповісти та закрити
+        </button>
+      </form>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

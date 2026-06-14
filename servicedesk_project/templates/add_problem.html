@@ -1,0 +1,107 @@
+{% extends "base.html" %} {% block content %}
+<div class="form-card">
+  <h2 style="text-align: center; margin-bottom: 20px">
+    Створення нової заявки
+  </h2>
+
+  {% if message %}
+  <p
+    style="
+      color: #10b981;
+      text-align: center;
+      margin-bottom: 15px;
+      font-weight: 600;
+    "
+  >
+    {{ message }}
+  </p>
+  {% endif %} {% if error %}
+  <p
+    style="
+      color: #dc2626;
+      text-align: center;
+      margin-bottom: 15px;
+      font-weight: 600;
+    "
+  >
+    {{ error }}
+  </p>
+  {% endif %}
+
+  <form action="/add_my_problem" method="post" enctype="multipart/form-data">
+    <div class="form-group">
+      <label for="title">Назва проблеми / Пристрою</label>
+      <input
+        type="text"
+        id="title"
+        name="title"
+        class="form-control"
+        placeholder="Наприклад: Не працює монітор"
+        required
+      />
+    </div>
+    <div class="form-group">
+      <label for="description">Детальний опис</label>
+      <textarea
+        id="description"
+        name="description"
+        class="form-control"
+        rows="4"
+        placeholder="Опишіть, що саме сталося..."
+        required
+      ></textarea>
+    </div>
+    <div class="form-group">
+      <label for="desired_date">Бажана дата вирішення</label>
+      <input
+        type="date"
+        id="desired_date"
+        name="desired_date"
+        class="form-control"
+      />
+    </div>
+    <div class="form-group">
+      <label>Варіанти зв’язку (вкажіть хоча б один)</label>
+      <input
+        type="text"
+        id="contact_phone"
+        name="contact_phone"
+        class="form-control"
+        placeholder="Телефон"
+      />
+      <input
+        type="email"
+        id="contact_email"
+        name="contact_email"
+        class="form-control"
+        placeholder="Email"
+        style="margin-top: 10px"
+      />
+      <input
+        type="text"
+        id="contact_other"
+        name="contact_other"
+        class="form-control"
+        placeholder="Інший варіант зв’язку (наприклад: Telegram, Viber, WhatsApp, Skype)"
+        style="margin-top: 10px"
+      />
+      <small style="color: #64748b; display: block; margin-top: 8px">
+        Ви можете вказати кілька варіантів, але потрібно хоча б один.
+      </small>
+    </div>
+    <div class="form-group">
+      <label for="img">Додати фото (необов'язково)</label>
+      <input
+        type="file"
+        id="img"
+        name="img"
+        class="form-control"
+        accept="image/*"
+      />
+    </div>
+    <button type="submit" class="btn" style="width: 100%">
+      Надіслати заявку
+    </button>
+  </form>
+</div>
+{% endblock %}

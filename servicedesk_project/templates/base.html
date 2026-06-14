@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Service Desk</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+  </head>
+  <body>
+    <nav>
+      <div class="logo">🛠️ ServiceDesk</div>
+      <div>
+        <a href="/">Головна</a>
+        <a
+          href="https://t.me/BkBBkBbKbbot"
+          target="_blank"
+          style="color: #38bdf8; font-weight: bold"
+          >🤖 Наш Бот</a
+        >
+        {% if user and user.role in ['admin', 'owner'] %}
+        <a href="/admin/support_requests">Запити до підтримки</a>
+        {% else %}
+        <a href="/support">Підтримка</a>
+        {% endif %}
+        <a href="/profile">Профіль</a>
+        <a href="/forum">Форум</a>
+        {% if user and user.role in ['admin', 'owner'] %}
+        <a href="/admin/dashboard_stats">Адмін-панель</a>
+        <a href="/admin/workers">Кадри</a>
+        <a href="/admin_problems">Заявки клієнтів</a>
+        {% elif user and user.role == 'worker' %}
+        <a href="/worker/dashboard">Заявки користувачів</a>
+        {% elif user %}
+        <a href="/my_all_problems">Мої заявки</a>
+        <a href="/add_my_problem">Створити заявку</a>
+        <a href="/apply_worker">Заявка робітника</a>
+        {% else %}
+        <a href="/login">Увійти для заявок</a>
+        {% endif %}
+        {% if user and user.role == 'owner' %}
+        <a href="/owner">Власник</a>
+        {% endif %}
+        {% if user %}
+        <a href="/logout">Вихід</a>
+        {% else %}
+        <a href="/login">Вхід</a>
+        <a href="/register">Реєстрація</a>
+        {% endif %}
+      </div>
+    </nav>
+
+    <div class="container">{% block content %}{% endblock %}</div>
+
+    <footer>
+      <p>&copy; 2026 Service Desk Project. Всі права захищені.</p>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,37 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container">
+  <h2>Вкладка власника</h2>
+  <p style="color: #64748b">
+    Управління користувачами, працівниками та адміністраторами.
+  </p>
+  <div class="grid">
+    {% for u in all_users %}
+    <div class="ticket-card">
+      <strong>{{ u.display_name or u.username }}</strong>
+      <p style="color: #64748b">
+        {{ u.email }} — {{ 'Адмін' if u.is_admin else 'Працівник' if u.is_worker
+        else 'Користувач' }}
+      </p>
+      <p style="color: #475569">Позиція: {{ u.position or '—' }}</p>
+      <form action="/owner/action" method="post" style="margin-top: 10px">
+        <input type="hidden" name="user_id" value="{{ u.id }}" />
+        <select name="action" class="form-control" style="margin-bottom: 8px">
+          <option value="set_role">Змінити роль</option>
+          <option value="fire">Звільнити</option>
+        </select>
+        <select
+          name="target_role"
+          class="form-control"
+          style="margin-bottom: 8px"
+        >
+          <option value="user">Користувач</option>
+          <option value="worker">Працівник</option>
+          <option value="admin">Адмін</option>
+        </select>
+        <button class="btn" type="submit">Застосувати</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

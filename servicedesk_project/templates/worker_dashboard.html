@@ -1,0 +1,68 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container" style="margin-top: 30px">
+  <h2>Заявки користувачів</h2>
+
+  {% if error %}
+  <p style="color: #dc2626; font-weight: 600; margin: 16px 0">{{ error }}</p>
+  {% endif %}
+
+  {% if active_problem %}
+  <div class="ticket-card processing" style="margin-bottom: 30px">
+    <h3>Поточна заявка #{{ active_problem.id }}: {{ active_problem.title }}</h3>
+    <p style="color: #475569; white-space: pre-wrap">{{ active_problem.description }}</p>
+    <p style="color: #64748b; margin-top: 10px">
+      Клієнт ID: {{ active_problem.user_id }} |
+      Тел: {{ active_problem.contact_phone or '—' }} |
+      Email: {{ active_problem.contact_email or '—' }}
+    </p>
+
+    <div style="margin-top: 20px; background: #f8fafc; padding: 16px; border-radius: 8px">
+      <h4 style="margin-bottom: 12px">Чат з клієнтом</h4>
+      <div style="max-height: 220px; overflow-y: auto; margin-bottom: 12px">
+        {% if chat_messages %}
+          {% for msg in chat_messages %}
+          <div style="margin-bottom: 8px; padding: 8px; background: white; border-radius: 6px">
+            <strong>{{ msg.sender_name }}</strong>
+            <span style="color: #94a3b8; font-size: 0.8rem"> {{ msg.created_at | format_dt }}</span>
+            <p style="margin: 4px 0 0; color: #334155">{{ msg.message }}</p>
+          </div>
+          {% endfor %}
+        {% else %}
+        <p style="color: #94a3b8">Повідомлень ще немає.</p>
+        {% endif %}
+      </div>
+      <form action="/worker/problem/{{ active_problem.id }}/chat" method="post">
+        <textarea name="message" class="form-control" rows="3" placeholder="Напишіть клієнту..." required></textarea>
+        <button type="submit" class="btn" style="margin-top: 8px; width: 100%">Надіслати</button>
+      </form>
+    </div>
+
+    <form action="/worker/problem/{{ active_problem.id }}/complete" method="post" style="margin-top: 16px">
+      <button type="submit" class="btn" style="width: 100%; background: #10b981">
+        Завершити заявку
+      </button>
+    </form>
+  </div>
+  {% endif %}
+
+  <h3 style="margin-bottom: 16px">Доступні заявки</h3>
+  {% if not available_problems %}
+  <p style="color: #64748b">Немає нових заявок.</p>
+  {% else %}
+  <div class="grid">
+    {% for p in available_problems %}
+    <div class="ticket-card waiting">
+      <h4>{{ p.title }}</h4>
+      <p style="color: #475569">{{ p.description | truncate(120) }}</p>
+      <p style="color: #94a3b8; font-size: 0.85rem">#{{ p.id }} | {{ p.date_created | format_dt }}</p>
+      <form action="/worker/problem/{{ p.id }}/take" method="post" style="margin-top: 12px">
+        <button type="submit" class="btn" style="width: 100%" {% if active_problem %}disabled title="Спочатку завершіть поточну заявку"{% endif %}>
+          Взяти заявку
+        </button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

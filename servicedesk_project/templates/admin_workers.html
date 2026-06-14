@@ -1,0 +1,212 @@
+{% extends "base.html" %} {% block content %}
+<div class="container">
+  <div
+    style="
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    "
+  >
+    <div>
+      <h2>Управління кадрами та заявками майстрів 👥</h2>
+      <p style="color: #64748b; margin-top: 5px">
+        Адміністративна панель для перевірки заяв та оновлення ролей
+        працівників.
+      </p>
+    </div>
+  </div>
+
+  <div
+    style="margin-bottom: 16px; display: flex; gap: 8px; align-items: center"
+  >
+    <a href="/admin/workers" class="btn" style="background: #94a3b8">Усі</a>
+    <a
+      href="/admin/workers?position=початківець"
+      class="btn"
+      style="background: #f97316"
+      >Початківці</a
+    >
+    <a
+      href="/admin/workers?position=молодший"
+      class="btn"
+      style="background: #10b981"
+      >Молодші</a
+    >
+    <a
+      href="/admin/workers?position=старший"
+      class="btn"
+      style="background: #60a5fa"
+      >Старші</a
+    >
+    <a
+      href="/admin/workers?position=головний"
+      class="btn"
+      style="background: #f43f5e"
+      >Головні</a
+    >
+  </div>
+
+  {% if applications %}
+  <div style="margin-bottom: 30px">
+    <h3 style="margin-bottom: 15px; color: #0f172a">Нові заявки на роботу</h3>
+    <div class="grid">
+      {% for app in applications %}
+      <div class="ticket-card waiting">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+          "
+        >
+          <strong>{{ app.name }}</strong>
+          <span class="badge badge-waiting">{{ app.status }}</span>
+        </div>
+        <p style="color: #475569; margin-bottom: 8px">
+          <strong>Email:</strong> {{ app.email }}
+        </p>
+        <p style="color: #475569; margin-bottom: 8px">
+          <strong>Телефон:</strong> {{ app.phone }}
+        </p>
+        {% if app.contact_other %}
+        <p style="color: #475569; margin-bottom: 8px">
+          <strong>Інший контакт:</strong> {{ app.contact_other }}
+        </p>
+        {% endif %}
+        <p style="color: #475569; white-space: pre-wrap; margin-bottom: 15px">
+          {{ app.message or 'Без додаткового опису' }}
+        </p>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap">
+          <form
+            action="/admin/applications/approve"
+            method="post"
+            style="flex: 1; min-width: 180px"
+          >
+            <input type="hidden" name="application_id" value="{{ app.id }}" />
+            <button
+              type="submit"
+              class="btn"
+              style="width: 100%; background: #10b981"
+            >
+              Прийняти
+            </button>
+          </form>
+          <form
+            action="/admin/applications/reject"
+            method="post"
+            style="flex: 1; min-width: 180px"
+          >
+            <input type="hidden" name="application_id" value="{{ app.id }}" />
+            <button
+              type="submit"
+              class="btn"
+              style="width: 100%; background: #ef4444"
+            >
+              Відхилити
+            </button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <div class="form-card" style="margin-bottom: 30px">
+    <p style="color: #64748b; margin: 0">Наразі немає заявок на працівників.</p>
+  </div>
+  {% endif %} {% if workers %}
+  <div>
+    <h3 style="margin-bottom: 15px; color: #0f172a">
+      Активні працівники та адміністратори
+    </h3>
+    <div class="grid">
+      {% for worker in workers %}
+      <div class="ticket-card processing">
+        <div style="margin-bottom: 12px">
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: baseline;
+              gap: 15px;
+            "
+          >
+            <div>
+              <strong>{{ worker.display_name or worker.username }}</strong>
+              <p style="margin: 3px 0; color: #64748b; font-size: 0.95rem">
+                {{ 'Адмін' if worker.is_admin else 'Працівник' if
+                worker.is_worker else 'Користувач' }}
+              </p>
+            </div>
+
+            <span
+              class="badge badge-processing"
+              style="background: #38bdf8; color: #0f172a"
+            >
+              {% if worker.is_admin %} Немає позиції {% else %} {{
+              worker.position or 'Немає позиції' }} {% endif %}
+            </span>
+          </div>
+          <p style="color: #475569; margin: 8px 0 0">{{ worker.email }}</p>
+          <p style="color: #475569; margin: 2px 0 0">
+            {{ worker.phone or 'Телефон не вказано' }}
+          </p>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap">
+          {% if worker.is_worker and not worker.is_admin %}
+          <form
+            action="/admin/workers/action"
+            method="post"
+            style="flex: 1; min-width: 140px"
+          >
+            <input type="hidden" name="user_id" value="{{ worker.id }}" />
+            <input type="hidden" name="action" value="fire" />
+            <button
+              type="submit"
+              class="btn"
+              style="width: 100%; background: #ef4444"
+            >
+              Звільнити
+            </button>
+          </form>
+          <form
+            action="/admin/workers/action"
+            method="post"
+            style="flex: 1; min-width: 140px"
+          >
+            <input type="hidden" name="user_id" value="{{ worker.id }}" />
+            <input type="hidden" name="action" value="promote" />
+            <select
+              name="target_position"
+              class="form-control"
+              style="width: 100%; padding: 8px 10px"
+            >
+              <option value="молодший">молодший</option>
+              <option value="старший">старший</option>
+              <option value="головний">головний</option>
+            </select>
+            <button
+              type="submit"
+              class="btn"
+              style="width: 100%; margin-top: 8px"
+            >
+              Підвищити
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <div class="form-card">
+    <p style="color: #64748b; margin: 0">
+      Поки що немає працівників або адміністраторів у системі.
+    </p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

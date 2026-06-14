@@ -1,0 +1,53 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container" style="margin-top: 30px">
+  {% if not problem %}
+  <div class="form-card">
+    <p style="color: #dc2626">Заявку не знайдено.</p>
+  </div>
+  {% else %}
+  <div class="ticket-card completed">
+    <h2>{{ problem.title }}</h2>
+    <p style="color: #475569; white-space: pre-wrap; margin-top: 10px">
+      {{ problem.description }}
+    </p>
+    <p style="color: #64748b; margin-top: 12px">
+      Статус: <strong>{{ problem.status }}</strong>
+    </p>
+    <p style="color: #64748b">Контакти:</p>
+    <ul style="color: #475569; margin-left: 18px">
+      {% if problem.contact_phone %}
+      <li>Телефон: {{ problem.contact_phone }}</li>
+      {% endif %} {% if problem.contact_email %}
+      <li>Email: {{ problem.contact_email }}</li>
+      {% endif %} {% if problem.contact_other %}
+      <li>Інший: {{ problem.contact_other }}</li>
+      {% endif %}
+      <li>ID клієнта: {{ problem.user_id }}</li>
+    </ul>
+    {% if problem.image_url %}
+    <img
+      src="/static/{{ problem.image_url }}"
+      alt="Фото"
+      style="max-width: 100%; margin-top: 15px; border-radius: 8px"
+    />
+    {% endif %}
+    <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap">
+      {% if user.role == 'admin' %}
+      <form action="/problem" method="post" style="min-width: 140px">
+        <input type="hidden" name="id" value="{{ problem.id }}" />
+        <button type="submit" class="btn" style="width: 100%">
+          Взяти в роботу
+        </button>
+      </form>
+      <a
+        href="/add_answer?problem_id={{ problem.id }}"
+        class="btn"
+        style="background: #10b981; min-width: 140px"
+        >Надіслати відповідь</a
+      >
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

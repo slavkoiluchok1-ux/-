@@ -1,0 +1,76 @@
+{% extends 'base.html' %} {% block content %}
+<div style="text-align: center; margin-top: 50px">
+  <h1 style="font-size: 2.5rem; margin-bottom: 20px; color: #1e293b">
+    Надійний ремонт техніки
+  </h1>
+  <p
+    style="
+      font-size: 1.2rem;
+      color: #64748b;
+      max-width: 600px;
+      margin: 0 auto 30px auto;
+      line-height: 1.6;
+    "
+  >
+    ServiceDesk Plus — це сучасна система управління ремонтами. Подавайте заявки
+    онлайн, завантажуйте фото поломок та відстежуйте статус у реальному часі на
+    сайті або через нашого Telegram-бота.
+  </p>
+  <div style="margin-bottom: 40px">
+    <a href="/login" class="btn" style="margin-right: 15px; padding: 12px 25px"
+      >Подати заявку</a
+    >
+    <a
+      href="/register"
+      class="btn"
+      style="background-color: #475569; padding: 12px 25px"
+      >Створити акаунт</a
+    >
+  </div>
+
+  <div
+    style="
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      color: #ffffff;
+      padding: 25px;
+      border-radius: 12px;
+      max-width: 600px;
+      margin: 0 auto;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    "
+  >
+    <h3 style="margin: 0 0 8px 0; font-size: 1.3rem; color: #38bdf8">
+      🤖 Отримуйте оновлення в Telegram
+    </h3>
+    <p
+      style="
+        margin: 0 0 15px 0;
+        color: #94a3b8;
+        font-size: 0.95rem;
+        line-height: 1.5;
+      "
+    >
+      Не потрібно постійно оновлювати сайт. Наш офіційний бот сам надішле
+      повідомлення, коли ремонт буде завершено.
+    </p>
+    <a
+      href="https://t.me/BkBBkBbKbbot"
+      target="_blank"
+      style="
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background-color: #0284c7;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-weight: bold;
+        text-decoration: none;
+        font-size: 0.95rem;
+      "
+    >
+      Відкрити чат з ботом
+    </a>
+  </div>
+</div>
+{% endblock %}

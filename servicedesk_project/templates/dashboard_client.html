@@ -1,0 +1,146 @@
+{% extends "base.html" %} {% block content %}
+<div class="container">
+  {% if not is_tg_linked %}
+  <div
+    style="
+      background-color: #f0f9ff;
+      border: 1px solid #bae6fd;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+    "
+  >
+    <h4
+      style="
+        margin: 0 0 6px 0;
+        color: #0369a1;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      "
+    >
+      🤖 Автоматичні сповіщення в Telegram
+    </h4>
+    <p style="margin: 0; color: #334155; font-size: 14px; line-height: 1.5">
+      Щоб отримувати повідомлення про зміну статусу ваших заявок, перейдіть у
+      нашого бота
+      <a
+        href="https://t.me/BkBBkBbKbbot"
+        target="_blank"
+        style="color: #0284c7; font-weight: bold; text-decoration: underline"
+        >@BkBBkBbKbbot</a
+      >, натисніть <b>/start</b> та надішліть йому цей код підтвердження:
+      <span
+        style="
+          font-family: monospace;
+          font-size: 15px;
+          background: #ffffff;
+          padding: 2px 6px;
+          border-radius: 4px;
+          border: 1px dashed #0284c7;
+          font-weight: bold;
+          color: #0369a1;
+          margin-left: 4px;
+        "
+        >{{ tg_code }}</span
+      >
+    </p>
+  </div>
+  {% else %}
+  <div
+    style="
+      background-color: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      padding: 12px 15px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+      color: #166534;
+      font-size: 14px;
+      font-weight: 500;
+    "
+  >
+    ✅ Сповіщення у Telegram успішно активовані! Ви отримуватимете повідомлення
+    про оновлення в реальному часі.
+  </div>
+  {% endif %}
+
+  <div class="form-card">
+    <h2>Створити нову заявку</h2>
+    <form
+      action="/client/problem/create"
+      method="POST"
+      enctype="multipart/form-data"
+    >
+      <div class="form-group">
+        <label for="title">Назва пристрою або проблеми</label>
+        <input
+          type="text"
+          id="title"
+          name="title"
+          class="form-control"
+          required
+          placeholder="Наприклад: Ноутбук Asus не вмикається"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="description">Опис несправності</label>
+        <textarea
+          id="description"
+          name="description"
+          class="form-control"
+          rows="5"
+          required
+          placeholder="Опишіть, що саме сталося..."
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="file">Додати зображення</label>
+        <input
+          type="file"
+          id="file"
+          name="file"
+          class="form-control"
+          accept="image/*"
+        />
+      </div>
+
+      <button type="submit" class="btn">Надіслати заявку</button>
+    </form>
+  </div>
+
+  <hr style="margin: 40px 0; border: 0; border-top: 1px solid #e2e8f0" />
+
+  <h2>Мої заявки</h2>
+  {% if problems %}
+  <div class="grid">
+    {% for problem in problems %}
+    <div
+      class="ticket-card {{ 'waiting' if 'Чекає' in problem.status else 'processing' if 'обробці' in problem.status else 'completed' }}"
+    >
+      <h3>{{ problem.title }}</h3>
+      <p style="margin: 10px 0; color: #64748b">
+        {{ problem.description[:100] }}{% if problem.description|length > 100
+        %}...{% endif %}
+      </p>
+
+      <div style="margin-bottom: 15px">
+        <span
+          class="badge {{ 'badge-waiting' if 'Чекає' in problem.status else 'badge-processing' if 'обробці' in problem.status else 'badge-completed' }}"
+        >
+          {{ problem.status }}
+        </span>
+      </div>
+
+      <a href="/client/problem/{{ problem.id }}" class="btn">Детальніше</a>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p style="text-align: center; color: #94a3b8; margin-top: 20px">
+    У вас ще немає створених заявок.
+  </p>
+  {% endif %}
+</div>
+{% endblock %}

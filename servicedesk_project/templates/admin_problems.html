@@ -1,0 +1,61 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container" style="margin-top: 30px">
+  <h2>Заявки клієнтів</h2>
+  {% if not problems %}
+  <p style="color: #64748b">Поки що немає жодної заявки.</p>
+  {% else %}
+  <div class="grid">
+    {% for p in problems %}
+    <div class="ticket-card processing">
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: start;
+          margin-bottom: 12px;
+        "
+      >
+        <div>
+          <h3>{{ p.title }}</h3>
+          <p style="color: #64748b; margin: 4px 0">Статус: {{ p.status }}</p>
+          <p style="color: #64748b; margin: 4px 0">
+            Клієнт ID: {{ p.user_id }}
+          </p>
+        </div>
+        <span class="badge badge-processing">#{{ p.id }}</span>
+      </div>
+      <p style="color: #475569; white-space: pre-wrap">{{ p.description }}</p>
+      <p style="color: #64748b; font-size: 0.95rem; margin-top: 12px">
+        Контакти:
+      </p>
+      <ul style="color: #475569; margin: 0 0 12px 18px">
+        {% if p.contact_phone %}
+        <li>Телефон: {{ p.contact_phone }}</li>
+        {% endif %} {% if p.contact_email %}
+        <li>Email: {{ p.contact_email }}</li>
+        {% endif %} {% if p.contact_other %}
+        <li>Інший: {{ p.contact_other }}</li>
+        {% endif %}
+      </ul>
+      <form action="/add_answer" method="post" style="margin-top: 14px">
+        <input type="hidden" name="problem_id" value="{{ p.id }}" />
+        <textarea
+          name="message"
+          class="form-control"
+          rows="3"
+          placeholder="Відповідь клієнту..."
+          required
+        ></textarea>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px">
+          <button type="submit" class="btn" style="background: #10b981; min-width: 140px">
+            Відповісти
+          </button>
+          <a href="/problem?problem_id={{ p.id }}" class="btn" style="min-width: 140px">Деталі</a>
+        </div>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

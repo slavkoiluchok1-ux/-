@@ -1,0 +1,56 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container" style="margin-top: 20px; display: flex; gap: 20px">
+  <div style="flex: 2">
+    <h2>Форум</h2>
+    <div class="grid">
+      {% for msg in messages %}
+      <div class="ticket-card waiting">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+          "
+        >
+          <div>
+            <strong>{{ msg.sender_name }}</strong>
+            <div style="font-size: 0.85rem; color: #64748b">{{ msg.role }}</div>
+          </div>
+          <div style="font-size: 0.8rem; color: #94a3b8">
+            {{ msg.created_at.strftime('%d.%m.%Y %H:%M') }}
+          </div>
+        </div>
+        <p style="white-space: pre-wrap; color: #475569">{{ msg.message }}</p>
+      </div>
+      {% else %}
+      <p style="color: #64748b">Поки немає повідомлень. Почніть розмову!</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div style="flex: 1">
+    <div class="form-card">
+      {% if user %}
+      <h3>Написати повідомлення</h3>
+      <form action="/forum" method="post">
+        <div class="form-group">
+          <label for="message">Текст</label>
+          <textarea
+            name="message"
+            id="message"
+            rows="6"
+            class="form-control"
+            placeholder="Напишіть тут..."
+          ></textarea>
+        </div>
+        <button type="submit" class="btn">Надіслати</button>
+      </form>
+      {% else %}
+      <p style="color: #64748b">Будь ласка, увійдіть, щоб писати на форумі.</p>
+      <a href="/login" class="btn">Увійти</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

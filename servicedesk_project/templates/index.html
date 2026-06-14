@@ -1,0 +1,98 @@
+{% extends "base.html" %} {% block content %}
+<div style="text-align: center; margin-top: 50px">
+  <h1 style="margin-bottom: 20px">Ласкаво просимо до системи підтримки</h1>
+  {% if message %}
+  <p style="color: #0284c7; font-size: 1.2rem; font-weight: bold">{{ message }}</p>
+  {% endif %}
+  <p style="color: #64748b; margin-top: 10px">
+    Тут ви можете швидко залишити заявку про технічну проблему або відстежити її статус.
+  </p>
+  <div style="margin-top: 30px; margin-bottom: 40px">
+    <a href="/add_my_problem" class="btn">Повідомити про проблему</a>
+  </div>
+
+  <div
+    style="
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      color: #ffffff;
+      padding: 25px;
+      border-radius: 12px;
+      max-width: 600px;
+      margin: 0 auto;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    "
+  >
+    <h3 style="margin: 0 0 8px 0; font-size: 1.3rem; color: #38bdf8">
+      🤖 Наш Telegram-бот уже онлайн!
+    </h3>
+    <p style="margin: 0 0 15px 0; color: #94a3b8; font-size: 0.95rem; line-height: 1.5">
+      Отримуйте миттєві сповіщення про зміну статусу вашої заявки прямо в телефон.
+    </p>
+    <a
+      href="https://t.me/BkBBkBbKbbot"
+      target="_blank"
+      style="
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background-color: #0284c7;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-weight: bold;
+        text-decoration: none;
+        font-size: 0.95rem;
+      "
+    >
+      Запустити бота @BkBBkBbKbbot
+    </a>
+
+    {% if user and tg_code %}
+    <div
+      style="
+        margin-top: 20px;
+        padding: 16px;
+        background: {% if is_tg_linked %}rgba(74, 222, 128, 0.12){% else %}rgba(56, 189, 248, 0.1){% endif %};
+        border: 2px {% if is_tg_linked %}solid #4ade80{% else %}dashed #38bdf8{% endif %};
+        border-radius: 8px;
+      "
+    >
+      {% if is_tg_linked %}
+      <p style="margin: 0 0 8px; color: #4ade80; font-weight: 700; font-size: 1rem">
+        Підключено
+      </p>
+      {% else %}
+      <p style="margin: 0 0 8px; color: #94a3b8; font-size: 0.9rem">
+        Ваш ключ для прив'язки в Telegram:
+      </p>
+      {% endif %}
+      <p
+        style="
+          margin: 0 0 10px;
+          font-size: 1.6rem;
+          font-weight: bold;
+          color: {% if is_tg_linked %}#4ade80{% else %}#38bdf8{% endif %};
+          letter-spacing: 2px;
+        "
+      >
+        {{ tg_code }}
+      </p>
+      <p style="margin: 0; color: #94a3b8; font-size: 0.85rem; line-height: 1.5">
+        {% if is_tg_linked %}
+        Цей ключ можна знову використати на інших пристроях — надішліть його боту та підтвердіть 4 цифрами.
+        {% else %}
+        1. Відкрийте бота<br />
+        2. Надішліть код <strong style="color: #fff">{{ tg_code }}</strong><br />
+        3. Введіть 4 цифри, які надішле бот
+        {% endif %}
+      </p>
+    </div>
+    {% elif not user %}
+    <p style="margin: 20px 0 0; color: #94a3b8; font-size: 0.9rem">
+      <a href="/login" style="color: #38bdf8">Увійдіть</a> або
+      <a href="/register" style="color: #38bdf8">зареєструйтесь</a>, щоб отримати ключ для Telegram.
+    </p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

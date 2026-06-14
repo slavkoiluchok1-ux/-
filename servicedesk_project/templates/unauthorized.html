@@ -1,0 +1,24 @@
+{% extends "base.html" %} {% block content %}
+<div
+  class="form-card"
+  style="text-align: center; max-width: 550px; margin: 80px auto"
+>
+  <div style="font-size: 3.5rem; margin-bottom: 15px">🔒</div>
+  <h2 style="color: #1e293b; margin-bottom: 10px">Доступ обмежено</h2>
+
+  <p style="color: #64748b; font-size: 1.1rem; margin-bottom: 30px">
+    {{ detail if detail else "Для перегляду цієї сторінки необхідно
+    авторизуватися." }}
+  </p>
+
+  <div style="display: flex; gap: 15px; justify-content: center">
+    <a href="/login" class="btn" style="flex: 1; text-align: center">Увійти</a>
+    <a
+      href="/register"
+      class="btn"
+      style="flex: 1; text-align: center; background-color: #64748b"
+      >Реєстрація</a
+    >
+  </div>
+</div>
+{% endblock %}

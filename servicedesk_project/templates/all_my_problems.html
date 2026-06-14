@@ -1,0 +1,60 @@
+{% extends "base.html" %} {% block content %}
+<h2 style="margin-top: 20px">Мої подані заявки</h2>
+
+{% if not problems %}
+<p style="color: #64748b; margin-top: 20px">Ви ще не створили жодної заявки.</p>
+{% else %}
+<div class="grid">
+  {% for problem in problems %} {# Автоматичний підбір класів дизайну під статус
+  #} {% set card_class = 'waiting' %} {% set badge_class = 'badge-waiting' %} {%
+  if problem.status == 'У роботі' %} {% set card_class = 'processing' %} {% set
+  badge_class = 'badge-processing' %} {% elif problem.status == 'Є відповідь' or
+  problem.status == 'Завершено' %} {% set card_class = 'completed' %} {% set
+  badge_class = 'badge-completed' %} {% endif %}
+
+  <div class="ticket-card {{ card_class }}">
+    <div
+      style="
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 10px;
+      "
+    >
+      <h3 style="color: #1e293b">{{ problem.title }}</h3>
+      <span class="badge {{ badge_class }}">{{ problem.status }}</span>
+    </div>
+
+    <p style="color: #475569; font-size: 0.95rem; margin-bottom: 12px">
+      {{ problem.description | truncate(100) }}
+    </p>
+
+    <div style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 15px">
+      {% if problem.desired_date %}
+      <div>📅 Очікувана дата: {{ problem.desired_date }}</div>
+      {% endif %}
+      <div>
+        🕒 Створено: {{ problem.date_created | format_dt }}
+      </div>
+    </div>
+
+    {% if problem.image_url %}
+    <img
+      src="/static/{{ problem.image_url }}"
+      alt="Скріншот проблеми"
+      class="ticket-img"
+    />
+    {% endif %}
+
+    <div style="margin-top: 15px; text-align: right">
+      <a
+        href="/check_message?id={{ problem.id }}"
+        class="btn"
+        style="padding: 6px 12px; font-size: 0.9rem"
+        >Переглянути відповідь</a
+      >
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %} {% endblock %}

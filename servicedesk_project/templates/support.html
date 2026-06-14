@@ -1,0 +1,129 @@
+{% extends 'base.html' %} {% block content %}
+<div class="form-card" style="max-width: 820px; margin: 40px auto">
+  <h2 style="text-align: center; margin-bottom: 20px">
+    Підтримка та звернення
+  </h2>
+  <p style="color: #475569; margin-bottom: 20px">
+    Опишіть проблему, якщо щось не реагує, не працює або ви потребуєте допомоги.
+    Заявка обробляється окремо від сервісних звернень.
+  </p>
+
+  {% if error %}
+  <p
+    style="
+      color: #dc2626;
+      text-align: center;
+      margin-bottom: 15px;
+      font-weight: 600;
+    "
+  >
+    {{ error }}
+  </p>
+  {% endif %} {% if message %}
+  <p
+    style="
+      color: #10b981;
+      text-align: center;
+      margin-bottom: 15px;
+      font-weight: 600;
+    "
+  >
+    {{ message }}
+  </p>
+  {% endif %}
+
+  <form action="/support" method="post" class="form-card" style="padding: 20px">
+    <div class="form-group">
+      <label for="title">Тема звернення</label>
+      <input
+        type="text"
+        id="title"
+        name="title"
+        class="form-control"
+        placeholder="Наприклад: Сайт не реагує"
+        required
+      />
+    </div>
+    <div class="form-group">
+      <label for="message">Текст звернення</label>
+      <textarea
+        id="message"
+        name="message"
+        class="form-control"
+        rows="5"
+        placeholder="Опишіть, в чому проблема..."
+        required
+      ></textarea>
+    </div>
+    <div class="form-group">
+      <label>Контакт для зворотного зв’язку</label>
+      <input
+        type="tel"
+        id="contact_phone"
+        name="contact_phone"
+        class="form-control"
+        placeholder="Телефон"
+      />
+      <input
+        type="email"
+        id="contact_email"
+        name="contact_email"
+        class="form-control"
+        placeholder="Email"
+        style="margin-top: 10px"
+      />
+      <input
+        type="text"
+        id="contact_other"
+        name="contact_other"
+        class="form-control"
+        placeholder="Інший варіант зв’язку (Telegram, Viber, WhatsApp)"
+        style="margin-top: 10px"
+      />
+      <small style="color: #64748b; display: block; margin-top: 8px"
+        >Потрібен хоча б один контакт.</small
+      >
+    </div>
+    <button type="submit" class="btn" style="width: 100%">
+      Відправити звернення
+    </button>
+  </form>
+
+  {% if support_requests %}
+  <div style="margin-top: 30px">
+    <h3>Мої звернення</h3>
+    <div class="grid">
+      {% for request in support_requests %}
+      <div
+        class="ticket-card {{ 'waiting' if request.status == 'Нова' else 'processing' if request.status == 'В обробці' else 'completed' }}"
+      >
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+          "
+        >
+          <strong>{{ request.title }}</strong>
+          <span
+            class="badge {{ 'badge-waiting' if request.status == 'Нова' else 'badge-processing' if request.status == 'В обробці' else 'badge-completed' }}"
+            >{{ request.status }}</span
+          >
+        </div>
+        <p style="color: #475569">{{ request.message | truncate(120) }}</p>
+        {% if request.response_message %}
+        <p style="color: #16a34a; font-weight: 600">
+          Відповідь: {{ request.response_message | truncate(120) }}
+        </p>
+        {% endif %}
+        <p style="color: #94a3b8; font-size: 0.85rem; margin-top: 10px">
+          Створено: {{ request.date_created | format_dt }}
+        </p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

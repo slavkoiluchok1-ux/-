@@ -1,0 +1,135 @@
+{% extends 'base.html' %} {% block content %}
+<div
+  style="
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+  "
+>
+  <h1>Панель адміністратора (Майстра)</h1>
+  <form action="/logout" method="post">
+    <button type="submit" class="btn btn-danger">Вийти</button>
+  </form>
+</div>
+
+<h2>Усі заявки в системі</h2>
+<div class="grid">
+  {% for p in problems %}
+  <div
+    class="ticket-card {% if p.status == 'В обробці' %}waiting{% elif p.status == 'У роботі' %}processing{% else %}completed{% endif %}"
+  >
+    <div
+      style="display: flex; justify-content: space-between; margin-bottom: 10px"
+    >
+      <strong
+        >Заявка #{{ p.id }} (Клієнт: {{ p.user.username if p.user else 'ID ' ~
+        p.user_id }})</strong
+      >
+      <span
+        class="badge {% if p.status == 'В обробці' %}badge-waiting{% elif p.status == 'У роботі' %}badge-processing{% else %}badge-completed{% endif %}"
+        >{{ p.status }}</span
+      >
+    </div>
+    <h3>{{ p.title }}</h3>
+    <p style="color: #475569; margin: 10px 0">{{ p.description }}</p>
+    <p style="font-size: 0.95rem; color: #334155; margin: 0">
+      <strong>Телефон:</strong> {{ p.contact_phone or 'Не вказано' }}<br />
+      <strong>Email:</strong> {{ p.contact_email or 'Не вказано' }}<br />
+      <strong>Інше:</strong> {{ p.contact_other or 'Не вказано' }}
+    </p>
+    {% if p.image_url %}
+    <img src="/static/{{ p.image_url }}" class="ticket-img" alt="Поломка" />
+    {% endif %}
+
+    <div
+      style="
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px dashed #cbd5e1;
+      "
+    >
+      {% if p.status == 'В обробці' %}
+      <form method="post" action="/admin/problem/{{ p.id }}/take">
+        <button
+          type="submit"
+          class="btn"
+          style="width: 100%; background-color: #3b82f6"
+        >
+          Взяти в роботу
+        </button>
+      </form>
+      {% elif p.status == 'У роботі' %}
+      <form
+        method="post"
+        action="/admin/problem/{{ p.id }}/respond"
+        style="margin-bottom: 15px"
+      >
+        <input
+          type="text"
+          name="message"
+          class="form-control"
+          placeholder="Написати коментар клієнту..."
+          required
+          style="margin-bottom: 5px"
+        />
+        <button
+          type="submit"
+          class="btn"
+          style="width: 100%; background-color: #4b5563"
+        >
+          Надіслати відповідь
+        </button>
+      </form>
+
+      <form
+        method="post"
+        action="/admin/problem/{{ p.id }}/close"
+        style="background: #f8fafc; padding: 10px; border-radius: 6px"
+      >
+        <h4 style="margin-bottom: 5px; font-size: 0.9rem">
+          Формування технічного талона:
+        </h4>
+        <input
+          type="text"
+          name="work_done"
+          class="form-control"
+          placeholder="Виконані роботи"
+          required
+          style="margin-bottom: 5px; font-size: 0.9rem"
+        />
+        <input
+          type="text"
+          name="parts_used"
+          class="form-control"
+          placeholder="Використані деталі"
+          style="margin-bottom: 5px; font-size: 0.9rem"
+        />
+        <input
+          type="text"
+          name="warranty_info"
+          class="form-control"
+          placeholder="Гарантія (наприклад: 6 місяців)"
+          required
+          style="margin-bottom: 5px; font-size: 0.9rem"
+        />
+        <button
+          type="submit"
+          class="btn"
+          style="width: 100%; background-color: #10b981"
+        >
+          Видати талон
+        </button>
+      </form>
+      {% else %}
+      <p style="color: #10b981; font-weight: bold; font-size: 0.9rem">
+        🛑 Заявку успішно виконано та закрито.
+      </p>
+      {% endif %}
+    </div>
+  </div>
+  {% else %}
+  <p>Немає жодної заявки для відображення.</p>
+  {% endfor %}
+</div>
+{% endblock %}

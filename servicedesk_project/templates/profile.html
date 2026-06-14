@@ -1,0 +1,103 @@
+{% extends 'base.html' %} {% block content %}
+<div class="form-card" style="max-width: 720px; margin: 40px auto">
+  <h2 style="text-align: center; margin-bottom: 20px">Мій профіль</h2>
+  <div
+    style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center"
+  >
+    <div style="flex: 1 1 260px">
+      <div style="margin-bottom: 20px; text-align: center">
+        {% if user.profile_photo %}
+        <div style="text-align: center">
+          <img
+            src="/static/{{ user.profile_photo }}"
+            alt="avatar"
+            style="
+              width: 120px;
+              height: 120px;
+              border-radius: 50%;
+              object-fit: cover;
+              border: 2px solid #fff;
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            "
+          />
+        </div>
+        {% else %}
+        <div
+          style="
+            width: 120px;
+            height: 120px;
+            background: #e2e8f0;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            color: #334155;
+          "
+        >
+          {{ user.display_name[0] if user.display_name else user.username[0] }}
+        </div>
+        {% endif %}
+      </div>
+      <p><strong>Ім'я для відображення:</strong> {{ user.display_name }}</p>
+      <p><strong>Початкове ім'я:</strong> {{ user.initial_name }}</p>
+      <p><strong>Логін:</strong> {{ user.username }}</p>
+      <p><strong>Email:</strong> {{ user.email }}</p>
+      <p><strong>Телефон:</strong> {{ user.phone or 'Не вказано' }}</p>
+      <p>
+        <strong>Роль:</strong> {{ 'Адмін' if user.role == 'admin' else
+        'Працівник' if user.role == 'worker' else 'Клієнт' }}
+      </p>
+      <p><strong>Посада:</strong> {{ user.position or 'Немає' }}</p>
+    </div>
+    <div style="flex: 1 1 360px">
+      <form action="/profile" method="post" enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="display_name">Ім'я для відображення</label>
+          <input
+            id="display_name"
+            name="display_name"
+            type="text"
+            class="form-control"
+            value="{{ user.display_name }}"
+          />
+        </div>
+        <div class="form-group">
+          <label for="initial_name">Початкове ім'я (логін)</label>
+          <input
+            id="initial_name"
+            name="initial_name"
+            type="text"
+            class="form-control"
+            value="{{ user.initial_name }}"
+          />
+        </div>
+        <div class="form-group">
+          <label for="phone">Телефон</label>
+          <input
+            id="phone"
+            name="phone"
+            type="tel"
+            class="form-control"
+            value="{{ user.phone or '' }}"
+            placeholder="+380 99 123 45 67"
+          />
+        </div>
+        <div class="form-group">
+          <label for="bio">Про себе</label>
+          <textarea id="bio" name="bio" class="form-control" rows="4">
+{{ user.bio or '' }}</textarea
+          >
+        </div>
+        <div class="form-group">
+          <label for="file">Фото профілю</label>
+          <input id="file" name="file" type="file" class="form-control" />
+        </div>
+        <button type="submit" class="btn" style="width: 100%">
+          Оновити профіль
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

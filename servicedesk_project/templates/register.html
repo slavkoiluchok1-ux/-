@@ -1,0 +1,75 @@
+{% extends "base.html" %} {% block content %}
+<div class="form-card">
+  <h2 style="text-align: center; margin-bottom: 20px">Реєстрація акаунта</h2>
+
+  {% if message %}
+  <p
+    style="
+      color: #10b981;
+      text-align: center;
+      margin-bottom: 15px;
+      font-weight: 600;
+    "
+  >
+    {{ message }}
+  </p>
+  {% endif %} {% if error %}
+  <p
+    style="
+      color: #ef4444;
+      text-align: center;
+      margin-bottom: 15px;
+      font-weight: 600;
+    "
+  >
+    {{ error }}
+  </p>
+  {% endif %}
+
+  <form action="/register" method="post">
+    <div class="form-group">
+      <label for="username">Ім'я користувача (Логін)</label>
+      <input
+        type="text"
+        id="username"
+        name="username"
+        class="form-control"
+        required
+      />
+    </div>
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input
+        type="email"
+        id="email"
+        name="email"
+        class="form-control"
+        required
+      />
+    </div>
+    <div class="form-group">
+      <label for="password">Пароль</label>
+      <input
+        type="password"
+        id="password"
+        name="password"
+        class="form-control"
+        required
+      />
+    </div>
+    <div class="form-group">
+      <label for="confirm_password">Підтвердіть пароль</label>
+      <input
+        type="password"
+        id="confirm_password"
+        name="confirm_password"
+        class="form-control"
+        required
+      />
+    </div>
+    <button type="submit" class="btn" style="width: 100%">
+      Зареєструватися
+    </button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends "base.html" %} {% block content %}
+<div class="container">
+  <div
+    style="
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    "
+  >
+    <div>
+      <h2>Робоче місце майстра 🛠️</h2>
+      <p style="color: #64748b; margin-top: 5px">
+        Нижче наведено список технічних завдань, які адміністрація закріпила за
+        вами.
+      </p>
+    </div>
+    <form action="/logout" method="post">
+      <button type="submit" class="btn btn-danger">Вийти</button>
+    </form>
+  </div>
+
+  {% if problems %}
+  <div class="grid">
+    {% for p in problems %}
+    <div
+      class="ticket-card processing"
+      style="
+        border-left-width: 6px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      "
+    >
+      <div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+          "
+        >
+          <strong style="color: #64748b; font-size: 0.9rem"
+            >Заявка №{{ p.id }}</strong
+          >
+          <span class="badge badge-processing">{{ p.status }}</span>
+        </div>
+
+        <h3 style="color: #1e293b; margin-bottom: 10px">{{ p.title }}</h3>
+        <p
+          style="
+            color: #475569;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+          "
+        >
+          {{ p.description }}
+        </p>
+      </div>
+
+      <div
+        style="
+          margin-top: auto;
+          padding-top: 15px;
+          border-top: 1px dashed #cbd5e1;
+        "
+      >
+        <form action="/worker/problem/{{ p.id }}/status" method="post">
+          <label
+            style="
+              display: block;
+              font-weight: 600;
+              margin-bottom: 8px;
+              font-size: 0.85rem;
+              color: #334155;
+            "
+          >
+            Змінити статус виконання:
+          </label>
+          <div style="display: flex; gap: 10px">
+            <select
+              name="status"
+              class="form-control"
+              style="
+                flex: 1;
+                padding: 8px 10px;
+                font-size: 0.9rem;
+                height: auto;
+              "
+            >
+              <option value="В процесі діагностики">
+                В процесі діагностики
+              </option>
+              <option value="Очікує на запчастини">Очікує на запчастини</option>
+              <option value="Ремонт завершено (Тестування)">
+                Ремонт завершено (Тестування)
+              </option>
+            </select>
+            <button
+              type="submit"
+              class="btn"
+              style="background-color: #10b981; padding: 8px 15px"
+            >
+              Оновити
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div
+    class="form-card"
+    style="max-width: 100%; text-align: center; padding: 40px"
+  >
+    <p style="color: #94a3b8; font-size: 1.1rem; font-style: italic; margin: 0">
+      🎉 Чудова робота! Зараз у вас немає призначених замовлень.
+    </p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

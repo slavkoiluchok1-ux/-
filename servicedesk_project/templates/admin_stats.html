@@ -1,0 +1,52 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container" style="margin-top: 30px">
+  <h2>Статистика сервісного центру:</h2>
+  <ul
+    style="
+      list-style-type: none;
+      padding-left: 0;
+      font-size: 1.1rem;
+      line-height: 1.8;
+    "
+  >
+    <li>В обробці: <b>{{ stats['В обробці'] }}</b></li>
+    <li>У роботі: <b>{{ stats['У роботі'] }}</b></li>
+    <li>Є відповідь: <b>{{ stats['Є відповідь'] }}</b></li>
+    <li>Завершено: <b>{{ stats['Завершено'] }}</b></li>
+  </ul>
+
+  <h2 style="margin-top: 40px">Усі заявки в системі:</h2>
+  {% for p in problems %}
+  <div
+    style="
+      background: white;
+      padding: 20px;
+      border-radius: 6px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      margin-bottom: 15px;
+    "
+  >
+    <h3>{{ p.title }} (Статус: {{ p.status }})</h3>
+    <p style="color: #64748b">
+      Бажаний термін: {{ p.desired_date or 'Не вказано' }}
+    </p>
+    <form action="/delete_problem" method="post">
+      <input type="hidden" name="problem_id" value="{{ p.id }}" />
+      <button
+        type="submit"
+        style="
+          color: #ef4444;
+          background: none;
+          border: none;
+          font-weight: bold;
+          cursor: pointer;
+          padding: 0;
+        "
+      >
+        Видалити заявку
+      </button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
