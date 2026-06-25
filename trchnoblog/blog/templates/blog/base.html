@@ -1,0 +1,97 @@
+{% load static %}
+
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}TechBlog{% endblock %}</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet" />
+
+    <style>
+      .navbar-brand {
+        font-weight: bold;
+        color: #007bff !important;
+      }
+      .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 60px 0;
+      }
+      .card {
+        transition: transform 0.2s;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .card:hover {
+        transform: translateY(-5px);
+      }
+      
+      /* Анімація та ефекти для меню навігації */
+      .nav-link {
+        position: relative;
+        font-weight: 500;
+        margin-left: 10px;
+        transition: color 0.3s ease;
+      }
+      .nav-link:hover {
+        color: #007bff !important;
+      }
+      .nav-link::after {
+        content: '';
+        position: absolute;
+        width: 0;
+        height: 2px;
+        bottom: 0;
+        left: 0;
+        background-color: #007bff;
+        transition: width 0.3s ease;
+      }
+      .nav-link:hover::after {
+        width: 100%;
+      }
+      /* Стиль для активної сторінки */
+      .nav-link.active-page {
+        color: #007bff !important;
+        font-weight: bold;
+      }
+      .nav-link.active-page::after {
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm sticky-top">
+      <div class="container">
+        <a class="navbar-brand" href="{% url 'blog:home' %}">🚀 TechBlog</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <div class="navbar-nav ms-auto">
+            <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active-page{% endif %}" href="{% url 'blog:home' %}">Головна</a>
+            <a class="nav-link {% if request.resolver_match.url_name == 'popular' %}active-page{% endif %}" href="{% url 'blog:popular' %}">Популярне</a>
+            <a class="nav-link {% if request.resolver_match.url_name == 'experience' %}active-page{% endif %}" href="{% url 'blog:experience' %}">Досвід</a>
+            <a class="nav-link {% if request.resolver_match.url_name == 'about' %}active-page{% endif %}" href="{% url 'blog:about' %}">Про нас</a>
+            <a class="nav-link {% if request.resolver_match.url_name == 'contact' %}active-page{% endif %}" href="{% url 'blog:contact' %}">Контакти</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main style="min-height: 75vh;">
+      {% block content %}
+      {% endblock %}
+    </main>
+
+    <footer class="bg-dark text-white text-center py-4 mt-5">
+      <div class="container">
+        <p>&copy; 2026 TechBlog. Всі права захищені.</p>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

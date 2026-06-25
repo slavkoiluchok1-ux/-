@@ -1,0 +1,44 @@
+{% extends 'blog/base.html' %}
+
+{% block title %} Популярні статті {% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <!-- Заголовок сторінки -->
+  <h1 class="text-center mb-5">{{ blog_title }}</h1>
+
+  <!-- Карточки статей з парною кількістю переглядів -->
+  <div class="row">
+    {% for post in posts %} {% if post.views|divisibleby:2 %}
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">{{ post.title }}</h5>
+          <p class="card-text">
+            <span class="badge bg-primary">{{ post.views }} переглядів</span>
+          </p>
+          <small class="text-muted">Стаття #{{ forloop.counter }}</small>
+        </div>
+      </div>
+    </div>
+    {% endif %} {% endfor %}
+  </div>
+
+  <!-- Список всіх статей за популярністю -->
+  <div class="mt-5">
+    <h3>Всі статті за популярністю:</h3>
+    <ol class="list-group list-group-numbered">
+      {% for post in posts %}
+      <li
+        class="list-group-item d-flex justify-content-between align-items-start"
+      >
+        <div class="ms-2 me-auto">
+          <div class="fw-bold">{{ post.title }}</div>
+        </div>
+        <span class="badge bg-primary rounded-pill">{{ post.views }}</span>
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+</div>
+{% endblock %}

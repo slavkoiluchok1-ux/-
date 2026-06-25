@@ -1,0 +1,74 @@
+*
+
+/* Глобальні стилі для TechBlog */
+* * {
+    box-sizing: border-box;
+}
+
+.navbar {
+    background: rgba(0, 0, 0, 0.9);
+    padding: 15px 0;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+}
+
+.navbar ul {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+}
+
+.navbar li {
+    margin: 0 20px;
+}
+
+.navbar a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.navbar a:hover {
+    color: #3498db;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 80px 20px 20px;
+
+}
+
+.footer {
+    background: #2c3e50;
+    color: white;
+    text-align: center;
+    padding: 30px 0;
+    margin-top: 50px;
+}
+
+*
+
+/* Стилі для hero-секції */
+* .hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 60px 0;
+    text-align: center;
+}
+
+.hero-section h1 {
+    font-size: 3rem;
+    margin-bottom: 20px;
+}
+
+.hero-section p {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+}
