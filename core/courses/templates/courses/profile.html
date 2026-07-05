@@ -1,0 +1,9 @@
+<h2>Профіль учня</h2>
+<p>Логін: {{ request.user.username }}</p>
+<p>Ім'я: {{ request.user.first_name }}</p>
+<p>Прізвище: {{ request.user.last_name }}</p>
+<p>Email: {{ request.user.email }}</p>
+<p>Вік: {{ profile.age }}</p>
+<p>Телефон: {{ profile.phone }}</p>
+<hr>
+<a href="{% url 'dashboard' %}">Назад на Dashboard</a>

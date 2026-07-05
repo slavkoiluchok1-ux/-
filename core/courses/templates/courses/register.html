@@ -1,0 +1,21 @@
+<form method="post">
+    {% csrf_token %}
+    <h2>Реєстрація учня</h2>
+    {{ user_form.non_field_errors }}
+    {{ user_form.as_p }}
+    
+    <h2>Вибір курсів (Оберіть 3 різних курси та пріоритети 1, 2, 3)</h2>
+    {{ formset.management_form }}
+    {% if formset.non_form_errors %}
+        <div style="color: red;">{{ formset.non_form_errors }}</div>
+    {% endif %}
+    {% for form in formset %}
+        {% if form.non_field_errors %}
+            <div style="color: red;">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+            {{ form.as_p }}
+        </div>
+    {% endfor %}
+    <button type="submit">Зареєструватися</button>
+</form>

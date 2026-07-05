@@ -1,0 +1,13 @@
+<h2>Панель керування (Dashboard)</h2>
+<p>Вітаємо, {{ request.user.username }}!</p>
+<h3>Обрані вами курси:</h3>
+<ul>
+    {% for selection in selections %}
+        <li>{{ selection.course.title }} (Пріоритет: {{ selection.priority }})</li>
+    {% empty %}
+        <li>Ви ще не обрали жодного курсу.</li>
+    {% endfor %}
+</ul>
+<hr>
+<a href="{% url 'profile' %}">Профіль учня</a> | 
+<a href="{% url 'logout' %}">Вийти з системи</a>
