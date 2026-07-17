@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Weather App</title>
+  </head>
+  <body>
+    <h1>Перевірити погоду</h1>
+
+    <form method="post">
+      <input type="text" name="city" placeholder="Введіть місто" required />
+      <button type="submit">Отримати погоду</button>
+    </form>
+
+    {% if error %}
+    <p style="color: red">{{ error }}</p>
+    {% endif %} {% if weather %}
+    <h2>Погода в {{ weather.city }}</h2>
+    <p>Температура: {{ weather.temperature }} °C</p>
+    <p>Вологість: {{ weather.humidity }} %</p>
+    <p>Опис: {{ weather.description }}</p>
+    <p>Швидкість вітру: {{ weather.wind_speed }} м/с</p>
+    {% endif %}
+  </body>
+</html>
