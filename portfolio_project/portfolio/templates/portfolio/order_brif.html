@@ -1,0 +1,86 @@
+{% extends 'portfolio/base.html' %}
+
+{% block title %}Бриф на розробку | Портфоліо{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+    <div class="card-soft p-4 p-md-5 shadow-sm">
+      <div class="row g-4">
+        <div class="col-lg-7">
+          <div class="mb-4">
+            <span class="badge rounded-pill bg-primary-subtle text-primary mb-2">Бриф на розробку</span>
+            <h1 class="display-5 fw-bold mb-3">Розкажіть про свій проєкт</h1>
+            <p class="text-muted-soft fs-6">Заповніть бриф, щоб отримати детальну пропозицію із термінами та бюджетом. Чим більше деталей — тим точніша оцінка.</p>
+          </div>
+          <form method="post" novalidate>
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label" for="id_project_name">{{ form.project_name.label }}</label>
+                {{ form.project_name }}
+                {{ form.project_name.errors }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="id_budget">{{ form.budget.label }}</label>
+                {{ form.budget }}
+                {{ form.budget.errors }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="id_deadline">{{ form.deadline.label }}</label>
+                {{ form.deadline }}
+                {{ form.deadline.errors }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="id_contact_name">{{ form.contact_name.label }}</label>
+                {{ form.contact_name }}
+                {{ form.contact_name.errors }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="id_contact_email">{{ form.contact_email.label }}</label>
+                {{ form.contact_email }}
+                {{ form.contact_email.errors }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="id_contact_phone">{{ form.contact_phone.label }}</label>
+                {{ form.contact_phone }}
+                {{ form.contact_phone.errors }}
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="id_description">{{ form.description.label }}</label>
+                {{ form.description }}
+                {{ form.description.errors }}
+              </div>
+            </div>
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mt-4">
+              <div>
+                <p class="text-muted-soft mb-1"><strong>Порада:</strong> поділіться референсами, функціоналом та бажаними термінами.</p>
+                <p class="text-muted-soft mb-0">Це допоможе отримати точнішу і швидшу відповідь.</p>
+              </div>
+              <button class="btn btn-primary btn-lg">Відправити заявку</button>
+            </div>
+          </form>
+        </div>
+        <div class="col-lg-5">
+          <div class="card-soft p-4 bg-primary text-white h-100">
+            <h2 class="h5 fw-bold mb-3">Що краще вказати</h2>
+            <ul class="list-unstyled mb-0">
+              <li class="mb-3">• Мету сайту і цільову аудиторію</li>
+              <li class="mb-3">• Бюджет, терміни та формат проекту</li>
+              <li class="mb-3">• Необхідні функції і інтеграції</li>
+              <li class="mb-3">• Приклади дизайну чи референси</li>
+            </ul>
+            <div class="mt-4">
+              <p class="fw-semibold mb-2">Переваги</p>
+              <p class="small mb-2">✔ Точна оцінка</p>
+              <p class="small mb-2">✔ Менше правок</p>
+              <p class="small mb-0">✔ Чіткий план розробки</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

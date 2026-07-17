@@ -1,0 +1,31 @@
+{% extends "portfolio/base.html" %}
+
+{% block title %}Навички | Портфоліо{% endblock %}
+
+{% block content %}
+  <div class="card-soft p-4 mb-4">
+    <h1 class="display-5 fw-bold mb-2">Навички</h1>
+    <p class="text-muted-soft mb-0">Технічні навички, інструменти й soft skills, які я активно розвиваю.</p>
+  </div>
+  {% if skills %}
+    <div class="row gx-4 gy-4">
+      {% for skill in skills %}
+        <div class="col-md-6">
+          <div class="card-soft h-100 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="card-title mb-0">{{ skill.name }}</h5>
+              <span class="text-primary fw-semibold">{{ skill.level }}/10</span>
+            </div>
+            <p class="text-muted-soft mb-3">{{ skill.get_category_display }}</p>
+            <div class="progress mb-2">
+              <div class="progress-bar" role="progressbar" style="width: {{ skill.level }}0%;" aria-valuenow="{{ skill.level }}" aria-valuemin="1" aria-valuemax="10"></div>
+            </div>
+            <p class="small mb-0">Рівень володіння: {{ skill.level }} з 10</p>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-muted-soft">Навички ще не додано.</p>
+  {% endif %}
+{% endblock %}

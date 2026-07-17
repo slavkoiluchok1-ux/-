@@ -1,0 +1,51 @@
+{% extends 'portfolio/base.html' %}
+
+{% block title %}{{ post.title }} | Портфоліо{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <h1 class="display-6 fw-bold">{{ post.title }}</h1>
+      <p class="text-muted">{{ post.created_at|date:"d M Y" }}{% if post.category %} · {{ post.category.name }}{% endif %}</p>
+      <div class="lead">{{ post.content|linebreaks }}</div>
+      <div class="mt-4">
+        {% for tag in post.tags.all %}<span class="badge bg-light text-dark me-1">#{{ tag.name }}</span>{% endfor %}
+      </div>
+
+      <div class="card-soft p-4 mt-5">
+        <h3 class="h5 fw-bold mb-3">Коментарі</h3>
+        {% if comments %}
+          {% for comment in comments %}
+          <div class="card-soft p-3 mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <strong>{{ comment.author_name }}</strong>
+              <small class="text-muted">{{ comment.created_at|date:"d M Y H:i" }}</small>
+            </div>
+            <p class="mb-0">{{ comment.comment|linebreaksbr }}</p>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted-soft mb-0">Поки що немає коментарів.</p>
+        {% endif %}
+      </div>
+
+      <div class="card-soft p-4 mt-4">
+        <h3 class="h5 fw-bold mb-3">Залишити коментар</h3>
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            {{ comment_form.author_name.label_tag }}
+            {{ comment_form.author_name }}
+          </div>
+          <div class="mb-3">
+            {{ comment_form.comment.label_tag }}
+            {{ comment_form.comment }}
+          </div>
+          <button type="submit" class="btn btn-primary">Відправити</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

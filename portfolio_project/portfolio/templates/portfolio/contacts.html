@@ -1,0 +1,44 @@
+{% extends "portfolio/base.html" %}
+
+{% block title %}Контакти | Портфоліо{% endblock %}
+
+{% block content %}
+  <div class="mb-4">
+    <h1 class="section-title">Контакти та досвід</h1>
+    <p class="text-muted-soft">Тут показано мої ключові ролі, компанії, періоди роботи та контактні дані для замовлення веб-проєктів.</p>
+  </div>
+
+  <div class="row g-4 mb-5">
+    <div class="col-md-6">
+      <div class="card-soft h-100 p-4">
+        <h5 class="card-title">Контакти</h5>
+        <p class="mb-2"><strong>Email:</strong> hello@example.com</p>
+        <p class="mb-2"><strong>Телефон:</strong> +38 (050) 123-45-67</p>
+        <p class="mb-0"><strong>Локація:</strong> Київ, Україна</p>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card-soft h-100 p-4">
+        <h5 class="card-title">Працюю з</h5>
+        <p class="text-muted-soft">Python, Django, Bootstrap, HTML, CSS, JavaScript, REST API.</p>
+        <a class="btn btn-primary" href="{% url 'portfolio:order_brif' %}">Заповнити бриф</a>
+      </div>
+    </div>
+  </div>
+
+  {% if experiences %}
+    <div class="row g-4">
+      {% for experience in experiences %}
+        <div class="col-md-6">
+          <div class="card-soft h-100 p-4">
+            <h5 class="card-title">{{ experience.position }}</h5>
+            <p class="text-muted-soft mb-2">{{ experience.company }} — {{ experience.period }}</p>
+            <p class="mb-0">{{ experience.description|linebreaksbr }}</p>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-muted-soft">Досвід ще не додано.</p>
+  {% endif %}
+{% endblock %}

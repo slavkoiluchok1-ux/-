@@ -1,0 +1,53 @@
+{% extends 'portfolio/base.html' %}
+
+{% block title %}Проєкти | Портфоліо{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-12">
+    <div class="card-soft p-4 mb-4">
+      <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+        <div>
+          <h1 class="section-title mb-2">Галерея проєктів</h1>
+          <p class="text-muted-soft mb-0">Набір навчальних і практичних проєктів, які демонструють мій шлях у веб-розробці.</p>
+        </div>
+        <div class="d-flex gap-2">
+          <a class="btn btn-outline-primary" href="https://github.com/slavkoiluchok1-ux/-" target="_blank" rel="noopener">Більше проектів</a>
+        </div>
+      </div>
+      <form method="get" class="row g-2 align-items-end mt-4">
+        <div class="col-md-4">
+          <label class="form-label">Фільтр за технологією</label>
+          <select name="technology" class="form-select">
+            <option value="">Усі</option>
+            {% for tech in technologies %}
+              <option value="{{ tech }}" {% if selected_technology == tech %}selected{% endif %}>{{ tech }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-primary w-100">Фільтрувати</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% for project in projects %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card-soft h-100">
+        {% if project.image %}
+          <img src="{{ project.image.url }}" class="img-cover" alt="{{ project.title }}">
+        {% endif %}
+        <div class="card-body text-center">
+          <h5 class="card-title fs-5 fw-bold">{{ project.title }}</h5>
+          <p class="text-muted-soft fs-6 mb-3">{{ project.description|truncatewords:25 }}</p>
+          <p class="small text-muted-soft mb-3">{{ project.technologies }}</p>
+          <a href="{% url 'portfolio:project_detail' project.pk %}" class="btn btn-outline-primary btn-sm">Детальніше</a>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="col-12"><p class="text-muted-soft">Проєкти ще не додано.</p></div>
+  {% endfor %}
+</div>
+{% endblock %}

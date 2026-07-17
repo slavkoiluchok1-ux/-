@@ -1,0 +1,194 @@
+{% extends "portfolio/base.html" %}
+
+{% block title %}Головна | Портфоліо{% endblock %}
+
+{% block content %}
+<div class="hero-panel row align-items-center mb-5">
+  <div class="col-lg-7">
+    <span class="badge rounded-pill bg-light text-dark mb-3">Python • Django • Bootstrap</span>
+    <h1 class="display-5 fw-bold mb-3">Створюю веб-продукти, які виглядають професійно й працюють на результат</h1>
+    <p class="lead mb-4">Я розробник, який поєднує технічну точність, чистий UI та практичний підхід до вирішення задач бізнесу й стартапів.</p>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-light text-primary fw-semibold" href="{% url 'portfolio:projects' %}">Переглянути проєкти</a>
+      <a class="btn btn-outline-light" href="{% url 'portfolio:order_brif' %}">Замовити розробку</a>
+    </div>
+  </div>
+  <div class="col-lg-5 mt-4 mt-lg-0 text-center">
+    <div class="card-soft p-4 text-dark text-start">
+      <h3 class="h5 fw-bold mb-3">Чому мені довіряють</h3>
+      <ul class="mb-0 text-muted-soft">
+        <li>Чіткий процес розробки</li>
+        <li>Адаптивний і сучасний дизайн</li>
+        <li>Фокус на користі, а не лише на “красі”</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-5">
+  <div class="col-lg-4">
+    <div class="card-soft p-4 h-100">
+      <h2 class="section-title">Швидкий доступ</h2>
+      <p class="text-muted-soft mb-3">Перемикайтесь між основними функціями сайту: прайс, блог та аналітика.</p>
+      <div class="d-grid gap-2">
+        <a class="btn btn-primary" href="{% url 'portfolio:pricing' %}">Прайс</a>
+        <a class="btn btn-outline-primary" href="{% url 'portfolio:blog' %}">Блог</a>
+        <a class="btn btn-outline-primary" href="{% url 'portfolio:analytics' %}">Аналітика</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card-soft p-4 h-100">
+      <h2 class="section-title">Я створюю рішення, які працюють</h2>
+      <p class="text-muted-soft mb-2">Портфоліо містить реальні проєкти, адаптивні інтерфейси і швидкі бекенд-сервіси. Розробка ведеться з акцентом на продукт, а не на складність.</p>
+      <p class="text-muted-soft mb-0">На сайті ви знайдете приклади роботи, тарифи на пакети, блог про розробку та аналітику динаміки замовлень.</p>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-5">
+  <div class="col-lg-6">
+    <div class="card-soft p-4 h-100">
+      <h2 class="section-title">Про мене</h2>
+      <p class="text-muted-soft mb-2">Я прийшов у ІТ через цікавість до логіки, рішень і створення продуктів, які реально допомагають людям. Поступово розвиваю навички в Python, Django, frontend-розробці та роботі з реальними проєктами.</p>
+      <p class="text-muted-soft mb-0">Моя мотивація — не просто “зробити сайт”, а створити інструмент, який зручний, швидкий і корисний для користувача. У вільний час люблю вивчати нові технології, читати документацію та покращувати свої навички.</p>
+      <div class="mt-3 d-flex gap-2 flex-wrap">
+        <span class="badge rounded-pill bg-primary-subtle text-primary">Python</span>
+        <span class="badge rounded-pill bg-primary-subtle text-primary">Django</span>
+        <span class="badge rounded-pill bg-primary-subtle text-primary">Bootstrap</span>
+        <span class="badge rounded-pill bg-primary-subtle text-primary">Git</span>
+        <span class="badge rounded-pill bg-primary-subtle text-primary">Самонавчання</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card-soft p-4 h-100">
+      <h2 class="section-title">Навички</h2>
+      <ul class="mb-0 text-muted-soft">
+        <li>Python, Django, Flask</li>
+        <li>HTML, CSS, JavaScript, Bootstrap</li>
+        <li>Git, VS Code, SQL, REST API</li>
+        <li>Комунікація, робота в команді, самонавчання</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-5">
+  <div class="col-lg-6">
+    <div class="card-soft p-4 h-100">
+      <h2 class="section-title">Що я пропоную</h2>
+      <ul class="mb-0 text-muted-soft">
+        <li>Сучасний дизайн на Bootstrap</li>
+        <li>Швидкі MVP, корпоративні сайти та блоги</li>
+        <li>Чітке планування, підтримка й масштабування</li>
+      </ul>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card-soft p-4 h-100">
+      <h2 class="section-title">Мій підхід</h2>
+      <p class="text-muted-soft mb-2">Я працюю над тим, щоб кожен сайт був зрозумілим для користувача, простим у підтримці і адаптованим під бізнес-цілі.</p>
+      <p class="text-muted-soft mb-0">Особливу увагу приділяю швидкості, SEO-основам і зручності адмінки, щоб ти міг легко керувати своїм продуктом.</p>
+    </div>
+  </div>
+</div>
+
+<div class="row mb-5">
+  <div class="col-12 mb-3">
+    <h2 class="section-title">Проєкти</h2>
+  </div>
+  {% if projects %}
+    {% for project in projects %}
+      <div class="col-md-6 mb-4">
+        <div class="card-soft h-100">
+          {% if project.image %}
+            <img src="{{ project.image.url }}" class="img-cover" alt="{{ project.title }}">
+          {% endif %}
+          <div class="card-body d-flex flex-column align-items-center text-center">
+            <h5 class="card-title"><a href="{% url 'portfolio:project_detail' project.pk %}" class="text-decoration-none text-primary fw-bold">{{ project.title }}</a></h5>
+            <p class="text-muted-soft mb-2">{{ project.description|truncatechars:160 }}</p>
+            <p class="small mb-1"><strong>Технології:</strong> {{ project.technologies }}</p>
+            <p class="small mb-3"><strong>Дата:</strong> {{ project.date }}</p>
+            <div class="mt-auto">
+              {% if project.github %}
+                <a href="{{ project.github }}" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">GitHub</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="col-12"><p class="text-muted-soft">Поки що немає проектів.</p></div>
+  {% endif %}
+</div>
+
+<div class="row mb-5">
+  <div class="col-12 mb-3">
+    <h2 class="section-title">Навички</h2>
+  </div>
+  {% if skills %}
+    {% for skill in skills %}
+      <div class="col-md-6 mb-3">
+        <div class="card-soft">
+          <div class="card-body">
+            <div class="d-flex justify-content-between mb-2">
+              <h5 class="card-title mb-0">{{ skill.name }}</h5>
+              <span class="fw-bold text-primary">{{ skill.level }}/10</span>
+            </div>
+            <p class="text-muted-soft mb-2">Категорія: {{ skill.category }}</p>
+            <div class="progress">
+              <div class="progress-bar" role="progressbar" style="width: {{ skill.level }}0%;" aria-valuenow="{{ skill.level }}" aria-valuemin="1" aria-valuemax="10"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="col-12"><p class="text-muted-soft">Навички ще не додано.</p></div>
+  {% endif %}
+</div>
+
+<div class="row mb-5">
+  <div class="col-12 mb-3">
+    <h2 class="section-title">Відгуки клієнтів</h2>
+  </div>
+  {% if testimonials %}
+    {% for item in testimonials %}
+      <div class="col-md-6 mb-3">
+        <div class="card-soft">
+          <div class="card-body">
+            <p class="mb-2">«{{ item.quote }}»</p>
+            <strong>{{ item.client_name }}</strong>
+            <div class="text-warning">{% for i in '12345' %}{% if forloop.counter <= item.rating %}★{% else %}☆{% endif %}{% endfor %}</div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="col-12"><p class="text-muted-soft">Відгуки ще не додано.</p></div>
+  {% endif %}
+</div>
+
+<div class="row mb-4">
+  <div class="col-12 mb-3">
+    <h2 class="section-title">Досвід</h2>
+  </div>
+  {% if experiences %}
+    {% for experience in experiences %}
+      <div class="col-md-12 mb-3">
+        <div class="card-soft">
+          <div class="card-body">
+            <h5 class="card-title">{{ experience.position }} — {{ experience.company }}</h5>
+            <p class="text-muted-soft mb-1">{{ experience.period }}</p>
+            <p class="mb-0">{{ experience.description|linebreaksbr }}</p>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="col-12"><p class="text-muted-soft">Записи досвіду ще не додано.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

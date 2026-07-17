@@ -1,0 +1,92 @@
+{% extends 'portfolio/base.html' %}
+
+{% block title %}Прайс | Портфоліо{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="text-center mb-4">
+    <h1 class="display-5 fw-bold">Пакети послуг</h1>
+    <p class="text-muted-soft">Обирайте варіант, який найкраще підходить для вашого проєкту.</p>
+  </div>
+
+  <div class="card-soft p-4 mb-4">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label">Базовий бюджет, USD</label>
+        <input class="form-control" id="budgetInput" type="number" min="300" value="800" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Складність</label>
+        <select class="form-select" id="complexitySelect">
+          <option value="1">Стандартна</option>
+          <option value="1.3">Підвищена</option>
+          <option value="1.7">Складна</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <div class="fw-semibold">Орієнтовна вартість: <span id="estimateValue" class="text-primary">$0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    {% for package in packages %}
+    <div class="col-md-4">
+      <div class="card-soft h-100 p-4 {% if package.popular %}border border-primary{% endif %}">
+        {% if package.popular %}
+        <span class="badge bg-primary mb-3">Популярний</span>
+        {% endif %}
+        <h3 class="h4 fw-bold">{{ package.title }}</h3>
+        <p class="text-muted-soft">{{ package.description }}</p>
+        <p class="display-6 fw-bold mb-3">${{ package.price }}</p>
+        <ul class="list-unstyled">
+          {% for feature in package.features.splitlines %}
+          <li class="mb-2">✓ {{ feature }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    {% empty %}
+    <p class="text-muted-soft">Пакети ще не додані.</p>
+    {% endfor %}
+  </div>
+
+  <div class="card-soft p-4 mt-4">
+    <h3 class="h5 fw-bold mb-3">Таблиця порівняння</h3>
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th>Пакет</th>
+            <th>Ціль</th>
+            <th>Термін</th>
+            <th>Бюджет</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Базовий</td><td>Landing page</td><td>3–5 днів</td><td>300–600 USD</td></tr>
+          <tr><td>Стандарт</td><td>Корпоративний сайт</td><td>1–2 тижні</td><td>800–1400 USD</td></tr>
+          <tr><td>Преміум</td><td>Складний продукт</td><td>2–4 тижні</td><td>1800+ USD</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  const budgetInput = document.getElementById('budgetInput');
+  const complexitySelect = document.getElementById('complexitySelect');
+  const estimateValue = document.getElementById('estimateValue');
+
+  const updateEstimate = () => {
+    const budget = Number(budgetInput.value || 0);
+    const multiplier = Number(complexitySelect.value || 1);
+    const estimate = Math.round(budget * multiplier);
+    estimateValue.textContent = `$${estimate}`;
+  };
+
+  budgetInput.addEventListener('input', updateEstimate);
+  complexitySelect.addEventListener('change', updateEstimate);
+  updateEstimate();
+</script>
+{% endblock %}

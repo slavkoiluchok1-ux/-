@@ -1,0 +1,11 @@
+{% extends 'portfolio/base.html' %}
+
+{% block title %}Дякуємо | Портфоліо{% endblock %}
+
+{% block content %}
+<div class="card p-5 shadow-sm text-center">
+  <h1 class="mb-3">Дякуємо за заявку!</h1>
+  <p>Ми отримали ваші дані і зв’яжемося з вами найближчим часом.</p>
+  <a href="{% url 'portfolio:home' %}" class="btn btn-primary">Повернутися на головну</a>
+</div>
+{% endblock %}
