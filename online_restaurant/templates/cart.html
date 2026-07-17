@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Neon Noodle | Кошик</title>
+    <style>
+      body {
+        background: #0d0d0d;
+        color: #fff;
+        font-family: "Segoe UI", sans-serif;
+        margin: 0;
+      }
+
+      .section {
+        max-width: 1000px;
+        margin: 50px auto;
+        padding: 20px;
+      }
+
+      .neon-title {
+        color: #f0f;
+        text-shadow: 0 0 15px #f0f;
+        text-align: center;
+        font-size: 3rem;
+        margin-bottom: 40px;
+        text-transform: uppercase;
+      }
+
+      /* Стилі неонової таблиці */
+      .neon-table-wrapper {
+        background: #111;
+        border: 1px solid #333;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+      }
+
+      .neon-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .neon-table th {
+        color: #0ff;
+        border-bottom: 2px solid #0ff;
+        padding: 15px;
+        text-align: left;
+        font-size: 1.2rem;
+      }
+
+      .neon-table td {
+        padding: 15px;
+        border-bottom: 1px solid #333;
+        vertical-align: middle;
+      }
+
+      .cart-item-img {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 5px;
+        border: 1px solid #f0f;
+      }
+
+      .item-name {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #fff;
+      }
+
+      /* Неонові кнопки для +, -, видалити */
+      .btn-neon-small {
+        background: transparent;
+        border: 1px solid #0ff;
+        color: #0ff;
+        width: 30px;
+        height: 30px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: 0.3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .btn-neon-small:hover {
+        background: #0ff;
+        color: #000;
+        box-shadow: 0 0 10px #0ff;
+      }
+
+      .btn-delete {
+        border-color: #f0f;
+        color: #f0f;
+      }
+      .btn-delete:hover {
+        background: #f0f;
+        box-shadow: 0 0 10px #f0f;
+      }
+
+      .total-section {
+        margin-top: 30px;
+        text-align: right;
+      }
+
+      .total-price {
+        font-size: 2rem;
+        color: #0ff;
+        text-shadow: 0 0 10px #0ff;
+        margin-bottom: 20px;
+      }
+
+      /* Велика кнопка оформлення */
+      .btn-checkout {
+        padding: 15px 40px;
+        background: transparent;
+        border: 2px solid #f0f;
+        color: #f0f;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 1.2rem;
+        border-radius: 5px;
+        transition: 0.3s;
+        display: inline-block;
+        cursor: pointer;
+      }
+
+      .btn-checkout:hover {
+        background: #f0f;
+        color: #000;
+        box-shadow: 0 0 20px #f0f;
+      }
+
+      .empty-cart {
+        text-align: center;
+        padding: 50px;
+        color: #888;
+        font-size: 1.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    {% include '_navigation.html' %}
+
+    <div class="section">
+      <h1 class="neon-title">КОШИК ДАНИХ</h1>
+
+      {% if items %}
+      <div class="neon-table-wrapper">
+        <table class="neon-table">
+          <thead>
+            <tr>
+              <th>ПРОДУКТ</th>
+              <th style="text-align: center">КІЛЬКІСТЬ</th>
+              <th>ЦІНА</th>
+              <th>СУМА</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in items %}
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 15px">
+                  <img
+                    src="{{ url_for('static', filename='menu/' + item.obj.file_name) }}"
+                    class="cart-item-img"
+                    alt="{{ item.obj.name }}"
+                  />
+                  <span class="item-name">{{ item.obj.name }}</span>
+                </div>
+              </td>
+              <td style="text-align: center">
+                <a
+                  href="{{ url_for('update_cart', name=item.obj.name, action='minus') }}"
+                  class="btn-neon-small"
+                  >-</a
+                >
+                <span style="margin: 0 15px; font-size: 1.2rem"
+                  >{{ item.qty }}</span
+                >
+                <a
+                  href="{{ url_for('update_cart', name=item.obj.name, action='plus') }}"
+                  class="btn-neon-small"
+                  >+</a
+                >
+              </td>
+              <td style="color: #888">{{ item.price }} UAH</td>
+              <td style="color: #0ff; font-weight: bold; font-size: 1.2rem">
+                {{ item.subtotal }} UAH
+              </td>
+              <td style="text-align: right">
+                <a
+                  href="{{ url_for('update_cart', name=item.obj.name, action='delete') }}"
+                  class="btn-neon-small btn-delete"
+                  >X</a
+                >
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <div class="total-section">
+          <div class="total-price">РАЗОМ: {{ total_sum }} UAH</div>
+          <form action="{{ url_for('confirm_order') }}" method="POST">
+            <button type="submit" class="btn-checkout">
+              ІНФІЛЬТРУВАТИ ЗАМОВЛЕННЯ
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {% else %}
+      <div class="neon-table-wrapper empty-cart">
+        <p>Твій буфер обміну порожній. Час завантажити трохи їжі.</p>
+        <a
+          href="/menu"
+          class="btn-checkout"
+          style="margin-top: 20px; border-color: #0ff; color: #0ff"
+          >ПОВЕРНУТИСЯ ДО БАЗИ ДАНИХ (МЕНЮ)</a
+        >
+      </div>
+      {% endif %}
+    </div>
+  </body>
+</html>

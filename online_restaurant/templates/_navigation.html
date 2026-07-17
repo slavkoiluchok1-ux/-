@@ -1,0 +1,156 @@
+<nav
+  style="
+    background: #111;
+    padding: 15px 30px;
+    border-bottom: 2px solid #0ff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: &quot;Segoe UI&quot;, sans-serif;
+  "
+>
+  <div class="nav-left">
+    <a
+      href="/"
+      style="
+        color: #0ff;
+        text-decoration: none;
+        margin-right: 20px;
+        font-weight: bold;
+        font-size: 1.1rem;
+        text-shadow: 0 0 5px #0ff;
+      "
+      >🏠 ГОЛОВНА</a
+    >
+
+    <a
+      href="/menu"
+      style="
+        color: #fff;
+        text-decoration: none;
+        font-weight: bold;
+        transition: 0.3s;
+      "
+      >🍔 МЕНЮ</a
+    >
+  </div>
+
+  <div class="nav-right" style="display: flex; align-items: center">
+    {% if current_user.is_authenticated %}
+
+    <a
+      href="/cart"
+      class="cart-link"
+      style="
+        color: #0ff;
+        text-decoration: none;
+        margin-right: 20px;
+        font-weight: bold;
+        border: 1px solid #0ff;
+        padding: 5px 15px;
+        border-radius: 5px;
+        box-shadow: 0 0 5px #0ff;
+        transition: 0.3s;
+      "
+      >🛒 КОШИК</a
+    >
+
+    {% if current_user.nickname == 'Admin' %}
+    <div
+      style="
+        background: #222;
+        padding: 5px 15px;
+        border-radius: 5px;
+        border: 1px dashed #f0f;
+        margin-right: 20px;
+      "
+    >
+      <span style="color: #f0f; font-weight: bold; margin-right: 10px"
+        >👑 АДМІН:</span
+      >
+      <a
+        href="/add_position"
+        style="color: #fff; text-decoration: none; margin-right: 15px"
+        >+ Страва</a
+      >
+      <a
+        href="/admin/orders"
+        style="color: #fff; text-decoration: none; margin-right: 15px"
+        >Всі замовлення</a
+      >
+      <a href="/admin/reservations" style="color: #fff; text-decoration: none"
+        >Бронювання</a
+      >
+    </div>
+    {% else %}
+    <a
+      href="/my_orders"
+      style="color: #ccc; text-decoration: none; margin-right: 15px"
+      >Мої замовлення</a
+    >
+    <a
+      href="/reserve"
+      style="color: #ccc; text-decoration: none; margin-right: 20px"
+      >Забронювати стіл</a
+    >
+    {% endif %}
+
+    <span style="color: #888; margin-right: 15px"
+      >Привіт, {{ current_user.nickname }}!</span
+    >
+
+    <a
+      href="/logout"
+      style="
+        color: #ff3333;
+        text-decoration: none;
+        border: 1px solid #ff3333;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-weight: bold;
+        transition: 0.3s;
+      "
+      >ВИЙТИ 🚪</a
+    >
+
+    {% else %}
+    <a
+      href="/login"
+      style="color: #0ff; text-decoration: none; margin-right: 15px"
+      >Увійти</a
+    >
+    <a
+      href="/register"
+      style="
+        background: #0ff;
+        color: #000;
+        text-decoration: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        font-weight: bold;
+      "
+      >Реєстрація</a
+    >
+    {% endif %}
+  </div>
+</nav>
+
+<style>
+  .nav-left a:hover {
+    color: #f0f !important;
+    text-shadow: 0 0 8px #f0f;
+  }
+  .nav-right a:hover:not([href="/logout"]):not(.cart-link) {
+    color: #0ff !important;
+  }
+  .cart-link:hover {
+    background: #0ff;
+    color: #000 !important;
+    box-shadow: 0 0 15px #0ff;
+  }
+  a[href="/logout"]:hover {
+    background: #ff3333;
+    color: #fff !important;
+    box-shadow: 0 0 10px #ff3333;
+  }
+</style>

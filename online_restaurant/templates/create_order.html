@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Оформлення замовлення</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .qty-btn {
+        width: 35px;
+        height: 35px;
+        padding: 0;
+        line-height: 1;
+      }
+      .table img {
+        width: 50px;
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body class="bg-light">
+    <div class="container py-5">
+      <div class="row justify-content-center">
+        <div class="col-lg-10">
+          <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+              <h2 class="h4 mb-0 text-center">🛒 Ваш кошик</h2>
+            </div>
+            <div class="card-body">
+              {% if basket %}
+              <div class="table-responsive">
+                <table class="table align-middle">
+                  <thead>
+                    <tr>
+                      <th>Страва</th>
+                      <th class="text-center">Кількість</th>
+                      <th>Ціна</th>
+                      <th class="text-end">Дія</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% set total = namespace(value=0) %} {% for name, qty in
+                    basket.items() %} {# Тут потрібна логіка отримання
+                    актуальної ціни зі знижкою #} {# Для простоти в цьому
+                    шаблоні припустимо, що ми передали ціни, але зазвичай ми
+                    робимо запит до БД всередині роута. #}
+                    <tr>
+                      <td><strong>{{ name }}</strong></td>
+                      <td class="text-center">
+                        <div
+                          class="d-flex justify-content-center align-items-center gap-2"
+                        >
+                          <a
+                            href="{{ url_for('update_cart', name=name, action='minus') }}"
+                            class="btn btn-outline-secondary btn-sm qty-btn"
+                            >-</a
+                          >
+                          <span class="fw-bold">{{ qty }}</span>
+                          <a
+                            href="{{ url_for('update_cart', name=name, action='plus') }}"
+                            class="btn btn-outline-secondary btn-sm qty-btn"
+                            >+</a
+                          >
+                        </div>
+                      </td>
+                      <td>За одиницю</td>
+                      <td class="text-end">
+                        <a
+                          href="{{ url_for('update_cart', name=name, action='delete') }}"
+                          class="btn btn-danger btn-sm"
+                          >🗑️</a
+                        >
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="text-end mt-4">
+                <form action="{{ url_for('create_order') }}" method="POST">
+                  <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ session.csrf_token }}"
+                  />
+                  <a
+                    href="{{ url_for('menu') }}"
+                    class="btn btn-link text-decoration-none"
+                    >← Повернутися до меню</a
+                  >
+                  <button type="submit" class="btn btn-success btn-lg px-5">
+                    Підтвердити замовлення
+                  </button>
+                </form>
+              </div>
+
+              {% else %}
+              <div class="text-center py-5">
+                <p class="text-muted">Кошик порожній</p>
+                <a href="{{ url_for('menu') }}" class="btn btn-primary"
+                  >Перейти до меню</a
+                >
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Меню | Neon Noodle</title>
+    <style>
+      body {
+        background: #080808;
+        color: #fff;
+        font-family: "Segoe UI", sans-serif;
+        margin: 0;
+        padding-bottom: 50px;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+      h1 {
+        color: #0ff;
+        text-align: center;
+        text-transform: uppercase;
+        text-shadow: 0 0 15px #0ff;
+        letter-spacing: 3px;
+        margin-bottom: 40px;
+      }
+
+      /* Сітка карток */
+      .menu-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 30px;
+      }
+
+      /* Картка страви */
+      .menu-card {
+        background: #111;
+        border: 1px solid #333;
+        border-radius: 12px;
+        overflow: hidden;
+        position: relative;
+        transition: 0.3s ease-in-out;
+        display: flex;
+        flex-direction: column;
+      }
+      .menu-card:hover {
+        border-color: #f0f;
+        box-shadow: 0 0 20px rgba(255, 0, 255, 0.4);
+        transform: translateY(-5px);
+      }
+
+      /* Зображення */
+      .card-img-wrapper {
+        width: 100%;
+        height: 200px;
+        overflow: hidden;
+        position: relative;
+      }
+      .card-img-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: 0.5s;
+      }
+      .menu-card:hover .card-img-wrapper img {
+        transform: scale(1.1);
+      }
+
+      /* Бейдж знижки */
+      .discount-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: #ff0055;
+        color: #fff;
+        padding: 5px 10px;
+        font-weight: bold;
+        border-radius: 20px;
+        box-shadow: 0 0 10px #ff0055;
+        z-index: 2;
+      }
+
+      /* Інформація */
+      .card-info {
+        padding: 20px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .item-name {
+        font-size: 1.4rem;
+        color: #0ff;
+        margin: 0 0 10px 0;
+        text-shadow: 0 0 5px #0ff;
+      }
+      .item-desc {
+        color: #aaa;
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+        flex-grow: 1;
+      }
+
+      /* Ціна */
+      .price-container {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-bottom: 15px;
+      }
+      .old-price {
+        text-decoration: line-through;
+        color: #666;
+        font-size: 1rem;
+        margin-right: 10px;
+      }
+      .new-price {
+        color: #0f0;
+        text-shadow: 0 0 8px #0f0;
+      }
+
+      /* Кнопки */
+      .btn-order {
+        display: block;
+        text-align: center;
+        background: transparent;
+        color: #f0f;
+        border: 2px solid #f0f;
+        padding: 10px;
+        text-decoration: none;
+        text-transform: uppercase;
+        font-weight: bold;
+        border-radius: 6px;
+        transition: 0.3s;
+      }
+      .btn-order:hover {
+        background: #f0f;
+        color: #000;
+        box-shadow: 0 0 15px #f0f;
+      }
+
+      /* Панель Адміна */
+      .admin-controls {
+        background: #222;
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        border-top: 1px dashed #444;
+      }
+      .admin-btn {
+        font-size: 0.8rem;
+        text-decoration: none;
+        padding: 5px 10px;
+        border-radius: 4px;
+        color: #fff;
+      }
+      .btn-toggle {
+        background: #ffaa00;
+      }
+      .btn-delete {
+        background: #ff0055;
+      }
+      .inactive-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 1.5rem;
+        font-weight: bold;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    {% include '_navigation.html' %}
+
+    <div class="container">
+      <h1>Кібер-Меню</h1>
+
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %} {% for category, message in messages %}
+      <div style="text-align: center; color: #0ff; margin-bottom: 20px">
+        {{ message }}
+      </div>
+      {% endfor %} {% endif %} {% endwith %}
+
+      <div class="menu-grid">
+        {% for item in all_positions %}
+        <div class="menu-card">
+          {% if not item.active %}
+          <div class="inactive-overlay">ПРИХОВАНО</div>
+          {% endif %}
+
+          <div class="card-img-wrapper">
+            {% if item.discount > 0 %}
+            <div class="discount-badge">-{{ item.discount }}%</div>
+            {% endif %} {% if item.file_name %}
+            <img
+              src="{{ url_for('static', filename='menu/' + item.file_name) }}"
+              alt="{{ item.name }}"
+            />
+            {% else %}
+            <img
+              src="{{ url_for('static', filename='menu/default.png') }}"
+              alt="Default"
+            />
+            {% endif %}
+          </div>
+
+          <div class="card-info">
+            <h3 class="item-name">{{ item.name }}</h3>
+            <div class="item-desc">{{ item.ingredients }}</div>
+
+            <div class="price-container">
+              {% if item.discount > 0 %}
+              <span class="old-price">{{ item.price }} грн</span>
+              <span class="new-price"
+                >{{ (item.price * (100 - item.discount) / 100) | int }}
+                грн</span
+              >
+              {% else %}
+              <span class="new-price">{{ item.price }} грн</span>
+              {% endif %}
+            </div>
+
+            <a
+              href="{{ url_for('position', name=item.name) }}"
+              class="btn-order"
+              >Переглянути / Замовити</a
+            >
+          </div>
+
+          {% if current_user.is_authenticated and current_user.nickname ==
+          'Admin' %}
+          <div class="admin-controls">
+            <a
+              href="{{ url_for('toggle_active', item_id=item.id) }}"
+              class="admin-btn btn-toggle"
+            >
+              {% if item.active %}👁️ Сховати{% else %}👀 Показати{% endif %}
+            </a>
+            <a
+              href="{{ url_for('delete_position', item_id=item.id) }}"
+              class="admin-btn btn-delete"
+              onclick="return confirm('Видалити страву назавжди?');"
+            >
+              🗑️ Видалити
+            </a>
+          </div>
+          {% endif %}
+        </div>
+        {% else %}
+        <p style="text-align: center; width: 100%; color: #666">
+          Меню поки порожнє.
+        </p>
+        {% endfor %}
+      </div>
+
+      {% if current_user.is_authenticated and current_user.nickname == 'Admin'
+      %}
+      <div style="text-align: center; margin-top: 40px">
+        <a
+          href="{{ url_for('add_position') }}"
+          style="
+            background: #0ff;
+            color: #000;
+            padding: 15px 30px;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 8px;
+          "
+          >➕ ДОДАТИ НОВУ СТРАВУ</a
+        >
+      </div>
+      {% endif %}
+    </div>
+  </body>
+</html>

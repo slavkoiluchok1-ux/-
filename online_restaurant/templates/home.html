@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Neon Noodle | Головна</title>
+    <style>
+      body {
+        background: #050505;
+        color: #fff;
+        font-family: "Segoe UI", sans-serif;
+        margin: 0;
+        overflow-x: hidden;
+      }
+
+      /* Головний екран з анімацією */
+      .hero {
+        height: 70vh;
+        background:
+          linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+          url("{{ url_for('static', filename='hero_bg.jpg') }}") center/cover;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        border-bottom: 2px solid #0ff;
+        position: relative;
+      }
+
+      .hero h1 {
+        font-size: 5rem;
+        color: #f0f;
+        text-shadow:
+          0 0 10px #f0f,
+          0 0 30px #f0f;
+        margin: 0;
+        letter-spacing: 10px;
+        animation: flicker 3s infinite alternate;
+      }
+
+      @keyframes flicker {
+        0%,
+        19%,
+        21%,
+        23%,
+        25%,
+        54%,
+        56%,
+        100% {
+          text-shadow:
+            0 0 10px #f0f,
+            0 0 30px #f0f;
+        }
+        20%,
+        22%,
+        24%,
+        55% {
+          text-shadow: none;
+          color: #330033;
+        }
+      }
+
+      .hero p {
+        font-size: 1.2rem;
+        color: #0ff;
+        text-transform: uppercase;
+        letter-spacing: 4px;
+        margin-top: 10px;
+      }
+
+      /* Секції */
+      .section {
+        max-width: 1100px;
+        margin: 60px auto;
+        padding: 0 20px;
+      }
+
+      .section-title {
+        font-size: 2rem;
+        text-align: center;
+        margin-bottom: 40px;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+      }
+
+      /* Переваги */
+      .grid-features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+      }
+
+      .feature-card {
+        background: #0a0a0a;
+        padding: 40px;
+        border: 1px solid #1a1a1a;
+        border-radius: 15px;
+        text-align: center;
+        transition: 0.4s;
+        position: relative;
+      }
+
+      .feature-card:hover {
+        border-color: #0ff;
+        box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
+        transform: translateY(-10px);
+      }
+
+      .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        display: block;
+      }
+
+      /* Промо-товари */
+      .promo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 25px;
+      }
+
+      .promo-item {
+        background: #111;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #333;
+        transition: 0.3s;
+      }
+
+      .promo-item:hover {
+        border-color: #f0f;
+        transform: scale(1.03);
+      }
+
+      .promo-item img {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+        filter: grayscale(30%);
+      }
+
+      .promo-content {
+        padding: 20px;
+        text-align: center;
+      }
+
+      .promo-content h4 {
+        margin: 0 0 10px 0;
+        color: #fff;
+        font-size: 1.2rem;
+      }
+
+      .promo-price {
+        color: #0f0;
+        font-weight: bold;
+        font-size: 1.1rem;
+        text-shadow: 0 0 5px #0f0;
+        margin-bottom: 15px;
+      }
+
+      /* Кнопки */
+      .btn-neon {
+        padding: 15px 35px;
+        background: transparent;
+        border: 2px solid #0ff;
+        color: #0ff;
+        text-decoration: none;
+        font-weight: bold;
+        border-radius: 5px;
+        transition: 0.3s;
+        display: inline-block;
+        margin: 10px;
+      }
+
+      .btn-neon:hover {
+        background: #0ff;
+        color: #000;
+        box-shadow: 0 0 30px #0ff;
+      }
+
+      .btn-more {
+        color: #f0f;
+        text-decoration: none;
+        font-size: 0.9rem;
+        border-bottom: 1px solid transparent;
+        transition: 0.3s;
+      }
+
+      .btn-more:hover {
+        border-bottom: 1px solid #f0f;
+        text-shadow: 0 0 5px #f0f;
+      }
+    </style>
+  </head>
+  <body>
+    {% include '_navigation.html' %}
+
+    <div class="hero">
+      <h1>NEON NOODLE</h1>
+      <p>СМАК МАЙБУТНЬОГО В КОЖНІЙ ПОРЦІЇ</p>
+      <div style="margin-top: 30px">
+        <a href="/menu" class="btn-neon">ВІДКРИТИ МЕНЮ</a>
+        <a
+          href="/reserve"
+          class="btn-neon"
+          style="border-color: #f0f; color: #f0f"
+          >ЗАБРОНЮВАТИ СТІЛ</a
+        >
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title" style="color: #0ff">Системні переваги</h2>
+      <div class="grid-features">
+        <div class="feature-card">
+          <span class="feature-icon">⚡</span>
+          <h3>ШВИДКА ДОСТАВКА</h3>
+          <p>
+            Кур'єри на спідерах доставлять замовлення швидше, ніж твій комп'ютер
+            завантажує ОС.
+          </p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🔋</span>
+          <h3>ЯКІСНІ ПРОДУКТИ</h3>
+          <p>
+            Тільки сертифіковане органічне паливо для стабільної роботи твого
+            організму.
+          </p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🌆</span>
+          <h3>АТМОСФЕРА</h3>
+          <p>
+            Найкращий неон у місті, синтвейв та повне занурення в
+            кіберпанк-вайб.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title" style="color: #f0f">Пропозиції дня</h2>
+      <div class="promo-grid">
+        {% for item in featured %}
+        <div class="promo-item">
+          <img
+            src="{{ url_for('static', filename='menu/' + item.file_name) }}"
+            alt="{{ item.name }}"
+          />
+          <div class="promo-content">
+            <h4>{{ item.name }}</h4>
+            <div class="promo-price">{{ item.price }} UAH</div>
+            <a href="/position/{{ item.name }}" class="btn-more"
+              >ДЕТАЛЬНІШЕ →</a
+            >
+          </div>
+        </div>
+        {% else %}
+        <p style="text-align: center; width: 100%; color: #444">
+          Актуальні пропозиції оновлюються...
+        </p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div style="text-align: center; margin: 80px 0">
+      <p style="color: #444; font-size: 0.8rem">
+        © 2026 NEON NOODLE CORP. ALL RIGHTS RESERVED.
+      </p>
+    </div>
+  </body>
+</html>

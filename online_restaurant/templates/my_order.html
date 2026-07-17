@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Замовлення #{{ order.id }} | Neon Noodle</title>
+    <style>
+      body {
+        background-color: #0d0d0d;
+        color: #fff;
+        font-family: "Segoe UI", sans-serif;
+        margin: 0;
+      }
+      .receipt-container {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 40px;
+        background: #111;
+        border: 2px dashed #0ff;
+        border-radius: 5px;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+      }
+      h1 {
+        color: #f0f;
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+      }
+      .order-meta {
+        text-align: center;
+        border-bottom: 1px solid #333;
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+      }
+      .order-meta p {
+        color: #888;
+        margin: 5px 0;
+      }
+
+      .items-list {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .items-list th {
+        text-align: left;
+        color: #0ff;
+        border-bottom: 1px solid #333;
+        padding: 10px 0;
+      }
+      .items-list td {
+        padding: 15px 0;
+        border-bottom: 1px solid #222;
+      }
+
+      .qty-badge {
+        background: #f0f;
+        color: #fff;
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-weight: bold;
+      }
+      .status {
+        color: #0f0;
+        font-weight: bold;
+        text-align: center;
+        margin-top: 30px;
+        text-transform: uppercase;
+      }
+
+      .back-link {
+        display: block;
+        text-align: center;
+        margin-top: 30px;
+        color: #888;
+        text-decoration: none;
+        transition: 0.3s;
+      }
+      .back-link:hover {
+        color: #0ff;
+      }
+    </style>
+  </head>
+  <body>
+    {% include '_navigation.html' %}
+
+    <div class="receipt-container">
+      <h1>ДЯКУЄМО!</h1>
+      <div class="order-meta">
+        <p>Замовлення №{{ order.id }}</p>
+        <p>Час: {{ order.order_time.strftime('%d.%m.%Y %H:%M') }}</p>
+      </div>
+
+      <table class="items-list">
+        <thead>
+          <tr>
+            <th>НАЗВА СТРАВИ</th>
+            <th style="text-align: right">КІЛЬКІСТЬ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for name, qty in order.order_list.items() %}
+          <tr>
+            <td>{{ name }}</td>
+            <td style="text-align: right">
+              <span class="qty-badge">{{ qty }}</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div class="status">● СТАТУС: ГОТУЄТЬСЯ</div>
+
+      <a href="/my_orders" class="back-link">← До списку всіх замовлень</a>
+    </div>
+  </body>
+</html>

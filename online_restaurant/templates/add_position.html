@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Адмін-панель | Neon Noodle</title>
+    <style>
+      body {
+        background-color: #0d0d0d;
+        color: #fff;
+        font-family: "Segoe UI", sans-serif;
+        margin: 0;
+      }
+
+      .admin-container {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 30px;
+        background: #111;
+        border: 1px solid #0ff;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+        border-radius: 15px;
+      }
+
+      h1 {
+        text-align: center;
+        color: #f0f;
+        text-shadow: 0 0 10px #f0f;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        margin-bottom: 30px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        color: #0ff;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+      }
+
+      input[type="text"],
+      input[type="number"],
+      textarea {
+        width: 100%;
+        padding: 12px;
+        background: #222;
+        border: 1px solid #333;
+        color: #fff;
+        border-radius: 5px;
+        box-sizing: border-box;
+        transition: 0.3s;
+      }
+
+      input:focus,
+      textarea:focus {
+        border-color: #0ff;
+        outline: none;
+        box-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+      }
+
+      /* Стиль для завантаження файлу */
+      input[type="file"] {
+        color: #888;
+        padding: 10px 0;
+      }
+
+      .btn-save {
+        width: 100%;
+        padding: 15px;
+        background: #f0f;
+        color: #fff;
+        border: none;
+        font-weight: bold;
+        text-transform: uppercase;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: 0.3s;
+        margin-top: 10px;
+      }
+
+      .btn-save:hover {
+        background: #fff;
+        color: #f0f;
+        box-shadow: 0 0 20px #fff;
+      }
+
+      .back-link {
+        display: block;
+        text-align: center;
+        margin-top: 20px;
+        color: #555;
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+
+      .back-link:hover {
+        color: #0ff;
+      }
+    </style>
+  </head>
+  <body>
+    {% include '_navigation.html' %}
+
+    <div class="admin-container">
+      <h1>Додати страву</h1>
+
+      <form method="POST" enctype="multipart/form-data">
+        <input
+          type="hidden"
+          name="csrf_token"
+          value="{{ session.csrf_token }}"
+        />
+
+        <div class="form-group">
+          <label>Назва страви:</label>
+          <input
+            type="text"
+            name="name"
+            placeholder="Наприклад: Борщ з пампушками"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Ціна (UAH):</label>
+          <input type="number" name="price" placeholder="150" required />
+        </div>
+
+        <div class="form-group">
+          <label>Вага (г/мл):</label>
+          <input type="text" name="weight" placeholder="450г" required />
+        </div>
+
+        <div class="form-group">
+          <label>Інгредієнти:</label>
+          <textarea
+            name="ingredients"
+            rows="2"
+            placeholder="М'ясо, буряк, картопля..."
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Опис:</label>
+          <textarea
+            name="description"
+            rows="3"
+            placeholder="Розкажіть, чому ця страва особлива..."
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Фото страви:</label>
+          <input type="file" name="img" accept="image/*" required />
+        </div>
+
+        <button type="submit" class="btn-save">ЗБЕРЕГТИ ПОЗИЦІЮ</button>
+      </form>
+
+      <a href="/menu" class="back-link">← Повернутися до меню</a>
+    </div>
+  </body>
+</html>

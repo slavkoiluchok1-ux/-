@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Реєстрація | Neon Noodle</title>
+    <style>
+      body {
+        background-color: #0d0d0d;
+        color: #fff;
+        font-family: "Segoe UI", sans-serif;
+      }
+      .container {
+        width: 300px;
+        margin: 100px auto;
+        padding: 20px;
+        border: 1px solid #0ff;
+        box-shadow: 0 0 15px #0ff;
+        border-radius: 10px;
+      }
+      input {
+        width: 90%;
+        padding: 10px;
+        margin: 10px 0;
+        background: #222;
+        border: 1px solid #444;
+        color: #fff;
+      }
+      button {
+        width: 100%;
+        padding: 10px;
+        background: #0ff;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+      }
+      .alert {
+        color: #ff0055;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    {% include '_navigation.html' %}
+
+    <div class="container">
+      <h2>Реєстрація</h2>
+
+      {# ВИПРАВЛЕНО: Тільки критичні помилки реєстрації #} {% with messages =
+      get_flashed_messages(category_filter=["danger"]) %} {% if messages %} {%
+      for message in messages %}
+      <p class="alert">{{ message }}</p>
+      {% endfor %} {% endif %} {% endwith %}
+
+      <form action="/register" method="post">
+        <input
+          type="hidden"
+          name="csrf_token"
+          value="{{ session.csrf_token }}"
+        />
+        <input type="text" name="nickname" placeholder="Нікнейм" required />
+        <input type="email" name="email" placeholder="Email" required />
+        <input
+          type="password"
+          name="password"
+          placeholder="Пароль (мін. 8 симв.)"
+          required
+        />
+        <button type="submit">СТВОРИТИ АКАУНТ</button>
+      </form>
+      <p><a href="/login" style="color: #f0f">Вже є акаунт? Увійти</a></p>
+    </div>
+  </body>
+</html>
