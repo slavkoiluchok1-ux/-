@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Месенджер - Головна</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f4f7f6;
+        margin: 0;
+        padding: 20px;
+        color: #333;
+      }
+      .container {
+        max-width: 600px;
+        margin: auto;
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      }
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 20px;
+      }
+      nav a {
+        text-decoration: none;
+        padding: 10px 15px;
+        background: #007bff;
+        color: white;
+        border-radius: 5px;
+        font-size: 14px;
+        transition: 0.3s;
+      }
+      nav a:hover {
+        background: #0056b3;
+      }
+      nav a.logout {
+        background: #dc3545;
+      }
+      .flash {
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 5px;
+        border: 1px solid transparent;
+      }
+      .success {
+        background-color: #d4edda;
+        color: #155724;
+        border-color: #c3e6cb;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Привіт, {{ username }}! 👋</h1>
+
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %} {% for category, message in messages %}
+      <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %} {% endif %} {% endwith %}
+
+      <p>Ваш персональний захищений кабінет. Оберіть дію:</p>
+      <nav>
+        <a href="/search_friends">🔍 Пошук</a>
+        <a href="/my_friends">👥 Друзі</a>
+        <a href="/friend_requests">📩 Запити</a>
+        <a href="/new_messages">💬 Повідомлення</a>
+        <a href="/logout" class="logout">Вихід</a>
+      </nav>
+    </div>
+  </body>
+</html>

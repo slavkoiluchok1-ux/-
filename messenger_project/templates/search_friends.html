@@ -1,0 +1,17 @@
+{% extends "base.html" %} {% block title %}Пошук друзів{% endblock %} {% block
+content %}
+<h2>Знайти друзів</h2>
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <input
+    type="text"
+    name="name"
+    placeholder="Введіть нікнейм користувача"
+    required
+  />
+  <button type="submit" class="btn">Додати в друзі</button>
+</form>
+<div class="text-center mt-3">
+  <a href="/home" class="text-muted">← Повернутися на головну</a>
+</div>
+{% endblock %}

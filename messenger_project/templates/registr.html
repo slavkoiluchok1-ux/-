@@ -1,0 +1,33 @@
+{% extends "base.html" %} {% block title %}Реєстрація{% endblock %} {% block
+content %}
+<h2>Реєстрація</h2>
+
+<form action="/register" method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <input
+    type="text"
+    name="nickname"
+    placeholder="Придумайте нікнейм"
+    required
+  />
+  <input type="email" name="email" placeholder="Ваш Email" required />
+  <input
+    type="password"
+    name="password"
+    placeholder="Створіть пароль"
+    required
+  />
+  <button type="submit" class="btn btn-success">Зареєструватися</button>
+</form>
+
+<hr style="margin: 25px 0; border: 0; border-top: 1px solid var(--border)" />
+
+<div class="text-center">
+  <p style="margin-bottom: 10px; color: var(--text-muted)">
+    Вже зареєстровані?
+  </p>
+  <a href="/login" class="btn" style="background-color: #6b7280"
+    >Увійти в існуючий акаунт</a
+  >
+</div>
+{% endblock %}

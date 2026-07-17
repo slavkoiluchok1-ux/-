@@ -1,0 +1,18 @@
+{% extends "base.html" %} {% block title %}Нові повідомлення{% endblock %} {%
+block content %}
+<h2>Непрочитані повідомлення</h2>
+
+{% if data %} {% for name, messages in data.items() %} {% for text in messages
+%}
+<div class="message-card">
+  <strong>@{{ name }}</strong>
+  <div>{{ text }}</div>
+</div>
+{% endfor %} {% endfor %} {% else %}
+<p class="text-center text-muted">У вас немає нових повідомлень.</p>
+{% endif %}
+
+<div class="text-center mt-3">
+  <a href="/home" class="text-muted">← На головну</a>
+</div>
+{% endblock %}

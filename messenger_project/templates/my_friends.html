@@ -1,0 +1,19 @@
+{% extends "base.html" %} {% block title %}Мої друзі{% endblock %} {% block
+content %}
+<h2>Ваші друзі</h2>
+
+{% if data %} {% for name in data %}
+<div class="list-item">
+  <strong>{{ name }}</strong>
+  <a href="/create_message/{{ name }}" class="btn btn-small">Написати ✉️</a>
+</div>
+{% endfor %} {% else %}
+<p class="text-center text-muted">
+  У вас поки немає друзів. <br /><a href="/search_friends">Знайдіть когось!</a>
+</p>
+{% endif %}
+
+<div class="text-center mt-3">
+  <a href="/home" class="text-muted">← На головну</a>
+</div>
+{% endblock %}

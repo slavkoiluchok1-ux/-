@@ -1,0 +1,22 @@
+{% extends "base.html" %} {% block title %}Вхід{% endblock %} {% block content
+%}
+<h2>Вхід у систему</h2>
+
+<form action="/login" method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <input type="text" name="nickname" placeholder="Ваш нікнейм" required />
+  <input type="password" name="password" placeholder="Ваш пароль" required />
+  <button type="submit" class="btn">Увійти</button>
+</form>
+
+<hr style="margin: 25px 0; border: 0; border-top: 1px solid var(--border)" />
+
+<div class="text-center">
+  <p style="margin-bottom: 10px; color: var(--text-muted)">
+    Ще не маєте акаунту?
+  </p>
+  <a href="/register" class="btn" style="background-color: #6b7280"
+    >Створити новий акаунт</a
+  >
+</div>
+{% endblock %}

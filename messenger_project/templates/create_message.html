@@ -1,0 +1,17 @@
+{% extends "base.html" %} {% block title %}Чат з {{ target_name }}{% endblock %}
+{% block content %}
+<h3>Листування з {{ target_name }}</h3>
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <textarea
+    name="text"
+    rows="4"
+    placeholder="Напишіть ваше повідомлення тут..."
+    required
+  ></textarea>
+  <button type="submit" class="btn">Надіслати ✈️</button>
+</form>
+<div class="text-center mt-3">
+  <a href="/my_friends" class="text-muted">← Назад до списку друзів</a>
+</div>
+{% endblock %}

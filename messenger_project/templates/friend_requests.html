@@ -1,0 +1,40 @@
+{% extends "base.html" %} {% block title %}Запити на дружбу{% endblock %} {%
+block content %}
+<h2>Запити на дружбу</h2>
+
+{% if data %} {% for id, name in data.items() %}
+<div class="list-item">
+  <span>Від: <strong>{{ name }}</strong></span>
+  <form
+    method="post"
+    action="/friend_requests_confirm"
+    style="display: flex; gap: 5px; flex-direction: row"
+  >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <input type="hidden" name="id" value="{{ id }}" />
+    <button
+      type="submit"
+      name="result"
+      value="yes"
+      class="btn btn-success btn-small"
+    >
+      Прийняти
+    </button>
+    <button
+      type="submit"
+      name="result"
+      value="no"
+      class="btn btn-danger btn-small"
+    >
+      Відхилити
+    </button>
+  </form>
+</div>
+{% endfor %} {% else %}
+<p class="text-center text-muted">Нових запитів немає.</p>
+{% endif %}
+
+<div class="text-center mt-3">
+  <a href="/home" class="text-muted">← На головну</a>
+</div>
+{% endblock %}
