@@ -1,0 +1,10 @@
+﻿fastapi
+uvicorn[standard]
+sqlalchemy
+asyncpg
+pydantic
+pydantic-settings
+python-multipart
+httpx
+passlib[bcrypt]
+python-jose[cryptography]
