@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Fast Money | Вхід{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <h1>Вхід</h1>
+    <p class="subtitle">Увійдіть у ваш обліковий запис</p>
+
+    {% if error %}
+        <div id="server-message" class="message error" role="alert">{{ error }}</div>
+    {% endif %}
+
+    <form id="loginForm" action="/login" method="post">
+        <div class="form-group">
+            <label for="email">Email або логін</label>
+            <input id="email" name="email" type="text" placeholder="Введіть email або username" required value="{{ request.form.email if request.form else '' }}" />
+        </div>
+
+        <div class="form-group">
+            <label for="password">Пароль</label>
+            <input id="password" name="password" type="password" placeholder="Введіть пароль" required />
+        </div>
+
+        <button type="submit">Увійти</button>
+        <div id="message" class="message" aria-live="polite"></div>
+    </form>
+
+    <div class="link-row">
+        Немає акаунту? <a href="/register">Зареєструватися</a>
+    </div>
+</div>
+
+<script>
+    const form = document.getElementById('loginForm');
+    const message = document.getElementById('message');
+    const serverMessage = document.getElementById('server-message');
+
+    if (serverMessage) {
+        setTimeout(() => {
+            serverMessage.style.transition = 'opacity 0.4s';
+            serverMessage.style.opacity = '0';
+            setTimeout(() => { if (serverMessage.parentNode) serverMessage.remove(); }, 420);
+        }, 4000);
+    }
+
+    form.addEventListener('submit', async function (event) {
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const payload = {
+            email: (emailInput.value || '').trim(),
+            password: passwordInput.value || ''
+        };
+
+        if (!payload.email || !payload.password) {
+            event.preventDefault();
+            showMessage('Будь ласка, введіть email або логін і пароль.', 'error');
+            return;
+        }
+
+        const btn = form.querySelector('button[type="submit"]');
+        if (btn && window.flashButtonText) {
+            window.flashButtonText(btn, 'Вхід…', btn.textContent, 60000);
+        }
+
+        try {
+            const response = await fetch('/api/v1/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(payload)
+            });
+
+            if (window.handleAuthRedirect && window.handleAuthRedirect(response)) {
+                event.preventDefault();
+                return;
+            }
+
+            const ct = response.headers.get('content-type') || '';
+            const isJson = ct.includes('application/json');
+            const data = isJson ? (await response.json().catch(() => ({}))) : {};
+
+            if (!response.ok) {
+                event.preventDefault();
+                const detail = isJson ? (data.detail || 'Невірний логін або пароль') : 'Невірний логін або пароль';
+                throw new Error(Array.isArray(detail) ? detail.map(d => d.msg || d).join(', ') : detail);
+            }
+
+            event.preventDefault();
+
+            const token = data.access_token;
+            if (token) {
+                try { localStorage.setItem('token', String(token)); } catch (_) {}
+            }
+
+            showMessage('Вхід успішний! Перехід...', 'success');
+
+            const target = data.redirect_url
+                || ((data.is_admin || data.is_superuser) ? '/admin' : '/');
+
+            setTimeout(() => {
+                window.location.href = target;
+            }, 400);
+        } catch (error) {
+            event.preventDefault();
+            showMessage(error.message || 'Помилка входу', 'error');
+        }
+    });
+
+    function showMessage(text, type) {
+        message.textContent = text;
+        message.classList.remove('error', 'success');
+        if (type) message.classList.add(type);
+    }
+</script>
+{% endblock %}

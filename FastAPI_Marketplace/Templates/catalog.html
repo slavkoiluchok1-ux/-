@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}Fast Money | Каталог{% endblock %}
+
+{% block content %}
+<style>
+    .catalog-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .catalog-header .page-intro {
+        margin: 0;
+        flex: 1;
+        text-align: left;
+    }
+    .catalog-grid-wrap {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 24px;
+        margin-top: 24px;
+        justify-content: center;
+        justify-items: center;
+    }
+    .product-card {
+        width: 100%;
+        max-width: 300px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+        align-items: stretch;
+        padding: 16px;
+        box-sizing: border-box;
+    }
+    .product-media {
+        aspect-ratio: 4 / 3;
+        background: var(--surface-soft);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        overflow: hidden;
+    }
+    .product-media img { width: 100%; height: 100%; object-fit: cover; }
+    .product-placeholder {
+        color: var(--muted);
+        font-size: 14px;
+    }
+    .product-card-body {
+        padding: 14px 16px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        flex: 1;
+        text-align: center;
+        align-items: center;
+    }
+    .product-card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+    }
+    .product-card-top h3 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        text-align: center;
+        flex: 1;
+    }
+    .product-card-top h3 a {
+        color: var(--text);
+        text-decoration: none;
+    }
+    .product-card-top h3 a:hover { color: #93c5fd; }
+    .favorite-btn {
+        background: none;
+        border: none;
+        color: #ef4444;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 4px 8px;
+    }
+    .product-card-body p {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.4;
+        margin: 0;
+        display: -webkit-box;
+        line-clamp: 3;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        width: 100%;
+    }
+    .product-meta {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: auto;
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    .price {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--text);
+    }
+    .product-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        box-sizing: border-box;
+        margin-top: 12px;
+    }
+    .product-actions > * {
+        flex: 1 1 0;
+        min-width: 0;
+        padding: 8px 10px;
+        font-size: 14px;
+        white-space: nowrap;
+        text-align: center;
+        box-sizing: border-box;
+    }
+    .product-actions .btn {
+        width: 100%;
+        max-width: none;
+    }
+    .product-actions .btn-danger {
+        background: transparent;
+        border: 1px solid #ff4d4d;
+        color: #ff4d4d;
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-weight: 500;
+        transition: all 0.2s ease-in-out;
+    }
+    .product-actions .btn-danger:hover {
+        background-color: rgba(255, 77, 77, 0.1);
+        border-color: #ff4d4d;
+        color: #ff4d4d;
+    }
+    .empty-state {
+        padding: 60px 20px;
+        text-align: center;
+        background: var(--bg-card);
+        border: 1px dashed var(--border);
+        border-radius: 14px;
+        color: var(--muted);
+        max-width: 600px;
+        margin: 24px auto;
+    }
+    .empty-state h3 { color: var(--text); margin-top: 0; }
+
+    .btn-add-product {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        padding: 10px 18px;
+        border-radius: 10px;
+        border: none;
+        font-weight: 700;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    .btn-add-product:hover { transform: translateY(-1px); }
+
+    .page-intro-wrap {
+        max-width: 1200px;
+        margin: 0 auto 24px;
+    }
+</style>
+
+<div class="page-intro-wrap">
+    <section class="page-intro">
+        <span class="eyebrow">Каталог</span>
+        <h1>Асортимент товарів</h1>
+        <p>Знайдіть потрібний товар, скористайтеся розумним пошуком і додайте свій продукт до каталогу.</p>
+    </section>
+</div>
+
+<div class="catalog-header">
+    <div style="flex:1;"></div>
+    {% if current_user %}
+    <button type="button" class="btn-add-product" onclick="openAddProductModal('{{ current_user.phone if current_user and current_user.phone else None }}')">
+        + Додати свій товар
+    </button>
+    {% else %}
+    <a href="/login" class="btn btn-outline">Увійти, щоб додати товар</a>
+    {% endif %}
+</div>
+
+<div class="catalog-toolbar">
+    <form method="get" action="/catalog" class="search-form">
+        <input type="text" name="q" value="{{ q }}" placeholder="Пошук за назвою або описом" />
+        <button type="submit" class="btn btn-primary">Шукати</button>
+    </form>
+</div>
+
+<div class="catalog-grid-wrap">
+    {% if products %}
+    <div class="product-grid">
+        {% for product in products %}
+        <article class="product-card">
+            <div class="product-media">
+                {% if product.image_url %}
+                    <a href="/products/{{ product.id }}">
+                        <img src="{{ product.image_url }}" alt="{{ product.title|e }}" />
+                    </a>
+                {% else %}
+                    <a href="/products/{{ product.id }}" class="product-placeholder">Без фото</a>
+                {% endif %}
+            </div>
+
+            <div class="product-card-body">
+                <div class="product-card-top">
+                    <h3><a href="/products/{{ product.id }}">{{ product.title }}</a></h3>
+                </div>
+
+                <p>{{ product.description[:120] }}{% if product.description|length > 120 %}...{% endif %}</p>
+
+                <div class="product-meta">
+                    <span class="price">{{ product.price }} ₴</span>
+                    <span class="stock">В наявності: {{ product.quantity }}</span>
+                </div>
+            </div>
+
+            <div class="product-actions">
+                <a href="/products/{{ product.id }}" class="btn btn-primary">Переглянути</a>
+                {% if current_user and current_user.role in ['admin', 'superadmin'] %}
+                <form method="post" action="/admin/products/{{ product.id }}/delete" class="delete-product-form" data-product-id="{{ product.id }}" data-product-title="{{ product.title|e }}">
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Видалити товар {{ product.title|e }}?');">Видалити</button>
+                </form>
+                {% endif %}
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+        <div class="empty-state">Товарів за вашим запитом не знайдено.</div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Fast Money | Головна{% endblock %}
+
+{% block content %}
+<div class="container">
+    <section class="hero">
+        <span class="eyebrow">Fast Money</span>
+        <h1>Швидкий доступ до фінансових рішень</h1>
+        <p>
+            Платформа для зручного перегляду каталогу, керування кошиком, збереження товарів у списки обраного
+            та оперативного контролю замовлень з адмін-панеллю в одному місці.
+        </p>
+        <div class="hero-actions">
+            <a class="btn btn-primary" href="/catalog">Перейти до каталогу</a>
+            {% if current_user %}
+                <a class="btn btn-secondary" href="/profile">Мій профіль</a>
+            {% else %}
+                <a class="btn btn-secondary" href="/login">Увійти</a>
+                <a class="btn btn-secondary" href="/register">Створити акаунт</a>
+            {% endif %}
+        </div>
+    </section>
+
+    <div class="grid">
+        <article class="card">
+            <h3>Каталог</h3>
+            <p>Переглядайте актуальні товари, фільтруйте асортимент та знаходьте потрібні позиції швидко та зручно.</p>
+        </article>
+        <article class="card">
+            <h3>Кошик</h3>
+            <p>Зберігайте вибрані товари, контролюйте вартість і формуйте замовлення без зайвих клопотів.</p>
+        </article>
+        <article class="card">
+            <h3>Обране</h3>
+            <p>Накопичуйте цікаві продукти в одному списку, щоб не втрачати найкращі пропозиції.</p>
+        </article>
+        <article class="card">
+            <h3>Адмін-панель</h3>
+            <p>Управляйте користувачами, замовленнями, скаргами та статистикою у зручному кабінеті.</p>
+        </article>
+    </div>
+</div>
+{% endblock %}

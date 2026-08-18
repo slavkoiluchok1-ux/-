@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}Fast Money | Скарги{% endblock %}
+
+{% block content %}
+<style>
+    .complaints-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 24px;
+    }
+
+    .complaint-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .complaint-card:hover {
+        border-color: #93c5fd;
+        box-shadow: 0 4px 12px var(--shadow);
+    }
+
+    .complaint-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 12px;
+    }
+
+    .complaint-date {
+        color: var(--muted);
+        font-size: 12px;
+    }
+
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .status-opened {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-in_progress {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .status-resolved {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-rejected {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .complaint-reason {
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .complaint-preview {
+        color: var(--muted);
+        font-size: 14px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .modal-content {
+        max-width: 500px;
+        width: 90%;
+        margin: auto;
+        padding: 24px;
+        border-radius: 12px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: var(--muted);
+    }
+
+    .close-btn:hover {
+        color: var(--text);
+    }
+
+    .detail-section {
+        margin-bottom: 16px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .detail-section:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 4px;
+    }
+
+    .detail-value {
+        font-weight: 500;
+    }
+
+    .detail-text {
+        line-height: 1.6;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('complaint-modal');
+        const modalContent = document.getElementById('modal-content');
+        const closeBtn = document.getElementById('close-modal');
+
+        document.querySelectorAll('.complaint-card').forEach(card => {
+            card.addEventListener('click', function () {
+                const complaintData = JSON.parse(this.dataset.complaint);
+                showComplaintDetails(complaintData);
+            });
+        });
+
+        function showComplaintDetails(complaint) {
+            const statusLabels = {
+                'opened': 'Нова',
+                'in_progress': 'В обробці',
+                'resolved': 'Вирішено',
+                'rejected': 'Відхилено'
+            };
+
+            const reasonLabels = {
+                'profanity': 'Нецензурна лексика',
+                'threats': 'Погрози',
+                'sexual_content': 'Контент сексуального характеру',
+                'scam': 'Шахрайство',
+                'spam': 'Спам / Реклама',
+                'other': 'Інше'
+            };
+
+            modalContent.innerHTML = `
+                <div class="modal-header">
+                    <h3>Деталі скарги #${complaint.id}</h3>
+                    <button type="button" id="close-modal" class="close-btn">×</button>
+                </div>
+                <div class="detail-section">
+                    <div class="detail-label">Статус</div>
+                    <div class="detail-value">
+                        <span class="status-badge status-${complaint.status}">${statusLabels[complaint.status] || complaint.status}</span>
+                    </div>
+                </div>
+                <div class="detail-section">
+                    <div class="detail-label">Дата</div>
+                    <div class="detail-value">${complaint.created_at || '-'}</div>
+                </div>
+                <div class="detail-section">
+                    <div class="detail-label">Причина</div>
+                    <div class="detail-value">${reasonLabels[complaint.reason] || complaint.reason}</div>
+                </div>
+                <div class="detail-section">
+                    <div class="detail-label">Тип об'єкта</div>
+                    <div class="detail-value">${complaint.target_type || '-'}</div>
+                </div>
+                <div class="detail-section">
+                    <div class="detail-label">ID об'єкта</div>
+                    <div class="detail-value">${complaint.target_id || '-'}</div>
+                </div>
+                ${complaint.comment ? `
+                <div class="detail-section">
+                    <div class="detail-label">Опис</div>
+                    <div class="detail-value detail-text">${complaint.comment}</div>
+                </div>
+                ` : ''}
+                <div class="detail-section">
+                    <div class="detail-label">ID автора скарги</div>
+                    <div class="detail-value">${complaint.reporter_id || '-'}</div>
+                </div>
+            `;
+
+            modal.style.display = 'flex';
+            document.getElementById('close-modal').addEventListener('click', closeModal);
+            modal.addEventListener('click', function(event) {
+                if (event.target === modal) closeModal();
+            });
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+    });
+</script>
+
+<div class="container">
+    <section class="page-intro">
+        <span class="eyebrow">Скарги</span>
+        <h1>Список зареєстрованих скарг</h1>
+        <p>Перегляд всіх поданих заяв щодо товарів, відгуків та користувачів.</p>
+    </section>
+
+    {% if complaints %}
+    <div class="complaints-grid">
+        {% for complaint in complaints %}
+        <article class="complaint-card" data-complaint='{
+            "id": {{ complaint.id }},
+            "status": "{{ complaint.status }}",
+            "created_at": "{{ complaint.created_at.strftime('%Y-%m-%d %H:%M') if complaint.created_at else '' }}",
+            "reason": "{{ complaint.reason }}",
+            "target_type": "{{ complaint.target_type }}",
+            "target_id": {{ complaint.target_id }},
+            "comment": {{ complaint.comment | tojson if complaint.comment else 'null' }},
+            "reporter_id": {{ complaint.reporter_id }}
+        }'>
+            <div class="complaint-header">
+                <span class="complaint-date">{{ complaint.created_at.strftime('%Y-%m-%d %H:%M') if complaint.created_at else '-' }}</span>
+                <span class="status-badge status-{{ complaint.status }}">{{ complaint.status }}</span>
+            </div>
+            <div class="complaint-reason">{{ complaint.reason }}</div>
+            <div class="complaint-preview">{{ complaint.comment or 'Без опису' }}</div>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">Скарг ще немає.</div>
+    {% endif %}
+</div>
+
+<div id="complaint-modal" class="modal" style="display: none;">
+    <div id="modal-content" class="modal-content"></div>
+</div>
+{% endblock %}

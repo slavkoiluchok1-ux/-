@@ -1,0 +1,502 @@
+{% extends "base.html" %}
+
+{% block title %}Управління резюме | Адмінка{% endblock %}
+
+{% block content %}
+<div class="container admin-shell">
+    <section class="page-intro">
+        <span class="eyebrow">Супер-адмін</span>
+        <h1>Резюме та заявки</h1>
+        <p>Переглядайте, оцінюйте та керуйте поданими резюме кандидатів.</p>
+        <p class="sub-link"><a href="/admin">← Назад до адмін-панелі</a></p>
+    </section>
+
+    {% if message %}
+        <div class="alert alert-success"><p>{{ message }}</p></div>
+    {% endif %}
+
+    {% if error %}
+        <div class="alert alert-error"><p>{{ error }}</p></div>
+    {% endif %}
+
+    <section class="filters-card">
+        <form method="get" action="/admin/resumes" class="filter-form">
+            <div class="filter-group">
+                <label for="q">Пошук</label>
+                <input type="search" name="q" id="q"
+                       placeholder="Ім'я, email, посада, спеціальність, навички..."
+                       value="{{ q }}" />
+            </div>
+            <div class="filter-group">
+                <label for="filter_status">Статус</label>
+                <select name="filter_status" id="filter_status">
+                    <option value="">Усі</option>
+                    {% for key in statuses %}
+                        <option value="{{ key }}" {% if filter_status == key %}selected{% endif %}>
+                            {{ status_labels[key] }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary">Застосувати</button>
+                <a href="/admin/resumes" class="btn btn-outline">Скинути</a>
+            </div>
+        </form>
+    </section>
+
+    <section class="admin-users-table-wrap">
+        <div class="table-head-row">
+            <h2>Усі резюме ({{ resumes|length }})</h2>
+        </div>
+
+        {% if not resumes %}
+            <div class="empty-state">Резюме за даними фільтрами відсутні.</div>
+        {% else %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Кандидат</th>
+                    <th>Посада / Спеціальність</th>
+                    <th>Статус</th>
+                    <th>Дата</th>
+                    <th>Дії</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in resumes %}
+                <tr>
+                    <td>#{{ r.id }}</td>
+                    <td>
+                        <div>
+                            <strong>{{ r.display_name or r.user_display_name or r.username or 'Без імені' }}</strong>
+                        </div>
+                        <div class="muted small">
+                            @{{ r.username or '—' }} · {{ r.email or 'Без email' }}
+                        </div>
+                        {% if r.phone %}
+                            <div class="muted small">📞 {{ r.phone }}</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div>{{ r.title or 'Не вказано' }}</div>
+                        <div class="muted small">{{ r.specialty or '' }}</div>
+                    </td>
+                    <td>
+                        {% if r.status == 'accepted' %}
+                            <span class="badge badge-active">Прийнято</span>
+                        {% elif r.status == 'rejected' %}
+                            <span class="badge badge-inactive">Відхилено</span>
+                        {% elif r.status == 'reviewing' %}
+                            <span class="badge badge-admin">Перевіряється</span>
+                        {% else %}
+                            <span class="badge badge-user">На розгляді</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="small">{{ r.updated_at.strftime('%d.%m.%Y %H:%M') if r.updated_at else '—' }}</div>
+                        <div class="muted small">ств. {{ r.created_at.strftime('%d.%m.%Y') if r.created_at else '—' }}</div>
+                    </td>
+                    <td class="actions-cell">
+                        <button class="btn btn-outline tiny-btn resume-detail-btn"
+                                type="button"
+                                data-resume-id="{{ r.id }}"
+                                data-resume='{
+                                    "id": {{ r.id }},
+                                    "display_name": {{ (r.display_name or r.user_display_name or r.username or "")|tojson }},
+                                    "username": {{ (r.username or "")|tojson }},
+                                    "email": {{ (r.email or "")|tojson }},
+                                    "phone": {{ (r.phone or "")|tojson }},
+                                    "viber": {{ (r.viber or "")|tojson }},
+                                    "telegram": {{ (r.telegram or "")|tojson }},
+                                    "whatsapp": {{ (r.whatsapp or "")|tojson }},
+                                    "instagram": {{ (r.instagram or "")|tojson }},
+                                    "public_email": {{ (r.public_email or "")|tojson }},
+                                    "title": {{ (r.title or "")|tojson }},
+                                    "specialty": {{ (r.specialty or "")|tojson }},
+                                    "experience_years": {{ (r.experience_years or "")|tojson }},
+                                    "experience": {{ (r.experience or "")|tojson }},
+                                    "skills": {{ (r.skills or "")|tojson }},
+                                    "bio": {{ (r.bio or "")|tojson }},
+                                    "summary": {{ (r.summary or "")|tojson }},
+                                    "public_contacts": {{ (r.public_contacts or "")|tojson }},
+                                    "cv_file_path": {{ (r.cv_file_path or "")|tojson }},
+                                    "status": {{ (r.status or "pending")|tojson }},
+                                    "status_label": {{ (r.status_label or "На розгляді")|tojson }},
+                                    "updated_at": {{ ((r.updated_at.strftime('%d.%m.%Y %H:%M') if r.updated_at else "—"))|tojson }},
+                                    "created_at": {{ ((r.created_at.strftime('%d.%m.%Y %H:%M') if r.created_at else "—"))|tojson }}
+                                }'>
+                            Переглянути
+                        </button>
+
+                        <form method="post" action="/admin/resumes/{{ r.id }}/status" class="inline-form status-form">
+                            <select name="new_status" class="tiny-select">
+                                {% for key in statuses %}
+                                    <option value="{{ key }}" {% if r.status == key %}selected{% endif %}>
+                                        {{ status_labels[key] }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-primary tiny-btn">Змінити</button>
+                        </form>
+
+                        <form method="post" action="/admin/resumes/{{ r.id }}/delete"
+                              class="inline-form delete-resume-form"
+                              data-resume-id="{{ r.id }}">
+                            <button type="submit" class="btn btn-danger tiny-btn">Видалити</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    </section>
+</div>
+
+<div id="resume-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-backdrop" data-close-modal="1"></div>
+    <div class="modal-dialog" role="document">
+        <div class="modal-header">
+            <h3 id="modal-title">Деталі резюме</h3>
+            <button type="button" class="modal-close" data-close-modal="1" aria-label="Закрити">×</button>
+        </div>
+        <div class="modal-body" id="modal-body">
+            <p class="muted">Оберіть резюме для перегляду.</p>
+        </div>
+        <div class="modal-footer" id="modal-footer">
+            <button type="button" class="btn btn-outline" data-close-modal="1">Закрити</button>
+        </div>
+    </div>
+</div>
+
+<div id="confirm-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-backdrop" data-close-confirm="1"></div>
+    <div class="modal-dialog confirm-dialog" role="document">
+        <div class="modal-header">
+            <h3 id="confirm-title">Підтвердження</h3>
+            <button type="button" class="modal-close" data-close-confirm="1" aria-label="Закрити">×</button>
+        </div>
+        <div class="modal-body" id="confirm-body">
+            <p id="confirm-message">Ви впевнені?</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" data-close-confirm="1">Скасувати</button>
+            <button type="button" class="btn btn-danger" id="confirm-ok-btn">Підтвердити</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .page-intro .sub-link a { color: #2563eb; text-decoration: none; }
+    .page-intro .sub-link a:hover { text-decoration: underline; }
+
+    .filters-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 24px 0;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .filter-form { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
+    .filter-group { display: flex; flex-direction: column; flex: 1 1 260px; min-width: 200px; }
+    .filter-group label { font-weight: 600; font-size: 14px; margin-bottom: 6px; color: #1f2937; }
+    .filter-group input, .filter-group select {
+        border: 1px solid #d1d5db; border-radius: 8px; padding: 10px 12px; font-size: 14px;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .filter-group input:focus, .filter-group select:focus {
+        outline: none; border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+    .filter-actions { display: flex; gap: 8px; }
+
+    .alert { padding: 14px 18px; border-radius: 10px; margin: 16px 0; font-weight: 500; }
+    .alert-success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    .alert-error   { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+    .table-head-row { display: flex; justify-content: space-between; align-items: center; margin: 8px 0 12px; }
+    .data-table {
+        width: 100%; border-collapse: collapse; background: #ffffff;
+        border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .data-table thead { background: #f9fafb; }
+    .data-table th, .data-table td {
+        padding: 12px 16px; text-align: left; border-bottom: 1px solid #f3f4f6;
+        font-size: 14px; vertical-align: middle;
+    }
+    .data-table th { font-weight: 700; color: #374151; letter-spacing: 0.2px; }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+    .data-table tbody tr:hover { background: #f9fafb; }
+
+    .muted { color: #6b7280; }
+    .small { font-size: 12px; }
+
+    .badge {
+        display: inline-block; padding: 4px 10px; border-radius: 999px;
+        font-size: 12px; font-weight: 600; line-height: 1.2;
+    }
+    .badge-admin    { background: #2563eb; color: #fff; }
+    .badge-user     { background: #9ca3af; color: #fff; }
+    .badge-active   { background: #10b981; color: #fff; }
+    .badge-inactive { background: #ef4444; color: #fff; }
+
+    .actions-cell { white-space: nowrap; }
+    .inline-form { display: inline-block; margin-right: 6px; }
+    .tiny-btn { padding: 6px 10px; font-size: 13px; }
+    .tiny-select {
+        border: 1px solid #d1d5db; border-radius: 8px; padding: 5px 8px;
+        font-size: 13px; background: #fff;
+    }
+
+    .btn-danger { background: #ef4444; border-color: #ef4444; color: #fff; }
+    .btn-danger:hover { background: #dc2626; border-color: #dc2626; }
+
+    /* Modal */
+    .modal {
+        position: fixed; inset: 0; z-index: 50;
+        display: none; align-items: center; justify-content: center;
+        padding: 20px;
+    }
+    .modal.open { display: flex; }
+    .modal-backdrop {
+        position: absolute; inset: 0; background: rgba(17, 24, 39, 0.55);
+    }
+    .modal-dialog {
+        position: relative; z-index: 1;
+        width: 100%; max-width: 760px; max-height: 86vh; overflow: hidden;
+        background: #fff; border-radius: 14px;
+        display: flex; flex-direction: column;
+        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.25);
+    }
+    .modal-header {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 16px 20px; border-bottom: 1px solid #f1f5f9;
+    }
+    .modal-header h3 { margin: 0; font-size: 18px; color: #111827; }
+    .modal-close {
+        border: none; background: transparent; font-size: 26px; cursor: pointer;
+        line-height: 1; padding: 0 6px; color: #6b7280;
+    }
+    .modal-close:hover { color: #111827; }
+    .modal-body {
+        padding: 18px 20px; overflow-y: auto;
+        color: #1f2937;
+    }
+    .modal-footer {
+        padding: 12px 20px; border-top: 1px solid #f1f5f9;
+        display: flex; justify-content: flex-end;
+    }
+    .kv-grid {
+        display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px 20px; margin-bottom: 14px;
+    }
+    .kv-item { display: flex; flex-direction: column; font-size: 14px; }
+    .kv-item .k { font-weight: 600; color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px; }
+    .kv-item .v { color: #111827; }
+    .text-block { margin-top: 14px; }
+    .text-block h4 { margin: 14px 0 6px; font-size: 15px; color: #111827; }
+    .text-block p, .text-block pre {
+        margin: 0; white-space: pre-wrap; word-break: break-word;
+        background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px;
+        padding: 10px 12px; font-family: inherit; font-size: 14px; color: #1f2937;
+    }
+    .resume-header {
+        display: flex; justify-content: space-between; align-items: flex-start;
+        gap: 14px; margin-bottom: 14px;
+    }
+    .resume-header .meta-col { text-align: right; }
+    .resume-header h2 { margin: 0 0 4px; font-size: 20px; }
+    .resume-header .sub { color: #6b7280; font-size: 14px; }
+    .file-block {
+        display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px;
+        border: 1px solid #dbeafe; background: #eff6ff; color: #1d4ed8;
+        border-radius: 8px; font-size: 14px; text-decoration: none; margin-top: 12px;
+    }
+    .file-block:hover { background: #dbeafe; }
+    .empty { color: #9ca3af; font-style: italic; }
+
+    .confirm-dialog { max-width: 460px; }
+    #confirm-message { margin: 0; font-size: 15px; color: #1f2937; }
+
+    @media (max-width: 640px) {
+        .kv-grid { grid-template-columns: 1fr; }
+        .modal-header, .modal-body, .modal-footer { padding-left: 14px; padding-right: 14px; }
+    }
+</style>
+
+<script>
+    const modal = document.getElementById('resume-modal');
+    const modalBody = document.getElementById('modal-body');
+    const modalTitle = document.getElementById('modal-title');
+
+    const confirmModal = document.getElementById('confirm-modal');
+    const confirmMessage = document.getElementById('confirm-message');
+    const confirmOkBtn = document.getElementById('confirm-ok-btn');
+    let confirmCallback = null;
+
+    function closeModal() {
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+    }
+    function openModal() {
+        modal.classList.add('open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function openConfirm(message, onOk) {
+        confirmMessage.textContent = message;
+        confirmCallback = onOk;
+        confirmModal.classList.add('open');
+        confirmModal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeConfirm() {
+        confirmModal.classList.remove('open');
+        confirmModal.setAttribute('aria-hidden', 'true');
+        confirmCallback = null;
+        document.body.style.overflow = '';
+    }
+
+    confirmOkBtn.addEventListener('click', function () {
+        const cb = confirmCallback;
+        closeConfirm();
+        if (typeof cb === 'function') cb();
+    });
+
+    document.querySelectorAll('[data-close-confirm]').forEach(el => {
+        el.addEventListener('click', closeConfirm);
+    });
+
+    function esc(val, fallback) {
+        if (val === null || val === undefined) return fallback !== undefined ? fallback : '';
+        return String(val);
+    }
+    function isEmpty(v) { return v === null || v === undefined || String(v).trim() === ''; }
+    function escHtml(val) {
+        const s = esc(val);
+        const tmp = document.createElement('div');
+        tmp.textContent = s;
+        return tmp.innerHTML;
+    }
+
+    document.querySelectorAll('.resume-detail-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            let data;
+            try { data = JSON.parse(btn.getAttribute('data-resume')); }
+            catch (e) { data = {}; }
+
+            const name = escHtml(data.display_name) || 'Кандидат';
+            const title = escHtml(data.title) || '—';
+            modalTitle.textContent = `Резюме #${esc(data.id)} · ${name}`;
+
+            const statusBadge = (() => {
+                const s = esc(data.status);
+                const label = escHtml(data.status_label || 'На розгляді');
+                if (s === 'accepted') return `<span class="badge badge-active">${label}</span>`;
+                if (s === 'rejected') return `<span class="badge badge-inactive">${label}</span>`;
+                if (s === 'reviewing') return `<span class="badge badge-admin">${label}</span>`;
+                return `<span class="badge badge-user">${label}</span>`;
+            })();
+
+            const contacts = [
+                ['Email (профіль)', data.email],
+                ['Email (резюме)', data.public_email],
+                ['Телефон', data.phone],
+                ['Viber', data.viber],
+                ['Telegram', data.telegram],
+                ['WhatsApp', data.whatsapp],
+                ['Instagram', data.instagram],
+                ['Інші контакти', data.public_contacts],
+            ].map(([k, v]) => isEmpty(v)
+                ? ''
+                : `<div class="kv-item"><div class="k">${k}</div><div class="v">${escHtml(v)}</div></div>`
+            ).join('');
+
+            const cvLink = isEmpty(data.cv_file_path)
+                ? ''
+                : `<a class="file-block" href="${escHtml(data.cv_file_path.startsWith('http') ? data.cv_file_path : '/uploads/' + data.cv_file_path.replace(/^\/+/, ''))}" target="_blank" rel="noopener">📄 Переглянути файл CV</a>`;
+
+            modalBody.innerHTML = `
+                <div class="resume-header">
+                    <div>
+                        <h2>${name}</h2>
+                        <div class="sub">@${escHtml(data.username)} · ${statusBadge}</div>
+                    </div>
+                    <div class="meta-col">
+                        <div class="sub">Оновлено: ${escHtml(data.updated_at)}</div>
+                        <div class="sub">Створено: ${escHtml(data.created_at)}</div>
+                    </div>
+                </div>
+
+                <div class="kv-grid">
+                    <div class="kv-item"><div class="k">Посада</div><div class="v">${isEmpty(data.title) ? '<span class="empty">—</span>' : escHtml(data.title)}</div></div>
+                    <div class="kv-item"><div class="k">Спеціальність</div><div class="v">${isEmpty(data.specialty) ? '<span class="empty">—</span>' : escHtml(data.specialty)}</div></div>
+                    <div class="kv-item"><div class="k">Досвід (роки)</div><div class="v">${isEmpty(data.experience_years) ? '<span class="empty">—</span>' : escHtml(data.experience_years)}</div></div>
+                    <div class="kv-item"><div class="k">ID резюме</div><div class="v">#${esc(data.id)}</div></div>
+                    ${contacts}
+                </div>
+
+                <div class="text-block">
+                    <h4>Досвід роботи</h4>
+                    ${isEmpty(data.experience) ? '<p class="empty">Не вказано</p>' : `<pre>${escHtml(data.experience)}</pre>`}
+                </div>
+
+                <div class="text-block">
+                    <h4>Ключові навички</h4>
+                    ${isEmpty(data.skills) ? '<p class="empty">Не вказано</p>' : `<pre>${escHtml(data.skills)}</pre>`}
+                </div>
+
+                <div class="text-block">
+                    <h4>Коротко про себе (біографія)</h4>
+                    ${isEmpty(data.bio) ? '<p class="empty">Не вказано</p>' : `<pre>${escHtml(data.bio)}</pre>`}
+                </div>
+
+                <div class="text-block">
+                    <h4>Сумарний опис / Резюме</h4>
+                    ${isEmpty(data.summary) ? '<p class="empty">Не вказано</p>' : `<pre>${escHtml(data.summary)}</pre>`}
+                </div>
+
+                ${cvLink}
+            `;
+
+            openModal();
+        });
+    });
+
+    document.querySelectorAll('[data-close-modal]').forEach(el => {
+        el.addEventListener('click', closeModal);
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            if (modal.classList.contains('open')) closeModal();
+            if (confirmModal.classList.contains('open')) closeConfirm();
+        }
+    });
+
+    document.querySelectorAll('.delete-resume-form').forEach(form => {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const id = form.dataset.resumeId || '';
+            openConfirm(`Ви справді хочете видалити резюме #${id}?`, function () {
+                form.submit();
+            });
+        });
+    });
+
+    document.querySelectorAll('.status-form').forEach(form => {
+        form.addEventListener('submit', function () {
+            const btn = form.querySelector('button[type="submit"]');
+            if (!btn) return;
+            if (window.flashButtonText) {
+                window.flashButtonText(btn, 'Збереження…', btn.textContent, 1500);
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Fast Money | Редагування товару{% endblock %}
+
+{% block content %}
+<style>
+    .page-shell {
+        max-width: 100%;
+    }
+    .edit-wrap {
+        max-width: 780px;
+        margin: 0 auto;
+    }
+    .page-head {
+        margin-bottom: 20px;
+        text-align: left;
+    }
+    .page-head h1 { margin: 6px 0 6px; font-size: 1.75rem; }
+    .page-head a.back {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 14px;
+    }
+    .page-head a.back:hover { color: #93c5fd; }
+
+    .form-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        width: 100%;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+    .form-grid .full { grid-column: 1 / -1; }
+
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 6px;
+        font-size: 14px;
+    }
+    .form-group input,
+    .form-group textarea {
+        width: 100%;
+        padding: 11px 13px;
+        background: var(--surface-soft);
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        color: var(--text);
+        font-size: 14px;
+        font-family: inherit;
+        box-sizing: border-box;
+    }
+    .form-group textarea {
+        resize: vertical;
+        min-height: 140px;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.18);
+    }
+    .form-help {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 4px;
+    }
+
+    .media-section {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border);
+    }
+    .media-section h2 {
+        margin: 0 0 12px;
+        font-size: 1.1rem;
+    }
+    .media-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 10px;
+    }
+    .media-item {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        background: var(--surface-soft);
+        aspect-ratio: 1;
+        position: relative;
+    }
+    .media-item img, .media-item video {
+        width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .media-tag {
+        position: absolute;
+        top: 6px; left: 6px;
+        background: rgba(15,23,42,0.7);
+        color: #fff;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+    }
+
+    .form-actions {
+        margin-top: 24px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+
+    .message-box {
+        padding: 12px 16px;
+        border-radius: 10px;
+        margin-bottom: 18px;
+        font-size: 14px;
+    }
+    .message-box.error {
+        background: rgba(239,68,68,0.12);
+        color: #fca5a5;
+        border: 1px solid rgba(239,68,68,0.3);
+    }
+
+    @media (max-width: 640px) {
+        .form-grid { grid-template-columns: 1fr; }
+        .form-card { padding: 18px; }
+        .form-actions { justify-content: stretch; }
+        .form-actions .btn { flex: 1; text-align: center; }
+    }
+</style>
+
+<div class="edit-wrap">
+<div class="page-head">
+    <a class="back" href="/my-products">← Назад до моїх товарів</a>
+    <h1>Редагування товару</h1>
+    <p style="color: var(--muted); margin: 0;">
+        #{{ product.id }} — <a href="/products/{{ product.id }}" target="_blank" rel="noopener">Переглянути на сайті</a>
+    </p>
+</div>
+
+{% if error %}
+    <div class="message-box error" role="alert">{{ error }}</div>
+{% endif %}
+
+<div class="form-card">
+    <form action="/products/{{ product.id }}/edit" method="post" enctype="multipart/form-data">
+        <div class="form-grid">
+            <div class="form-group full">
+                <label for="title">Назва товару *</label>
+                <input id="title" name="title" type="text" maxlength="250" required value="{{ product.title|e }}" />
+            </div>
+
+            <div class="form-group full">
+                <label for="description">Опис *</label>
+                <textarea id="description" name="description" required>{{ product.description|e }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="price">Ціна (₴) *</label>
+                <input id="price" name="price" type="number" min="0" step="1" required value="{{ product.price }}" />
+            </div>
+
+            <div class="form-group">
+                <label for="quantity">Кількість на складі *</label>
+                <input id="quantity" name="quantity" type="number" min="0" step="1" required value="{{ product.quantity }}" />
+                <div class="form-help">Встановіть 0, якщо товар тимчасово закінчився</div>
+            </div>
+
+            <div class="form-group full">
+                <label for="seller_phone">Телефон продавця</label>
+                <input id="seller_phone" name="seller_phone" type="tel" value="{{ (product.seller_phone or '')|e }}" />
+                <div class="form-help">Залиште порожнім, щоб використати телефон з вашого профілю</div>
+            </div>
+
+            <div class="form-group full">
+                <label for="file">Додати нове фото/відео</label>
+                <input id="file" name="file" type="file" accept="image/*,video/*" />
+                <div class="form-help">Необов'язково. Можна додати лише 1 файл за раз; попередні медіа залишаться.</div>
+            </div>
+        </div>
+
+        {% if product.media %}
+            <div class="media-section">
+                <h2>Поточні медіа ({{ product.media|length }})</h2>
+                <div class="media-grid">
+                    {% for m in product.media %}
+                        <div class="media-item">
+                            {% if m.media_type == 'video' %}
+                                <span class="media-tag">▶ Відео</span>
+                                <video src="{{ m.file_path }}" preload="metadata"></video>
+                            {% else %}
+                                <img src="{{ m.file_path }}" alt="Медіа #{{ m.id }}" />
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Зберегти зміни</button>
+            <a href="/my-products" class="btn btn-outline">Скасувати</a>
+        </div>
+    </form>
+</div>
+</div>
+{% endblock %}

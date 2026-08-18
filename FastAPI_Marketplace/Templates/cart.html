@@ -1,0 +1,566 @@
+{% extends "base.html" %}
+
+{% block title %}Fast Money | Кошик{% endblock %}
+
+{% block content %}
+<style>
+    .cart-container {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 32px;
+        margin-top: 24px;
+    }
+
+    .cart-items-section {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+    }
+
+    .cart-summary-section {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        height: fit-content;
+        position: sticky;
+        top: 92px;
+    }
+
+    .cart-row {
+        display: grid;
+        grid-template-columns: 80px 1fr auto auto;
+        gap: 16px;
+        align-items: center;
+        padding: 16px 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .cart-row:last-child {
+        border-bottom: none;
+    }
+
+    .cart-product {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .cart-product .thumb {
+        width: 80px;
+        height: 80px;
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--surface-soft);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .cart-product .thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .cart-product .thumb span {
+        color: var(--muted);
+        font-size: 12px;
+    }
+
+    .cart-title {
+        font-weight: 600;
+        color: var(--text);
+        text-decoration: none;
+    }
+
+    .cart-title:hover {
+        color: #93c5fd;
+    }
+
+    .cart-price {
+        color: var(--muted);
+        font-size: 14px;
+    }
+
+    .qty-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .qty-btn {
+        width: 32px;
+        height: 32px;
+        border: 1px solid var(--border);
+        background: var(--surface-soft);
+        color: var(--text);
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+    .qty-btn:hover {
+        background: var(--border);
+    }
+
+    .cart-quantity-input {
+        width: 50px;
+        text-align: center;
+        padding: 6px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--surface-soft);
+        color: var(--text);
+    }
+
+    .remove-btn {
+        padding: 8px 16px;
+        background: transparent;
+        border: 1px solid #ef4444;
+        color: #ef4444;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .remove-btn:hover {
+        background: #ef4444;
+        color: white;
+    }
+
+    .summary-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 20px;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 1.1rem;
+    }
+
+    .summary-row.total {
+        font-size: 1.5rem;
+        font-weight: 700;
+        border-bottom: none;
+        margin-top: 12px;
+        padding-top: 16px;
+    }
+
+    .checkout-form label {
+        display: block;
+        margin-bottom: 16px;
+    }
+
+    .checkout-form label span {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+    }
+
+    .checkout-form input,
+    .checkout-form select {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface-soft);
+        color: var(--text);
+    }
+
+    @media (max-width: 900px) {
+        .cart-container {
+            grid-template-columns: 1fr;
+        }
+
+        .cart-summary-section {
+            position: static;
+        }
+
+        .cart-row {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .cart-product {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const cartTable = document.getElementById('cart-table');
+        const totalPriceEl = document.getElementById('cart-total-price');
+        const checkoutBtn = document.getElementById('checkout-btn');
+        const checkoutStatus = document.getElementById('checkout-status');
+        const checkoutForm = document.getElementById('checkout-form');
+
+        function updateCartUI(items, total) {
+            cartTable.innerHTML = items.map(item => {
+                const price = Number(item.product.price || 0);
+                const quantity = Number(item.quantity || 1);
+                const productId = item.product_id;
+                return `
+                    <div class="cart-row">
+                        <div class="cart-product">
+                            <div class="thumb">${item.product.image_url ? `<img src="${item.product.image_url}" alt="${item.product.title}" />` : '<span>Фото</span>'}</div>
+                            <div>
+                                <a href="/products/${productId}" class="cart-title">${item.product.title}</a>
+                                <div class="cart-price">${price} ₴</div>
+                            </div>
+                        </div>
+                        <div class="qty-controls">
+                            <button type="button" class="qty-btn" data-qty-minus="${item.id}" data-product-id="${productId}">−</button>
+                            <input
+                                type="number"
+                                name="quantity"
+                                min="1"
+                                value="${quantity}"
+                                data-item-id="${item.id}"
+                                data-product-id="${productId}"
+                                class="cart-quantity-input"
+                            />
+                            <button type="button" class="qty-btn" data-qty-plus="${item.id}" data-product-id="${productId}">+</button>
+                        </div>
+                        <button type="button" class="remove-btn" data-remove-item="${item.id}">Видалити</button>
+                    </div>
+                `;
+            }).join('');
+
+            if (totalPriceEl) totalPriceEl.textContent = `${total} ₴`;
+
+            // Re-attach event listeners
+            attachCartEventListeners();
+        }
+
+        function attachCartEventListeners() {
+            cartTable.querySelectorAll('.cart-quantity-input').forEach(input => {
+                input.addEventListener('focus', function () {
+                    this.dataset.prevQty = String(this.value || '1');
+                });
+                input.addEventListener('change', async function () {
+                    const productId = parseInt(this.dataset.productId, 10);
+                    const prevQty = parseInt(this.dataset.prevQty || this.value || '1', 10);
+                    const nextQty = Math.max(1, parseInt(this.value || '1', 10));
+                    this.value = String(nextQty);
+
+                    if (Number.isNaN(productId) || Number.isNaN(nextQty)) {
+                        this.value = String(prevQty);
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch('/api/v1/cart/update', {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify({ product_id: productId, quantity: nextQty })
+                        });
+
+                        if (window.handleAuthRedirect && window.handleAuthRedirect(response)) {
+                            return;
+                        }
+
+                        const data = await response.json().catch(() => ({}));
+                        if (!response.ok) {
+                            this.value = String(prevQty);
+                            return;
+                        }
+
+                        if (data.items) {
+                            updateCartUI(data.items, data.total);
+                        }
+
+                        if (typeof updateCartCount === 'function') {
+                            updateCartCount();
+                        }
+                    } catch (error) {
+                        this.value = String(prevQty);
+                    }
+                });
+            });
+
+            cartTable.querySelectorAll('[data-qty-plus]').forEach(button => {
+                button.addEventListener('click', async function () {
+                    const productId = parseInt(this.dataset.productId, 10);
+                    const itemId = this.dataset.qtyPlus;
+                    const input = cartTable.querySelector(`[data-item-id="${itemId}"]`);
+                    const currentQty = parseInt(input?.value || '1', 10);
+                    const nextQty = currentQty + 1;
+
+                    if (!input || Number.isNaN(productId) || Number.isNaN(currentQty)) return;
+
+                    input.value = String(nextQty);
+
+                    try {
+                        const response = await fetch('/api/v1/cart/update', {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify({ product_id: productId, quantity: nextQty })
+                        });
+
+                        if (window.handleAuthRedirect && window.handleAuthRedirect(response)) {
+                            return;
+                        }
+
+                        const data = await response.json().catch(() => ({}));
+                        if (!response.ok) {
+                            input.value = String(currentQty);
+                            return;
+                        }
+
+                        if (data.items) {
+                            updateCartUI(data.items, data.total);
+                        }
+
+                        if (typeof updateCartCount === 'function') {
+                            updateCartCount();
+                        }
+                    } catch (error) {
+                        input.value = String(currentQty);
+                    }
+                });
+            });
+
+            cartTable.querySelectorAll('[data-qty-minus]').forEach(button => {
+                button.addEventListener('click', async function () {
+                    const productId = parseInt(this.dataset.productId, 10);
+                    const itemId = this.dataset.qtyMinus;
+                    const input = cartTable.querySelector(`[data-item-id="${itemId}"]`);
+                    const currentQty = parseInt(input?.value || '1', 10);
+                    const nextQty = Math.max(1, currentQty - 1);
+
+                    if (!input || Number.isNaN(productId) || Number.isNaN(currentQty)) return;
+
+                    input.value = String(nextQty);
+
+                    try {
+                        const response = await fetch('/api/v1/cart/update', {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify({ product_id: productId, quantity: nextQty })
+                        });
+
+                        if (window.handleAuthRedirect && window.handleAuthRedirect(response)) {
+                            return;
+                        }
+
+                        const data = await response.json().catch(() => ({}));
+                        if (!response.ok) {
+                            input.value = String(currentQty);
+                            return;
+                        }
+
+                        if (data.items) {
+                            updateCartUI(data.items, data.total);
+                        }
+
+                        if (typeof updateCartCount === 'function') {
+                            updateCartCount();
+                        }
+                    } catch (error) {
+                        input.value = String(currentQty);
+                    }
+                });
+            });
+
+            cartTable.querySelectorAll('[data-remove-item]').forEach(button => {
+                button.addEventListener('click', async function () {
+                    const itemId = Number(this.dataset.removeItem);
+                    const originalText = this.textContent;
+                    try {
+                        const response = await fetch(`/api/v1/cart/remove/${itemId}`, { method: 'DELETE', credentials: 'include' });
+
+                        if (window.handleAuthRedirect && window.handleAuthRedirect(response)) {
+                            return;
+                        }
+
+                        if (response.ok) {
+                            if (window.flashButtonText) {
+                                window.flashButtonText(this, 'Видалено ✓', originalText, 1500);
+                            }
+                            setTimeout(() => {
+                                refreshCart();
+                                if (typeof updateCartCount === 'function') {
+                                    updateCartCount();
+                                }
+                            }, 400);
+                        }
+                    } catch (error) {
+                    }
+                });
+            });
+        }
+
+        async function refreshCart() {
+            try {
+                const response = await fetch('/api/v1/cart', { credentials: 'include' });
+                if (!response.ok) throw new Error('Не вдалося завантажити кошик');
+                const items = await response.json();
+
+                if (!items.length) {
+                    cartTable.innerHTML = '<div class="empty-state">Кошик порожній.</div>';
+                    if (totalPriceEl) totalPriceEl.textContent = '0 ₴';
+                    if (checkoutBtn) checkoutBtn.disabled = true;
+                    if (checkoutForm) checkoutForm.hidden = true;
+                    return;
+                }
+
+                let total = 0;
+                cartTable.innerHTML = items.map(item => {
+                    const price = Number(item.product.price || 0);
+                    const quantity = Number(item.quantity || 1);
+                    const productId = item.product_id;
+                    total += price * quantity;
+                    return `
+                        <div class="cart-row">
+                            <div class="cart-product">
+                                <div class="thumb">${item.product.image_url ? `<img src="${item.product.image_url}" alt="${item.product.title}" />` : '<span>Фото</span>'}</div>
+                                <div>
+                                    <a href="/products/${productId}" class="cart-title">${item.product.title}</a>
+                                    <div class="cart-price">${price} ₴</div>
+                                </div>
+                            </div>
+                            <div class="qty-controls">
+                                <button type="button" class="qty-btn" data-qty-minus="${item.id}" data-product-id="${productId}">−</button>
+                                <input
+                                    type="number"
+                                    name="quantity"
+                                    min="1"
+                                    value="${quantity}"
+                                    data-item-id="${item.id}"
+                                    data-product-id="${productId}"
+                                    class="cart-quantity-input"
+                                />
+                                <button type="button" class="qty-btn" data-qty-plus="${item.id}" data-product-id="${productId}">+</button>
+                            </div>
+                            <button type="button" class="remove-btn" data-remove-item="${item.id}">Видалити</button>
+                        </div>
+                    `;
+                }).join('');
+
+                if (totalPriceEl) totalPriceEl.textContent = `${total} ₴`;
+                if (checkoutBtn) checkoutBtn.disabled = false;
+                if (checkoutForm) checkoutForm.hidden = false;
+
+                // Attach event listeners to the newly rendered cart items
+                attachCartEventListeners();
+            } catch (error) {
+                cartTable.innerHTML = '<div class="empty-state">Не вдалося завантажити кошик.</div>';
+            }
+        }
+
+        if (checkoutBtn) {
+            checkoutBtn.addEventListener('click', async function () {
+                if (checkoutStatus) {
+                    checkoutStatus.hidden = true;
+                    checkoutStatus.textContent = '';
+                }
+
+                const deliveryAddress = document.getElementById('delivery-address')?.value.trim();
+                const phone = document.getElementById('checkout-phone')?.value.trim();
+                const paymentMethod = document.getElementById('payment-method')?.value.trim() || 'Оплата при отриманні';
+
+                if (!deliveryAddress) {
+                    checkoutStatus.textContent = 'Вкажіть адресу або № відділення доставки.';
+                    checkoutStatus.hidden = false;
+                    return;
+                }
+
+                if (!phone) {
+                    checkoutStatus.textContent = 'Вкажіть контактний номер телефону.';
+                    checkoutStatus.hidden = false;
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/v1/orders/checkout', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            delivery_address: deliveryAddress,
+                            phone: phone,
+                            payment_method: paymentMethod
+                        })
+                    });
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        const detail = payload.detail;
+                        const message = Array.isArray(detail)
+                            ? detail.map(item => item.msg || item).join(', ')
+                            : (detail || 'Не вдалося оформити замовлення');
+                        throw new Error(message);
+                    }
+                    window.location.href = '/orders';
+                } catch (error) {
+                    if (checkoutStatus) {
+                        checkoutStatus.textContent = error.message || 'Помилка оформлення.';
+                        checkoutStatus.hidden = false;
+                    }
+                }
+            });
+        }
+
+        refreshCart();
+    });
+</script>
+
+<div class="container">
+    <section class="page-intro">
+        <span class="eyebrow">Кошик</span>
+        <h1>Ваше замовлення</h1>
+        <p>Перевірте товари перед оформленням та скоригуйте кількість.</p>
+    </section>
+
+    <div class="cart-container">
+        <div class="cart-items-section">
+            <div id="cart-table" class="cart-list"></div>
+        </div>
+
+        <div class="cart-summary-section">
+            <h3 class="summary-title">Оформлення замовлення</h3>
+            <form id="checkout-form" class="checkout-form" hidden>
+                <div class="summary-row">
+                    <span>Загальна сума</span>
+                    <strong id="cart-total-price">0 ₴</strong>
+                </div>
+
+                <label>
+                    <span>Адреса або № відділення доставки *</span>
+                    <input id="delivery-address" type="text" name="delivery_address" required placeholder="м. Київ, вул. Хрещатик, 1 або НП №12" />
+                </label>
+
+                <label>
+                    <span>Контактний телефон *</span>
+                    <input id="checkout-phone" type="tel" name="phone" required placeholder="+380XXXXXXXXX" />
+                </label>
+
+                <label>
+                    <span>Спосіб оплати</span>
+                    <select id="payment-method" name="payment_method">
+                        <option value="Оплата при отриманні" selected>Оплата при отриманні</option>
+                    </select>
+                </label>
+
+                <button id="checkout-btn" type="button" class="btn btn-primary" disabled>Оформити замовлення</button>
+                <div id="checkout-status" class="form-error" hidden></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

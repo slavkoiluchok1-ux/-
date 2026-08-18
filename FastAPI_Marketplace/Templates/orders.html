@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+
+{% block title %}Fast Money | Замовлення{% endblock %}
+
+{% block content %}
+<style>
+    .order-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 20px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .order-card:hover {
+        border-color: #93c5fd;
+        box-shadow: 0 4px 12px var(--shadow);
+    }
+
+    .order-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .order-header h3 {
+        margin: 0;
+    }
+
+    .order-item-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .order-item-line:last-child {
+        border-bottom: none;
+    }
+
+    .order-item-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .order-item-info img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+
+    .product-placeholder {
+        width: 60px;
+        height: 60px;
+        background: var(--surface-soft);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        font-size: 12px;
+    }
+
+    .order-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 16px;
+        margin-top: 16px;
+        border-top: 2px solid var(--border);
+        font-size: 1.2rem;
+        font-weight: 700;
+    }
+
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .modal-content {
+        max-width: 600px;
+        width: 90%;
+        margin: auto;
+        padding: 24px;
+        border-radius: 12px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: var(--muted);
+    }
+
+    .close-btn:hover {
+        color: var(--text);
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        color: var(--muted);
+    }
+
+    .detail-value {
+        font-weight: 600;
+    }
+
+    .detail-items {
+        margin: 20px 0;
+    }
+
+    .detail-item {
+        display: flex;
+        gap: 12px;
+        padding: 12px;
+        background: var(--surface-soft);
+        border-radius: 8px;
+        margin-bottom: 8px;
+    }
+
+    .detail-item img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 6px;
+    }
+
+    .detail-item-info {
+        flex: 1;
+    }
+
+    .detail-item-price {
+        text-align: right;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async function () {
+        const list = document.getElementById('orders-list');
+        const modal = document.getElementById('order-modal');
+        const modalContent = document.getElementById('modal-content');
+        const closeBtn = document.getElementById('close-modal');
+
+        try {
+            const response = await fetch('/api/v1/orders', { credentials: 'include' });
+            const orders = response.ok ? await response.json() : [];
+
+            if (!orders.length) {
+                list.innerHTML = '<div class="empty-state">У вас ще немає замовлень.</div>';
+                return;
+            }
+
+            list.innerHTML = orders.map(order => {
+                const itemsHtml = (order.items || []).map(item => `
+                    <div class="order-item-line">
+                        <div class="order-item-info">
+                            ${item.product_image ? `<img src="${item.product_image}" alt="${item.product_title}" />` : '<div class="product-placeholder">Фото</div>'}
+                            <div>
+                                <strong>${item.product_title || 'Товар'}</strong>
+                                <div>Кількість: ${item.quantity}</div>
+                            </div>
+                        </div>
+                        <div class="order-item-price">${Number(item.price_at_purchase || 0)} ₴</div>
+                    </div>
+                `).join('');
+
+                return `
+                    <article class="order-card" data-order-id="${order.id}">
+                        <div class="order-header">
+                            <div>
+                                <h3>Замовлення #${order.id}</h3>
+                                <p>${order.created_at ? new Date(order.created_at).toLocaleString('uk-UA') : 'Дата не вказана'}</p>
+                            </div>
+                            <span class="status-pill status-${order.status || 'created'}">${order.status || 'created'}</span>
+                        </div>
+                        ${itemsHtml}
+                        <div class="order-total">
+                            <span>Підсумок</span>
+                            <strong>${Number(order.total_price || 0)} ₴</strong>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+
+            // Add click handlers for order details
+            document.querySelectorAll('.order-card').forEach(card => {
+                card.addEventListener('click', async function () {
+                    const orderId = this.dataset.orderId;
+                    try {
+                        const response = await fetch(`/api/v1/orders/${orderId}`, { credentials: 'include' });
+                        if (window.handleAuthRedirect && window.handleAuthRedirect(response)) {
+                            return;
+                        }
+                        if (!response.ok) throw new Error('Не вдалося завантажити деталі замовлення');
+                        const order = await response.json();
+                        showOrderDetails(order);
+                    } catch (error) {
+                    }
+                });
+            });
+        } catch (error) {
+            list.innerHTML = '<div class="empty-state">Не вдалося завантажити замовлення.</div>';
+        }
+
+        function showOrderDetails(order) {
+            const statusLabels = {
+                'created': 'Створено',
+                'completed': 'Виконано',
+                'cancelled': 'Скасовано'
+            };
+
+            const itemsHtml = (order.items || []).map(item => `
+                <div class="detail-item">
+                    ${item.product_image ? `<img src="${item.product_image}" alt="${item.product_title}" />` : '<div class="product-placeholder">Фото</div>'}
+                    <div class="detail-item-info">
+                        <strong>${item.product_title || 'Товар'}</strong>
+                        <div>Кількість: ${item.quantity}</div>
+                    </div>
+                    <div class="detail-item-price">
+                        <div>${Number(item.price_at_purchase || 0)} ₴</div>
+                        <small>за одиницю</small>
+                    </div>
+                </div>
+            `).join('');
+
+            modalContent.innerHTML = `
+                <div class="modal-header">
+                    <h3>Деталі замовлення #${order.id}</h3>
+                    <button type="button" id="close-modal" class="close-btn">×</button>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Статус:</span>
+                    <span class="detail-value">${statusLabels[order.status] || order.status}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Дата:</span>
+                    <span class="detail-value">${order.created_at ? new Date(order.created_at).toLocaleString('uk-UA') : '-'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Адреса доставки:</span>
+                    <span class="detail-value">${order.delivery_address || '-'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Телефон:</span>
+                    <span class="detail-value">${order.phone || '-'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Спосіб оплати:</span>
+                    <span class="detail-value">${order.payment_method || '-'}</span>
+                </div>
+                <div class="detail-items">
+                    <h4>Товари:</h4>
+                    ${itemsHtml}
+                </div>
+                <div class="detail-row" style="font-size: 1.3rem; font-weight: 700; margin-top: 16px; padding-top: 16px; border-top: 2px solid var(--border);">
+                    <span class="detail-label">Загальна сума:</span>
+                    <span class="detail-value">${Number(order.total_price || 0)} ₴</span>
+                </div>
+            `;
+
+            modal.style.display = 'flex';
+            document.getElementById('close-modal').addEventListener('click', closeModal);
+            modal.addEventListener('click', function(event) {
+                if (event.target === modal) closeModal();
+            });
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+    });
+</script>
+
+<div class="container">
+    <section class="page-intro">
+        <span class="eyebrow">Замовлення</span>
+        <h1>Історія покупок</h1>
+        <p>Перегляд ваших замовлень, дат оформлення та фіксованих цін на момент купівлі.</p>
+    </section>
+
+    <div id="orders-list" class="orders-list"></div>
+</div>
+
+<div id="order-modal" class="modal" style="display: none;">
+    <div id="modal-content" class="modal-content"></div>
+</div>
+{% endblock %}

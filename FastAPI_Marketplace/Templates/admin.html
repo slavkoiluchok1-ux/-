@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+
+{% block title %}Fast Money | Адмін-панель{% endblock %}
+
+{% block content %}
+<div class="container admin-shell">
+    <section class="page-intro">
+        <span class="eyebrow">Адмін-панель</span>
+        <h1>Управління платформою</h1>
+        <p>Контролюйте користувачів, замовлення, скарги та статистику продажів у одному місці.</p>
+    </section>
+
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="usersTab">Користувачі</button>
+        <button class="tab-btn" data-tab="ordersTab">Замовлення</button>
+        <button class="tab-btn" data-tab="statsTab">Статистика</button>
+        <button class="tab-btn" data-tab="complaintsTab">Скарги</button>
+    </div>
+
+    <div id="usersTab" class="panel active">
+        <h2>Користувачі</h2>
+        <div id="usersList" class="loading">Завантаження...</div>
+    </div>
+
+    <div id="ordersTab" class="panel">
+        <h2>Замовлення</h2>
+        <div id="ordersList" class="loading">Завантаження...</div>
+    </div>
+
+    <div id="statsTab" class="panel">
+        <h2>Статистика продажів</h2>
+        <div id="statsContent" class="loading">Завантаження...</div>
+    </div>
+
+    <div id="complaintsTab" class="panel">
+        <h2>Скарги</h2>
+        <div id="complaintsList" class="loading">Завантаження...</div>
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/login';
+    }
+
+    const API_HEADERS = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+    };
+
+    async function apiFetch(url, options = {}) {
+        const response = await fetch(url, {
+            ...options,
+            headers: {
+                ...API_HEADERS,
+                ...(options.headers || {})
+            }
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(data.detail || 'Помилка запиту');
+        }
+        return data;
+    }
+
+    async function loadCurrentUser() {
+        try {
+            const user = await apiFetch('/api/v1/auth/me');
+            if (!(user.is_admin || user.is_superuser)) {
+                window.location.href = '/login';
+            }
+        } catch (error) {
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
+    }
+
+    async function loadUsers() {
+        try {
+            const users = await apiFetch('/api/v1/admin/users');
+            const list = document.getElementById('usersList');
+
+            if (!users.length) {
+                list.innerHTML = '<p>Користувачів немає.</p>';
+                return;
+            }
+
+            list.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Роль</th>
+                            <th>Активність</th>
+                            <th>Дія</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${users.map(user => `
+                            <tr>
+                                <td>${user.id}</td>
+                                <td>${user.username}</td>
+                                <td>${user.email}</td>
+                                <td>${user.is_superuser ? 'Superadmin' : user.is_admin ? 'Admin' : 'User'}</td>
+                                <td>${user.is_active ? 'Так' : 'Ні'}</td>
+                                <td>
+                                    ${user.is_superuser ? '<span class="badge">Superadmin</span>' : `
+                                        <select class="status-select" data-user-id="${user.id}">
+                                            <option value="false" ${!user.is_admin ? 'selected' : ''}>User</option>
+                                            <option value="true" ${user.is_admin ? 'selected' : ''}>Admin</option>
+                                        </select>
+                                        <button class="tiny-btn" data-role-user="${user.id}">Зберегти</button>
+                                    `}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            document.querySelectorAll('[data-role-user]').forEach(button => {
+                button.addEventListener('click', async function () {
+                    const userId = Number(this.dataset.roleUser);
+                    const select = document.querySelector(`select[data-user-id="${userId}"]`);
+                    const isAdmin = select.value === 'true';
+                    const originalText = this.textContent;
+
+                    try {
+                        await apiFetch(`/api/v1/admin/users/${userId}/role`, {
+                            method: 'PATCH',
+                            body: JSON.stringify({ is_admin: isAdmin })
+                        });
+                        if (window.flashButtonText) {
+                            window.flashButtonText(this, 'Збережено ✓', originalText, 1500);
+                        }
+                        setTimeout(loadUsers, 800);
+                    } catch (error) {
+                        if (window.flashButtonText) {
+                            window.flashButtonText(this, 'Помилка ✗', originalText, 2000);
+                        }
+                    }
+                });
+            });
+        } catch (error) {
+            document.getElementById('usersList').innerHTML = `<div class="error">${error.message}</div>`;
+        }
+    }
+
+    async function loadOrders() {
+        try {
+            const orders = await apiFetch('/api/v1/admin/orders');
+            const list = document.getElementById('ordersList');
+
+            if (!orders.length) {
+                list.innerHTML = '<p>Замовлень немає.</p>';
+                return;
+            }
+
+            list.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Користувач</th>
+                            <th>Сума</th>
+                            <th>Статус</th>
+                            <th>Дія</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${orders.map(order => `
+                            <tr>
+                                <td>${order.id}</td>
+                                <td>${order.user_id}</td>
+                                <td>${order.total_price}</td>
+                                <td>${order.status}</td>
+                                <td>
+                                    <select class="status-select" data-order-status="${order.id}">
+                                        <option value="new" ${order.status === 'new' ? 'selected' : ''}>new</option>
+                                        <option value="paid" ${order.status === 'paid' ? 'selected' : ''}>paid</option>
+                                        <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>shipped</option>
+                                        <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>completed</option>
+                                        <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>cancelled</option>
+                                    </select>
+                                    <button class="tiny-btn" data-order-id="${order.id}">Оновити</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            document.querySelectorAll('[data-order-id]').forEach(button => {
+                button.addEventListener('click', async function () {
+                    const orderId = Number(this.dataset.orderId);
+                    const select = document.querySelector(`select[data-order-status="${orderId}"]`);
+                    const status = select.value;
+                    const originalText = this.textContent;
+
+                    try {
+                        await apiFetch(`/api/v1/admin/orders/${orderId}/status`, {
+                            method: 'PATCH',
+                            body: JSON.stringify({ status })
+                        });
+                        if (window.flashButtonText) {
+                            window.flashButtonText(this, 'Оновлено ✓', originalText, 1500);
+                        }
+                        setTimeout(loadOrders, 800);
+                    } catch (error) {
+                        if (window.flashButtonText) {
+                            window.flashButtonText(this, 'Помилка ✗', originalText, 2000);
+                        }
+                    }
+                });
+            });
+        } catch (error) {
+            document.getElementById('ordersList').innerHTML = `<div class="error">${error.message}</div>`;
+        }
+    }
+
+    async function loadStats() {
+        try {
+            const stats = await apiFetch('/api/v1/admin/stats');
+            const content = document.getElementById('statsContent');
+            content.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Загальний прибуток</div>
+                        <div class="stat-value">${stats.total_revenue} грн</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Кількість замовлень</div>
+                        <div class="stat-value">${stats.total_orders}</div>
+                    </div>
+                </div>
+            `;
+        } catch (error) {
+            document.getElementById('statsContent').innerHTML = `<div class="error">${error.message}</div>`;
+        }
+    }
+
+    async function loadComplaints() {
+        try {
+            const complaints = await apiFetch('/api/v1/admin/complaints');
+            const list = document.getElementById('complaintsList');
+
+            if (!complaints.length) {
+                list.innerHTML = '<p>Скарг немає.</p>';
+                return;
+            }
+
+            list.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Користувач</th>
+                            <th>Тема</th>
+                            <th>Текст</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${complaints.map(item => `
+                            <tr>
+                                <td>${item.id}</td>
+                                <td>${item.user_id}</td>
+                                <td>${item.title}</td>
+                                <td>${item.text}</td>
+                                <td><span class="badge">${item.status}</span></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        } catch (error) {
+            document.getElementById('complaintsList').innerHTML = `<div class="error">${error.message}</div>`;
+        }
+    }
+
+    document.querySelectorAll('.tab-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
+            button.classList.add('active');
+            document.getElementById(button.dataset.tab).classList.add('active');
+        });
+    });
+
+    loadCurrentUser();
+    loadUsers();
+    loadOrders();
+    loadStats();
+    loadComplaints();
+</script>
+{% endblock %}

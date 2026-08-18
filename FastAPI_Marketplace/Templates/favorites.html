@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Fast Money | Обране{% endblock %}
+
+{% block content %}
+<style>
+    .page-wrap {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .favorites-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 18px;
+        margin-top: 24px;
+        justify-content: center;
+        justify-items: center;
+    }
+
+    .favorite-item {
+        width: 100%;
+        max-width: 300px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+        align-items: stretch;
+        transition: all 0.2s;
+    }
+
+    .favorite-item:hover {
+        border-color: #93c5fd;
+        box-shadow: 0 4px 12px var(--shadow);
+    }
+
+    .favorite-image {
+        aspect-ratio: 4 / 3;
+        background: var(--surface-soft);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .favorite-image a { width: 100%; height: 100%; display: block; }
+    .favorite-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .product-placeholder {
+        color: var(--muted);
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+    }
+
+    .favorite-content {
+        padding: 14px 16px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        flex: 1;
+        text-align: center;
+        align-items: center;
+    }
+
+    .favorite-content h3 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .favorite-content h3 a {
+        color: var(--text);
+        text-decoration: none;
+    }
+
+    .favorite-content h3 a:hover {
+        color: #93c5fd;
+    }
+
+    .favorite-content p {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        width: 100%;
+    }
+
+    .favorite-meta {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        margin-top: auto;
+        font-size: 13px;
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .favorite-price {
+        font-weight: 700;
+        color: var(--text);
+        font-size: 1.15rem;
+    }
+
+    .favorite-stock {
+        color: var(--muted);
+    }
+
+    .favorite-actions {
+        display: flex;
+        gap: 8px;
+        padding: 0 16px 16px;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .favorite-actions .btn {
+        width: 100%;
+        max-width: 260px;
+    }
+
+    .empty-state {
+        padding: 60px 20px;
+        text-align: center;
+        background: var(--bg-card);
+        border: 1px dashed var(--border);
+        border-radius: 14px;
+        color: var(--muted);
+        max-width: 600px;
+        margin: 24px auto;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async function () {
+        const list = document.getElementById('favorites-list');
+        try {
+            const response = await fetch('/api/v1/favorites', { credentials: 'include' });
+
+            if (window.handleAuthRedirect && window.handleAuthRedirect(response)) {
+                return;
+            }
+
+            if (!response.ok) throw new Error('Не вдалося завантажити обране');
+            const items = await response.json();
+
+            if (!items.length) {
+                list.innerHTML = '<div class="empty-state">У вас поки що немає обраних товарів.</div>';
+                return;
+            }
+
+            list.innerHTML = items.map(item => {
+                const product = item.product || {};
+                const title = product.title ? product.title.replace(/"/g, '&quot;') : '';
+                const desc = product.description ? (product.description.slice(0, 80) + (product.description.length > 80 ? '...' : '')).replace(/"/g, '&quot;') : 'Без опису';
+                const price = product.price != null ? product.price : 0;
+                const quantity = product.quantity != null ? product.quantity : 0;
+                const image = product.image_url
+                    ? `<a href="/products/${item.product_id}"><img src="${product.image_url.replace(/"/g, '&quot;')}" alt="${title}" /></a>`
+                    : `<a href="/products/${item.product_id}" class="product-placeholder">Без фото</a>`;
+                return `
+                <article class="favorite-item">
+                    <div class="favorite-image">
+                        ${image}
+                    </div>
+                    <div class="favorite-content">
+                        <h3><a href="/products/${item.product_id}">${title}</a></h3>
+                        <p>${desc}</p>
+                        <div class="favorite-meta">
+                            <span class="favorite-price">${price} ₴</span>
+                            <span class="favorite-stock">В наявності: ${quantity}</span>
+                        </div>
+                    </div>
+                    <div class="favorite-actions">
+                        <a href="/products/${item.product_id}" class="btn btn-primary">Переглянути</a>
+                    </div>
+                </article>
+                `;
+            }).join('');
+        } catch (error) {
+            list.innerHTML = '<div class="empty-state">Не вдалося завантажити обране.</div>';
+        }
+    });
+</script>
+
+<div class="page-wrap">
+    <section class="page-intro">
+        <span class="eyebrow">Обране</span>
+        <h1>Збережені товари</h1>
+        <p>Товари, які ви відзначили як цікаві та хочете переглянути пізніше.</p>
+    </section>
+
+    <div id="favorites-list" class="favorites-grid"></div>
+</div>
+{% endblock %}

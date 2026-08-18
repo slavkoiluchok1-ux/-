@@ -1,0 +1,517 @@
+{% extends "base.html" %}
+
+{% block title %}Fast Money | {{ product.title }}{% endblock %}
+
+{% block content %}
+<style>
+    .product-detail-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 340px;
+        gap: 28px;
+        align-items: start;
+        margin-top: 20px;
+    }
+
+    .product-detail-main {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .product-gallery {
+        display: grid;
+        gap: 12px;
+    }
+
+    .product-gallery img,
+    .product-gallery video {
+        width: 100%;
+        max-height: 520px;
+        object-fit: cover;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+    }
+
+    .product-detail-main h1 {
+        margin: 0;
+        font-size: 2rem;
+    }
+
+    .product-description {
+        line-height: 1.6;
+        color: var(--muted);
+    }
+
+    .purchase-card {
+        position: sticky;
+        top: 92px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        box-shadow: 0 16px 40px var(--shadow);
+    }
+
+    .purchase-card .price-block {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #93c5fd;
+    }
+
+    .purchase-card .stock-line {
+        color: var(--muted);
+    }
+
+    .quantity-field {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .quantity-field input[type="number"] {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: var(--surface-soft);
+        color: var(--text);
+    }
+
+    .purchase-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .purchase-actions .btn {
+        width: 100%;
+    }
+
+    .seller-box {
+        margin-top: 8px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 900px) {
+        .product-detail-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .purchase-card {
+            position: static;
+        }
+    }
+
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .modal-content {
+        max-width: 500px;
+        width: 90%;
+        margin: auto;
+        padding: 24px;
+        border-radius: 12px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: var(--muted);
+    }
+
+    .close-btn:hover {
+        color: var(--text);
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const complaintModal = document.getElementById('complaint-modal');
+        const complaintForm = document.getElementById('complaint-form');
+        const complaintMessage = document.getElementById('complaint-message');
+        const reviewForm = document.getElementById('review-form');
+        const reviewError = document.getElementById('review-error');
+        const productId = Number('{{ product.id }}');
+
+        const openComplaintModal = () => {
+            if (complaintModal) complaintModal.style.display = 'flex';
+        };
+        const closeComplaintModal = () => {
+            if (complaintModal) complaintModal.style.display = 'none';
+        };
+
+        document.querySelectorAll('[data-complaint-open]').forEach((btn) => {
+            btn.addEventListener('click', openComplaintModal);
+        });
+
+        document.getElementById('close-complaint-modal')?.addEventListener('click', closeComplaintModal);
+        complaintModal?.addEventListener('click', function (event) {
+            if (event.target === complaintModal) closeComplaintModal();
+        });
+
+        complaintForm?.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            complaintMessage.hidden = true;
+            complaintMessage.textContent = '';
+
+            const formData = new FormData(complaintForm);
+            const reasonText = String(formData.get('reason') || '').trim();
+            const descText = String(formData.get('description') || '').trim();
+
+            try {
+                const response = await fetch('/api/v1/complaints', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        product_id: productId,
+                        reason: reasonText,
+                        description: descText || null
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({ detail: 'Не вдалося надіслати скаргу.' }));
+                    const detail = error.detail;
+                    const message = Array.isArray(detail)
+                        ? detail.map(item => item.msg || item).join(', ')
+                        : (detail || 'Не вдалося надіслати скаргу.');
+                    throw new Error(message);
+                }
+
+                complaintMessage.textContent = 'Скаргу успішно надіслано.';
+                complaintMessage.style.color = '#7ce3a1';
+                complaintMessage.hidden = false;
+                complaintForm.reset();
+                setTimeout(closeComplaintModal, 900);
+            } catch (error) {
+                complaintMessage.textContent = error.message || 'Не вдалося надіслати скаргу.';
+                complaintMessage.style.color = '#ffb6b6';
+                complaintMessage.hidden = false;
+            }
+        });
+
+        reviewForm?.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            reviewError.hidden = true;
+            reviewError.textContent = '';
+
+            const formData = new FormData(reviewForm);
+            try {
+                const response = await fetch('/api/v1/products/{{ product.id }}/reviews', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({ detail: 'Не вдалося додати відгук.' }));
+                    throw new Error(error.detail || 'Не вдалося додати відгук.');
+                }
+
+                window.location.reload();
+            } catch (error) {
+                reviewError.textContent = error.message || 'Не вдалося додати відгук.';
+                reviewError.hidden = false;
+            }
+        });
+
+        document.querySelectorAll('.add-to-cart').forEach((button) => {
+            button.addEventListener('click', async function () {
+                const quantityInput = document.getElementById('cart-quantity');
+                const quantity = Math.max(1, Number(quantityInput?.value || 1));
+                const originalText = this.textContent;
+
+                try {
+                    const response = await fetch('/api/v1/cart/add', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            product_id: productId,
+                            quantity: quantity
+                        })
+                    });
+
+                    if (window.handleAuthRedirect && window.handleAuthRedirect(response)) {
+                        return;
+                    }
+
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        if (window.flashButtonText) {
+                            window.flashButtonText(this, 'Помилка ✗', originalText, 2000);
+                        }
+                        return;
+                    }
+
+                    if (window.flashButtonText) {
+                        window.flashButtonText(this, 'Додано ✓', originalText, 2000);
+                    }
+                    if (typeof updateCartCount === 'function') {
+                        updateCartCount();
+                    }
+                } catch (error) {
+                    if (window.flashButtonText) {
+                        window.flashButtonText(this, 'Помилка ✗', originalText, 2000);
+                    }
+                }
+            });
+        });
+
+        document.querySelectorAll('.favorite-btn').forEach((button) => {
+            button.addEventListener('click', async function () {
+                const originalText = this.textContent;
+                try {
+                    const response = await fetch(`/api/v1/favorites/${productId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include'
+                    });
+
+                    if (window.handleAuthRedirect && window.handleAuthRedirect(response)) {
+                        return;
+                    }
+
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        if (window.flashButtonText) {
+                            window.flashButtonText(this, 'Помилка ✗', originalText, 2000);
+                        }
+                        return;
+                    }
+
+                    const isAdded = (payload.message || '').includes('додано');
+                    if (isAdded) {
+                        button.textContent = 'В обран ✓';
+                        button.classList.remove('btn-outline');
+                        button.classList.add('btn-primary');
+                        setTimeout(() => {
+                            if (typeof updateFavoritesCount === 'function') {
+                                updateFavoritesCount();
+                            }
+                        }, 50);
+                    } else {
+                        button.textContent = 'Видалено ✓';
+                        button.classList.remove('btn-primary');
+                        button.classList.add('btn-outline');
+                        setTimeout(() => {
+                            if (typeof updateFavoritesCount === 'function') {
+                                updateFavoritesCount();
+                            }
+                        }, 50);
+                        setTimeout(() => {
+                            button.textContent = 'В обране';
+                        }, 2000);
+                    }
+                } catch (error) {
+                    if (window.flashButtonText) {
+                        window.flashButtonText(this, 'Помилка ✗', originalText, 2000);
+                    }
+                }
+            });
+        });
+
+        document.querySelectorAll('[data-complaint-open]').forEach((btn) => {
+            btn.addEventListener('click', function () {
+                {% if not current_user %}
+                window.location.href = '/login';
+                {% else %}
+                openComplaintModal();
+                {% endif %}
+            });
+        });
+    });
+</script>
+
+<div class="container product-detail-page">
+    <a href="/catalog" class="back-link">← До каталогу</a>
+
+    <div class="product-detail-grid">
+        <div class="product-detail-main">
+            <div class="product-gallery">
+                {% if product.media %}
+                    {% for media in product.media %}
+                        {% if media.media_type == 'photo' %}
+                            <img src="{{ media.file_path }}" alt="{{ product.title }}" />
+                        {% else %}
+                            <video controls src="{{ media.file_path }}"></video>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-media">Без медіа</div>
+                {% endif %}
+            </div>
+
+            <div>
+                <h1>{{ product.title }}</h1>
+                <div class="rating-line">
+                    <span class="stars">{% for i in range(1, 6) %}{% if i <= average_rating %}★{% else %}☆{% endif %}{% endfor %}</span>
+                    <span>{{ average_rating }} / 5</span>
+                    <span>({{ reviews_count }} відгуків)</span>
+                </div>
+            </div>
+
+            <p class="product-description">{{ product.description }}</p>
+
+            <section class="review-section">
+                <h2>Відгуки</h2>
+
+                {% if current_user %}
+                <form id="review-form" class="review-form" enctype="multipart/form-data">
+                    <div class="form-grid">
+                        <label>
+                            <span>Оцінка</span>
+                            <select name="rating" required>
+                                <option value="5">5/5</option>
+                                <option value="4">4/5</option>
+                                <option value="3">3/5</option>
+                                <option value="2">2/5</option>
+                                <option value="1">1/5</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Фото/відео (до 1 ГБ)</span>
+                            <input type="file" name="files" multiple accept="image/*,video/*" />
+                        </label>
+                    </div>
+
+                    <label>
+                        <span>Коментар</span>
+                        <textarea name="comment" rows="4" placeholder="Поділіться враженням від товару..."></textarea>
+                    </label>
+
+                    <div id="review-error" class="form-error" hidden></div>
+                    <button type="submit" class="btn btn-primary">Залишити відгук</button>
+                </form>
+                {% else %}
+                <p>Увійдіть, щоб залишити відгук.</p>
+                {% endif %}
+
+                <div class="reviews-list">
+                    {% if reviews %}
+                        {% for review in reviews %}
+                        <article class="review-item">
+                            <div class="review-header">
+                                <div>
+                                    <strong>{{ review.username or 'Користувач' }}</strong>
+                                    <div class="stars small">{% for i in range(1, 6) %}{% if i <= review.rating %}★{% else %}☆{% endif %}{% endfor %}</div>
+                                </div>
+                            </div>
+                            <p>{{ review.comment or 'Без коментаря' }}</p>
+                            {% if review.media %}
+                            <div class="review-media-row">
+                                {% for item in review.media %}
+                                    {% if item.media_type == 'photo' %}
+                                        <img src="{{ item.file_path }}" alt="review media" />
+                                    {% else %}
+                                        <video controls src="{{ item.file_path }}"></video>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </article>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">Поки що немає відгуків.</div>
+                    {% endif %}
+                </div>
+            </section>
+        </div>
+
+        <aside class="purchase-card">
+            <div class="price-block">{{ product.price }} ₴</div>
+            <div class="stock-line">В наявності: {{ product.quantity }}</div>
+
+            <label class="quantity-field">
+                <span>Кількість</span>
+                <input id="cart-quantity" type="number" name="quantity" value="1" min="1" />
+            </label>
+
+            <div class="purchase-actions">
+                <button type="button" class="btn btn-primary add-to-cart" data-product-id="{{ product.id }}">Додати в кошик</button>
+                <button type="button" class="btn btn-outline favorite-btn" data-product-id="{{ product.id }}">В обране</button>
+                <button type="button" class="btn btn-danger" data-complaint-open>Поскаржитися</button>
+            </div>
+
+            <div class="seller-box">
+                <h3>Продавець</h3>
+                {% if seller %}
+                    <p><strong>Ім'я:</strong> {{ seller.display_name or seller.username }}</p>
+                    {% if product.seller_phone %}
+                        <p><strong>Телефон:</strong> {{ product.seller_phone }}</p>
+                    {% endif %}
+                {% else %}
+                    <p>Контакти недоступні.</p>
+                {% endif %}
+            </div>
+        </aside>
+    </div>
+</div>
+
+<div id="complaint-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Поскаржитися</h3>
+            <button type="button" id="close-complaint-modal" class="close-btn">×</button>
+        </div>
+
+        <form id="complaint-form">
+            <label>
+                <span>Причина</span>
+                <select name="reason" required>
+                    <option value="profanity">Нецензурна лексика</option>
+                    <option value="threats">Погрози</option>
+                    <option value="sexual_content">Контент сексуального характеру</option>
+                    <option value="scam">Шахрайство</option>
+                    <option value="spam">Спам / Реклама</option>
+                    <option value="other">Інше</option>
+                </select>
+            </label>
+
+            <label>
+                <span>Опис</span>
+                <textarea name="description" rows="5" placeholder="Опишіть проблему..."></textarea>
+            </label>
+
+            <div id="complaint-message" class="form-error" hidden></div>
+            <button type="submit" class="btn btn-danger">Надіслати</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

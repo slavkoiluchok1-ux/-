@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Fast Money | Реєстрація{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <h1>Реєстрація</h1>
+    <p class="subtitle">Створіть обліковий запис у Fast Money</p>
+
+    <form id="registerForm">
+        <div class="form-group">
+            <label for="username">Ім'я користувача</label>
+            <input id="username" name="username" type="text" placeholder="Введіть username" required />
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" placeholder="Введіть email" required />
+        </div>
+
+        <div class="form-group">
+            <label for="password">Пароль</label>
+            <input id="password" name="password" type="password" placeholder="Введіть пароль" required />
+        </div>
+
+        <button type="submit">Зареєструватися</button>
+        <div id="message" class="message" aria-live="polite"></div>
+    </form>
+
+    <div class="link-row">
+        Вже маєте акаунт? <a href="/login">Увійти</a>
+    </div>
+</div>
+
+<script>
+    const form = document.getElementById('registerForm');
+    const message = document.getElementById('message');
+
+    form.addEventListener('submit', async function (event) {
+        event.preventDefault();
+        message.textContent = '';
+        message.className = 'message';
+
+        const payload = {
+            username: document.getElementById('username').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            password: document.getElementById('password').value
+        };
+
+        if (!payload.username || !payload.email || !payload.password) {
+            showMessage('Будь ласка, заповніть всі поля.', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/v1/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const responseText = await response.text();
+            let data = {};
+            try {
+                data = responseText ? JSON.parse(responseText) : {};
+            } catch (error) {
+                data = { detail: responseText || 'Помилка реєстрації' };
+            }
+
+            if (response.status === 503) {
+                showMessage('База даних недоступна. Переконайтеся, що PostgreSQL запущено.', 'error');
+                return;
+            }
+
+            if (response.ok) {
+                const tokenData = data.access_token ? data : JSON.parse(responseText);
+                if (tokenData.access_token) {
+                    localStorage.setItem('token', tokenData.access_token);
+                }
+                showMessage('Реєстрація успішна! Входимо в акаунт...', 'success');
+                setTimeout(() => window.location.href = '/', 1500);
+                return;
+            }
+
+            const errorMessage = Array.isArray(data.detail)
+                ? data.detail.map(item => item.msg || item).join(', ')
+                : (data.detail || 'Помилка реєстрації');
+
+            showMessage(errorMessage, 'error');
+        } catch (error) {
+            showMessage(error.message || 'Помилка реєстрації', 'error');
+        }
+    });
+
+    function showMessage(text, type) {
+        message.textContent = text;
+        message.classList.add(type);
+    }
+</script>
+{% endblock %}

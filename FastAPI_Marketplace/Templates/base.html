@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Fast Money{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <style>
+        .cart-count {
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+            margin-left: 4px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="container nav-inner">
+            <a href="/" class="brand">Fast Money</a>
+            <nav class="nav-links">
+                <a href="/">Головна</a>
+                <a href="/catalog">Каталог</a>
+                <a href="/cart">Кошик <span class="cart-count" id="cart-count">0</span></a>
+                <a href="/favorites">Обране <span class="cart-count" id="fav-count" style="background:#10b981;">0</span></a>
+                <a href="/orders">Замовлення</a>
+                <a href="/complaints">Скарги</a>
+                <a href="/resume">Резюме</a>
+
+                {% if current_user and (current_user.is_admin or current_user.is_superuser) %}
+                    <a href="/admin">Адмін-панель</a>
+                {% endif %}
+
+                {% if current_user %}
+                    {% if current_user.role not in ['admin', 'superadmin'] %}
+                        <a href="/my-products">Мої товари</a>
+                    {% endif %}
+                    <a href="/profile" class="user-badge">{{ current_user.display_name or current_user.username }}</a>
+                    <a href="/logout" class="btn btn-secondary">Вийти</a>
+                {% else %}
+                    <a href="/login">Увійти</a>
+                    <a href="/register">Зареєструватися</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <main class="page-shell">
+        {% block content %}{% endblock %}
+    </main>
+
+    <div id="add-product-modal" class="app-modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="app-modal-backdrop" data-close-add-product="1"></div>
+        <div class="app-modal-dialog" role="document">
+            <div class="app-modal-header">
+                <h3>Додати свій товар</h3>
+                <button type="button" class="app-modal-close" data-close-add-product="1" aria-label="Закрити">&times;</button>
+            </div>
+            <div class="app-modal-body">
+                <form id="add-product-form" method="post" action="/api/v1/products" enctype="multipart/form-data" class="product-form-card">
+                    <div id="add-product-form-error" class="form-success" style="display:none;background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.35);color:#fca5a5;margin-bottom:14px;"></div>
+                    <div class="form-grid">
+                        <label>
+                            <span>Назва</span>
+                            <input type="text" name="title" required>
+                        </label>
+                        <label>
+                            <span>Ціна</span>
+                            <input type="number" name="price" min="0" required>
+                        </label>
+                        <label>
+                            <span>Кількість в наявності</span>
+                            <input type="number" name="quantity" min="0" required>
+                        </label>
+                        <label>
+                            <span>Номер телефону для зв'язку</span>
+                            <input type="text" name="seller_phone" id="add-product-phone" placeholder="За замовчуванням з вашого профілю">
+                        </label>
+                    </div>
+                    <label>
+                        <span>Опис</span>
+                        <textarea name="description" rows="4" required></textarea>
+                    </label>
+                    <label>
+                        <span>Фото або відео (до 1 ГБ)</span>
+                        <input type="file" name="files" multiple accept="image/*,video/*">
+                    </label>
+                </form>
+            </div>
+            <div class="app-modal-footer">
+                <button type="button" class="btn btn-secondary" data-close-add-product="1">Скасувати</button>
+                <button type="submit" form="add-product-form" class="btn btn-primary">Зберегти товар</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function updateCartCount() {
+            try {
+                const response = await fetch('/api/v1/cart', { credentials: 'include' });
+                if (response.ok) {
+                    const items = await response.json();
+                    const cartCount = document.getElementById('cart-count');
+                    if (cartCount) {
+                        const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+                        cartCount.textContent = totalItems;
+                        cartCount.style.display = totalItems > 0 ? 'inline' : 'none';
+                    }
+                }
+            } catch (error) {
+            }
+        }
+
+        async function updateFavoritesCount() {
+            try {
+                const response = await fetch('/api/v1/favorites', { credentials: 'include' });
+                if (response.ok) {
+                    const items = await response.json();
+                    const favCount = document.getElementById('fav-count');
+                    if (favCount) {
+                        favCount.textContent = items.length;
+                        favCount.style.display = items.length > 0 ? 'inline' : 'none';
+                    }
+                }
+            } catch (error) {
+            }
+        }
+
+        function flashButtonText(button, tempText, originalText, durationMs) {
+            if (!button) return;
+            const original = originalText ?? button.textContent;
+            button.disabled = true;
+            button.textContent = tempText;
+            setTimeout(() => {
+                button.textContent = original;
+                button.disabled = false;
+            }, durationMs || 2000);
+        }
+
+        function handleAuthRedirect(response) {
+            if (response && response.status === 401) {
+                window.location.href = '/login';
+                return true;
+            }
+            return false;
+        }
+
+        function openAddProductModal(defaultPhone) {
+            const modal = document.getElementById('add-product-modal');
+            const form = document.getElementById('add-product-form');
+            const errEl = document.getElementById('add-product-form-error');
+            const phoneInput = document.getElementById('add-product-phone');
+            if (!modal || !form) return;
+            if (form) form.reset();
+            if (errEl) {
+                errEl.style.display = 'none';
+                errEl.textContent = '';
+            }
+            if (phoneInput && defaultPhone) {
+                phoneInput.value = defaultPhone;
+            }
+            modal.classList.add('open');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeAddProductModal() {
+            const modal = document.getElementById('add-product-modal');
+            const form = document.getElementById('add-product-form');
+            const errEl = document.getElementById('add-product-form-error');
+            if (!modal) return;
+            modal.classList.remove('open');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+            if (form) form.reset();
+            if (errEl) {
+                errEl.style.display = 'none';
+                errEl.textContent = '';
+            }
+        }
+
+        function bindAddProductModalEvents() {
+            const modal = document.getElementById('add-product-modal');
+            const form = document.getElementById('add-product-form');
+            if (!modal || !form) return;
+
+            document.querySelectorAll('[data-close-add-product]').forEach(function (el) {
+                el.addEventListener('click', closeAddProductModal);
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && modal.classList.contains('open')) {
+                    closeAddProductModal();
+                }
+            });
+
+            form.addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const errEl = document.getElementById('add-product-form-error');
+                if (errEl) {
+                    errEl.style.display = 'none';
+                    errEl.textContent = '';
+                }
+
+                const formData = new FormData(form);
+                formData.set('seller_phone', formData.get('seller_phone') || '');
+
+                const submitBtn = modal.querySelector('button[type="submit"][form="add-product-form"]');
+                const originalBtnText = submitBtn ? submitBtn.textContent : null;
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Збереження...';
+                }
+
+                try {
+                    const response = await fetch('/api/v1/products', {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'include',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    if (response.ok) {
+                        closeAddProductModal();
+                        window.location.reload();
+                        return;
+                    }
+
+                    let errorMessage = 'Помилка: виберіть правильне фото або відео';
+                    try {
+                        const payload = await response.json();
+                        if (payload && payload.detail) {
+                            errorMessage = payload.detail;
+                        }
+                    } catch (_) {
+                        errorMessage = 'Помилка: перевірте введені дані.';
+                    }
+
+                    if (errEl) {
+                        errEl.textContent = errorMessage;
+                        errEl.style.display = 'block';
+                    }
+                } catch (error) {
+                    if (errEl) {
+                        errEl.textContent = 'Помилка: виберіть правильне фото або відео';
+                        errEl.style.display = 'block';
+                    }
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = originalBtnText;
+                    }
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            updateCartCount();
+            updateFavoritesCount();
+            bindAddProductModalEvents();
+        });
+
+        window.updateCartCount = updateCartCount;
+        window.updateFavoritesCount = updateFavoritesCount;
+        window.flashButtonText = flashButtonText;
+        window.handleAuthRedirect = handleAuthRedirect;
+        window.openAddProductModal = openAddProductModal;
+        window.closeAddProductModal = closeAddProductModal;
+    </script>
+</body>
+</html>

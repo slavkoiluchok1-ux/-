@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Fast Money | Мій профіль{% endblock %}
+
+{% block content %}
+<div class="container">
+    <section class="page-intro">
+        <span class="eyebrow">Профіль</span>
+        <h1>Мій акаунт</h1>
+        <p>Особиста інформація та налаштування облікового запису.</p>
+    </section>
+
+    {% if profile_message %}
+        <div class="form-success">{{ profile_message }}</div>
+    {% endif %}
+    {% if profile_error %}
+        <div class="form-error">{{ profile_error }}</div>
+    {% endif %}
+
+    <div class="profile-grid">
+        <section class="resume-card profile-info-card">
+            <h3>Інформація про акаунт</h3>
+            <dl class="profile-details">
+                <div>
+                    <dt>Ім'я / Username</dt>
+                    <dd>{{ current_user.display_name or current_user.username }}</dd>
+                </div>
+                <div>
+                    <dt>Логін</dt>
+                    <dd>{{ current_user.username }}</dd>
+                </div>
+                <div>
+                    <dt>Email</dt>
+                    <dd>{{ current_user.email }}</dd>
+                </div>
+                <div>
+                    <dt>Роль</dt>
+                    <dd>{{ user_role }}</dd>
+                </div>
+                <div>
+                    <dt>Дата реєстрації</dt>
+                    <dd>
+                        {% if current_user.created_at %}
+                            {{ current_user.created_at.strftime('%d.%m.%Y %H:%M') }}
+                        {% else %}
+                            Невідомо
+                        {% endif %}
+                    </dd>
+                </div>
+            </dl>
+
+            <div class="action-row">
+                <a href="/resume" class="btn btn-primary">Моє резюме</a>
+            </div>
+        </section>
+
+        <section class="resume-card profile-form-card">
+            <h3>Редагування даних акаунту</h3>
+            <form method="post" action="/profile" class="profile-form">
+                <label>
+                    <span>Відображуване ім'я</span>
+                    <input type="text" name="display_name" value="{{ current_user.display_name or '' }}" placeholder="Ваше ім'я">
+                </label>
+                <label>
+                    <span>Username *</span>
+                    <input type="text" name="username" value="{{ current_user.username }}" required>
+                </label>
+                <label>
+                    <span>Email *</span>
+                    <input type="email" name="email" value="{{ current_user.email }}" required>
+                </label>
+                <button type="submit" class="btn btn-primary">Зберегти зміни</button>
+            </form>
+        </section>
+
+        <section class="resume-card profile-form-card">
+            <h3>Зміна паролю</h3>
+            <form method="post" action="/profile/password" class="profile-form">
+                <label>
+                    <span>Поточний пароль *</span>
+                    <input type="password" name="current_password" required autocomplete="current-password">
+                </label>
+                <label>
+                    <span>Новий пароль *</span>
+                    <input type="password" name="new_password" required minlength="6" autocomplete="new-password">
+                </label>
+                <label>
+                    <span>Підтвердження паролю *</span>
+                    <input type="password" name="confirm_password" required minlength="6" autocomplete="new-password">
+                </label>
+                <button type="submit" class="btn btn-secondary">Змінити пароль</button>
+            </form>
+        </section>
+    </div>
+</div>
+{% endblock %}

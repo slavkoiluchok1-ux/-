@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Fast Money | Резюме{% endblock %}
+
+{% block content %}
+<div class="container">
+    <section class="page-intro">
+        {% if is_owner %}
+            <span class="eyebrow">Резюме</span>
+            <h1>Моє резюме</h1>
+            <p>Заповніть інформацію про бажану посаду, досвід, навички та контакти для роботодавців.</p>
+            <p><a href="/profile" class="back-link">← Повернутися до профілю</a></p>
+        {% else %}
+            <span class="eyebrow">Резюме кандидата</span>
+            <h1>{{ profile_user.display_name or profile_user.username }}</h1>
+            <p>Публічний перегляд резюме фахівця.</p>
+        {% endif %}
+    </section>
+
+    {% if is_owner %}
+    <form method="post" action="/resume" enctype="multipart/form-data" class="resume-card resume-form">
+        <h3>Дані резюме</h3>
+
+        <div class="form-grid">
+            <label>
+                <span>Бажана посада / спеціальність *</span>
+                <input type="text" name="title" value="{{ resume.title or resume.specialty or '' }}" placeholder="Python / FastAPI Developer" required>
+            </label>
+            <label>
+                <span>Досвід роботи</span>
+                <input type="text" name="experience_years" value="{{ resume.experience_years or resume.experience or '' }}" placeholder="3 роки">
+            </label>
+            <label>
+                <span>Навички</span>
+                <input type="text" name="skills" value="{{ resume.skills or '' }}" placeholder="Python, FastAPI, SQLAlchemy, Docker">
+            </label>
+            <label>
+                <span>Telegram</span>
+                <input type="text" name="telegram" value="{{ resume.telegram or '' }}" placeholder="@username">
+            </label>
+            <label>
+                <span>Телефон</span>
+                <input type="text" name="phone" value="{{ resume.phone or '' }}" placeholder="+380...">
+            </label>
+            <label>
+                <span>Email для зв'язку</span>
+                <input type="email" name="public_email" value="{{ resume.public_email or '' }}" placeholder="you@example.com">
+            </label>
+        </div>
+
+        <label>
+            <span>Опис про себе / короткий опис досвіду</span>
+            <textarea name="summary" rows="6" placeholder="Розкажіть, чим ви займаєтесь, який досвід маєте та які задачі вмієте вирішувати.">{{ resume.summary or resume.bio or '' }}</textarea>
+        </label>
+
+        <label>
+            <span>Контакти для зв'язку</span>
+            <textarea name="public_contacts" rows="4" placeholder="Phone: +380...&#10;Telegram: @username&#10;Email: hello@example.com">{{ resume.public_contacts or '' }}</textarea>
+        </label>
+
+        <label>
+            <span>Файл CV (PDF, DOCX або фото)</span>
+            <input type="file" name="cv_file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp">
+            {% if resume and resume.cv_file_path %}
+                <div class="resume-upload-note">
+                    Поточний файл: <a href="{{ resume.cv_file_path }}" target="_blank" rel="noreferrer">Переглянути CV</a>
+                </div>
+            {% endif %}
+        </label>
+
+        <div class="action-row">
+            <button type="submit" class="btn btn-primary">Опублікувати резюме</button>
+        </div>
+    </form>
+    {% else %}
+    <div class="resume-card public-resume-card">
+        <div class="resume-header">
+            <div>
+                <span class="eyebrow">Спеціальність</span>
+                <h2>{{ resume.title or resume.specialty or profile_user.display_name or profile_user.username }}</h2>
+            </div>
+            {% if resume and resume.experience_years %}
+                <span class="status-pill">{{ resume.experience_years }}</span>
+            {% endif %}
+        </div>
+
+        {% if resume and resume.specialty %}
+            <p class="resume-specialty">{{ resume.specialty }}</p>
+        {% endif %}
+
+        {% if resume and resume.summary %}
+            <div class="profile-block">
+                <h3>Про себе</h3>
+                <p>{{ resume.summary }}</p>
+            </div>
+        {% endif %}
+
+        {% if resume and resume.skills %}
+            <div class="profile-block">
+                <h3>Навички</h3>
+                <div class="tag-list">
+                    {% for skill in resume.skills.split(',') %}
+                        <span class="tag">{{ skill.strip() }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        {% if resume and resume.experience %}
+            <div class="profile-block">
+                <h3>Досвід</h3>
+                <p>{{ resume.experience }}</p>
+            </div>
+        {% endif %}
+
+        {% if resume and resume.public_contacts %}
+            <div class="profile-block">
+                <h3>Контакти</h3>
+                <p>{{ resume.public_contacts | replace('\n', '<br>') | safe }}</p>
+            </div>
+        {% endif %}
+
+        {% if resume and resume.cv_file_path %}
+            <div class="resume-actions">
+                <a href="{{ resume.cv_file_path }}" class="btn btn-primary" target="_blank" rel="noreferrer">Завантажити CV</a>
+            </div>
+        {% endif %}
+
+        <div class="contact-actions">
+            {% if resume and resume.telegram %}
+                <a href="https://t.me/{{ resume.telegram.replace('@', '') }}" class="btn btn-outline" target="_blank" rel="noreferrer">Telegram</a>
+            {% elif profile_user.telegram %}
+                <a href="https://t.me/{{ profile_user.telegram.replace('@', '') }}" class="btn btn-outline" target="_blank" rel="noreferrer">Telegram</a>
+            {% endif %}
+            {% if resume and resume.phone %}
+                <a href="tel:{{ resume.phone }}" class="btn btn-outline">Phone</a>
+            {% elif profile_user.phone %}
+                <a href="tel:{{ profile_user.phone }}" class="btn btn-outline">Phone</a>
+            {% endif %}
+            {% if resume and resume.public_email %}
+                <a href="mailto:{{ resume.public_email }}" class="btn btn-outline">Email</a>
+            {% elif profile_user.public_email %}
+                <a href="mailto:{{ profile_user.public_email }}" class="btn btn-outline">Email</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

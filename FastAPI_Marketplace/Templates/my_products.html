@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block title %}Fast Money | Мої товари{% endblock %}
+
+{% block content %}
+<style>
+    .page-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .page-head h1 { margin: 0; font-size: 1.75rem; }
+    .page-head .btn-add {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: #fff;
+        padding: 10px 18px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    .page-head .btn-add:hover { transform: translateY(-1px); }
+
+    .grid-wrap {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 18px;
+        justify-content: center;
+        justify-items: center;
+    }
+
+    .product-card {
+        width: 100%;
+        max-width: 300px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+        align-items: stretch;
+    }
+
+    .product-thumb {
+        aspect-ratio: 4 / 3;
+        background: var(--surface-soft);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        overflow: hidden;
+    }
+    .product-thumb a { width: 100%; height: 100%; display: block; }
+    .product-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .product-thumb span { color: var(--muted); font-size: 14px; }
+
+    .product-body {
+        padding: 14px 16px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        flex: 1;
+        text-align: center;
+        align-items: center;
+    }
+    .product-title {
+        font-weight: 700;
+        font-size: 1rem;
+        color: var(--text);
+        text-decoration: none;
+        line-height: 1.3;
+    }
+    .product-title:hover { color: #93c5fd; }
+    .product-desc {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.4;
+        margin: 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        width: 100%;
+    }
+    .product-meta {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: auto;
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    .product-price {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--text);
+    }
+    .card-actions {
+        display: flex;
+        gap: 8px;
+        padding: 0 16px 16px;
+        justify-content: center;
+        width: 100%;
+    }
+    .card-actions > a,
+    .card-actions > form {
+        flex: 1;
+        display: flex;
+    }
+    .card-actions > form > button,
+    .card-actions > a.btn {
+        width: 100%;
+    }
+
+    .empty-state {
+        padding: 60px 20px;
+        text-align: center;
+        background: var(--bg-card);
+        border: 1px dashed var(--border);
+        border-radius: 14px;
+        color: var(--muted);
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    .empty-state h3 { color: var(--text); margin-top: 0; }
+
+    .modal {
+        position: fixed; inset: 0; z-index: 100;
+        display: none; align-items: center; justify-content: center;
+    }
+    .modal.open { display: flex; }
+    .modal-backdrop {
+        position: absolute; inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+    }
+    .modal-dialog {
+        position: relative;
+        z-index: 1;
+        width: min(420px, calc(100% - 32px));
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.5);
+    }
+    .modal-header {
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--border);
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .modal-header h3 { margin: 0; font-size: 1.05rem; }
+    .modal-close {
+        background: none; border: none; color: var(--muted);
+        font-size: 22px; cursor: pointer; padding: 0 6px;
+    }
+    .modal-body { padding: 18px; color: var(--text); }
+    .modal-footer {
+        padding: 12px 18px 18px;
+        display: flex; gap: 10px; justify-content: flex-end;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: var(--surface-soft);
+        color: var(--muted);
+        font-size: 11px;
+    }
+</style>
+
+<div class="page-head">
+    <div>
+        <h1>Мої товари</h1>
+        <p style="color: var(--muted); margin: 4px 0 0;">
+            Всього товарів: <strong>{{ products|length }}</strong>
+        </p>
+    </div>
+    <button type="button" class="btn-add" onclick="openAddProductModal('{{ current_user.phone if current_user and current_user.phone else None }}')">
+        + Додати свій товар
+    </button>
+</div>
+
+<div class="grid-wrap">
+{% if not products %}
+    <div class="empty-state">
+        <h3>У вас ще немає товарів</h3>
+        <p style="margin: 6px 0 18px;">Створіть свій перший оголошення для продажу на маркетплейсі.</p>
+        <button type="button" class="btn-add" onclick="openAddProductModal('{{ current_user.phone if current_user and current_user.phone else None }}')">
+            + Додати перший товар
+        </button>
+    </div>
+{% else %}
+    <div class="products-grid">
+        {% for p in products %}
+            <div class="product-card">
+                <div class="product-thumb">
+                    {% if p.image_url %}
+                        <a href="/products/{{ p.id }}">
+                            <img src="{{ p.image_url }}" alt="{{ p.title|e }}" />
+                        </a>
+                    {% else %}
+                        <a href="/products/{{ p.id }}"><span>Фото відсутнє</span></a>
+                    {% endif %}
+                </div>
+                <div class="product-body">
+                    <a href="/products/{{ p.id }}" class="product-title">{{ p.title }}</a>
+                    {% if p.description %}
+                        <p class="product-desc">{{ p.description }}</p>
+                    {% endif %}
+                    <div class="product-price">{{ p.price }} ₴</div>
+                    <div class="product-meta">
+                        <span>Кількість: <strong style="color:var(--text);">{{ p.quantity }}</strong></span>
+                        {% if p.quantity == 0 %}
+                            <span class="badge" style="background: rgba(239, 68, 68, 0.12); color: #fca5a5;">Немає в наявності</span>
+                        {% elif p.sales_count %}
+                            <span class="badge">Продаж: {{ p.sales_count }}</span>
+                        {% else %}
+                            <span class="badge">Нових продажів</span>
+                        {% endif %}
+                    </div>
+                    <div class="product-meta" style="padding-top: 6px; border-top: 1px solid var(--border);">
+                        <span>Медіа: <strong style="color:var(--text);">{{ p.media_count }}</strong></span>
+                        {% if p.seller_phone %}
+                            <span>📞 {{ p.seller_phone }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <a class="btn btn-outline" href="/products/{{ p.id }}/edit">Редагувати</a>
+                    <form action="/products/{{ p.id }}/delete" method="post" class="delete-product-form" data-product-id="{{ p.id }}" data-product-title="{{ p.title|e }}">
+                        <button type="submit" class="btn btn-danger">Видалити</button>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+</div>
+
+<div id="confirm-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-backdrop" data-close-confirm="1"></div>
+    <div class="modal-dialog confirm-dialog" role="document">
+        <div class="modal-header">
+            <h3 id="confirm-title">Видалити товар?</h3>
+            <button type="button" class="modal-close" data-close-confirm="1" aria-label="Закрити">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="confirm-message" style="margin:0;">Ви впевнені, що хочете видалити товар? Ця дія не може бути скасована.</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" data-close-confirm="1">Скасувати</button>
+            <button type="button" class="btn btn-danger" id="confirm-ok-btn">Видалити</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const confirmModal = document.getElementById('confirm-modal');
+    const confirmMessage = document.getElementById('confirm-message');
+    const confirmTitle = document.getElementById('confirm-title');
+    const confirmOkBtn = document.getElementById('confirm-ok-btn');
+    let confirmCallback = null;
+
+    function openConfirm(message, title, onOk) {
+        if (title) confirmTitle.textContent = title;
+        else confirmTitle.textContent = 'Підтвердження';
+        confirmMessage.textContent = message;
+        confirmCallback = onOk;
+        confirmModal.classList.add('open');
+        confirmModal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeConfirm() {
+        confirmModal.classList.remove('open');
+        confirmModal.setAttribute('aria-hidden', 'true');
+        confirmCallback = null;
+        document.body.style.overflow = '';
+    }
+
+    confirmOkBtn.addEventListener('click', function () {
+        const cb = confirmCallback;
+        closeConfirm();
+        if (typeof cb === 'function') cb();
+    });
+
+    document.querySelectorAll('[data-close-confirm]').forEach(el => {
+        el.addEventListener('click', closeConfirm);
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && confirmModal.classList.contains('open')) closeConfirm();
+    });
+
+    document.querySelectorAll('.delete-product-form').forEach(form => {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const title = form.dataset.productTitle || 'цей товар';
+            openConfirm(
+                `Ви впевнені, що хочете видалити «${title}»? Ця дія не може бути скасована.`,
+                'Видалити товар?',
+                function () { form.submit(); }
+            );
+        });
+    });
+</script>
+{% endblock %}
