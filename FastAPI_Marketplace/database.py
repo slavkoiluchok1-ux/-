@@ -119,6 +119,13 @@ async def ensure_schema() -> None:
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
 
+    async with engine.begin() as connection:
+        if DATABASE_URL.startswith("sqlite"):
+            users_columns = await connection.execute(text("PRAGMA table_info(users)"))
+            user_existing = {row[1] for row in users_columns.fetchall()}
+            if "is_banned" not in user_existing:
+                await connection.execute(text("ALTER TABLE users ADD COLUMN is_banned BOOLEAN DEFAULT 0 NOT NULL"))
+
     await ensure_resume_table_columns()
     await ensure_order_table_columns()
 

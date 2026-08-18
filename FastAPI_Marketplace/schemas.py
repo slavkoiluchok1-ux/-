@@ -319,9 +319,17 @@ class ComplaintResponse(BaseModel):
     target_type: str
     target_id: int
     reason: str
+    subject: Optional[str] = None
+    object_label: Optional[str] = None
     comment: Optional[str] = None
     created_at: Optional[datetime] = None
     status: str = "opened"
+    user_id: Optional[int] = None
+    product_id: Optional[int] = None
+    username: Optional[str] = None
+    user_email: Optional[str] = None
+    title: Optional[str] = None
+    text: Optional[str] = None
 
 
 class ComplaintOut(ComplaintResponse):

@@ -38,6 +38,14 @@
     </div>
 </div>
 
+<div id="complaintModal" class="modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: #181d28; color: #fff; padding: 24px; border-radius: 12px; width: 450px; border: 1px solid #2a3245; position: relative;">
+        <span onclick="closeComplaintModal()" style="position: absolute; right: 16px; top: 12px; cursor: pointer; font-size: 20px;">&times;</span>
+        <h3 style="margin-top: 0;" id="modalTitle">Деталі скарги</h3>
+        <div id="modalBody" style="display: flex; flex-direction: column; gap: 10px; font-size: 14px;"></div>
+    </div>
+</div>
+
 <script>
     const token = localStorage.getItem('token');
     if (!token) {
@@ -243,6 +251,65 @@
         }
     }
 
+    const REASON_LABELS = {
+        profanity: 'Нецензурна лексика',
+        threats: 'Погрози',
+        sexual: 'Контент сексуального характеру',
+        fraud: 'Шахрайство',
+        spam: 'Спам / Реклама',
+        other: 'Інше'
+    };
+
+    function getComplaintReasonLabel(reason) {
+        if (!reason) return 'Інше';
+        return REASON_LABELS[reason] || reason;
+    }
+
+    function showComplaintDetails(complaintData) {
+        const complaint = complaintData && complaintData.dataset
+            ? complaintData.dataset
+            : complaintData || {};
+
+        const status = complaint.status || 'opened';
+        const statusLabels = {
+            opened: 'Нова',
+            in_progress: 'В обробці',
+            resolved: 'Вирішено',
+            rejected: 'Відхилено'
+        };
+
+        const objectType = complaint.targetType || complaint.target_type || '';
+        const objectId = complaint.targetId || complaint.target_id || complaint.product_id || '';
+        const objectLabel = complaint.objectLabel || complaint.object_label || (() => {
+            if (objectType === 'product') {
+                return `Товар "${complaint.productTitle || complaint.product_title || 'Товар'}" (ID: ${objectId})`;
+            }
+            if (objectType === 'user') {
+                return `Користувач "${complaint.user || complaint.username || 'Невідомий'}" (ID: ${complaint.userId || complaint.user_id || objectId})`;
+            }
+            return `Об'єкт (ID: ${objectId || '—'})`;
+        })();
+        const reasonValue = complaint.subject || complaint.theme || complaint.title || complaint.reason || 'other';
+        const descriptionText = complaint.text || complaint.description || complaint.comment || 'Без опису';
+
+        const body = document.getElementById('modalBody');
+        body.innerHTML = `
+            <div><strong>Статус:</strong> <span style="display:inline-block; padding:4px 10px; border-radius:999px; background:${status === 'resolved' ? '#d1fae5' : status === 'rejected' ? '#fee2e2' : status === 'in_progress' ? '#dbeafe' : '#fef3c7'}; color:${status === 'resolved' ? '#065f46' : status === 'rejected' ? '#991b1b' : status === 'in_progress' ? '#1e40af' : '#92400e'};">${statusLabels[status] || status}</span></div>
+            <div><strong>Дата створення:</strong> ${complaint.date || complaint.created_at || '-'}</div>
+            <div><strong>Об'єкт скарги:</strong> ${objectLabel || '—'}</div>
+            <div><strong>Причина скарги:</strong> ${getComplaintReasonLabel(reasonValue)}</div>
+            <div><strong>Опис скарги:</strong> ${descriptionText || 'Без опису'}</div>
+            <div><strong>Автор скарги:</strong> ${complaint.user || complaint.username || '—'}</div>
+            <div><strong>ID автора скарги:</strong> ${complaint.reporterId || complaint.reporter_id || complaint.user_id || '—'}</div>
+        `;
+
+        document.getElementById('complaintModal').style.display = 'flex';
+    }
+
+    function closeComplaintModal() {
+        document.getElementById('complaintModal').style.display = 'none';
+    }
+
     async function loadComplaints() {
         try {
             const complaints = await apiFetch('/api/v1/admin/complaints');
@@ -262,21 +329,77 @@
                             <th>Тема</th>
                             <th>Текст</th>
                             <th>Статус</th>
+                            <th>Дії</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${complaints.map(item => `
-                            <tr>
-                                <td>${item.id}</td>
-                                <td>${item.user_id}</td>
-                                <td>${item.title}</td>
-                                <td>${item.text}</td>
-                                <td><span class="badge">${item.status}</span></td>
-                            </tr>
-                        `).join('')}
+                        ${complaints.map(item => {
+                            const userName = item.username || item.user || item.user_email || item.user_id || '—';
+                            const reasonText = getComplaintReasonLabel(item.subject || item.reason || 'other');
+                            const objectLabel = item.object_label || (item.target_type === 'product'
+                                ? `Товар "${item.product_title || 'Товар'}" (ID: ${item.product_id || item.target_id})`
+                                : `Користувач "${userName}" (ID: ${item.user_id || item.target_id})`);
+                            const text = item.text || item.description || item.comment || 'Без опису';
+                            const isUserComplaint = item.target_type === 'user';
+                            const actions = isUserComplaint
+                                ? `<div style="display: flex; gap: 8px; align-items: center;"><button type="button" style="background: transparent; border: 1.5px solid #ff4d4d; color: #ff4d4d; border-radius: 8px; padding: 6px 12px; font-size: 13px; cursor: pointer; white-space: nowrap;" data-ban-user-id="${item.user_id}">Забанити</button></div>`
+                                : `<div style="display: flex; gap: 8px; align-items: center;"><button type="button" style="background: transparent; border: 1.5px solid #ff4d4d; color: #ff4d4d; border-radius: 8px; padding: 6px 12px; font-size: 13px; cursor: pointer; white-space: nowrap;" data-ban-user-id="${item.user_id}">Забанити автора</button><button type="button" style="background: transparent; border: 1.5px solid #ff4d4d; color: #ff4d4d; border-radius: 8px; padding: 6px 12px; font-size: 13px; cursor: pointer; white-space: nowrap;" data-delete-product-id="${item.product_id}">Видалити товар</button></div>`;
+                            return `
+                                <tr
+                                    data-id="${item.id}"
+                                    data-user="${userName}"
+                                    data-subject="${reasonText}"
+                                    data-theme="${reasonText}"
+                                    data-text="${text.replace(/"/g, '&quot;')}"
+                                    data-status="${item.status}"
+                                    data-date="${item.created_at || ''}"
+                                    data-target-type="${item.target_type || ''}"
+                                    data-target-id="${item.target_id || item.product_id || ''}"
+                                    data-reporter-id="${item.user_id || item.reporter_id || ''}"
+                                    data-object-label="${objectLabel.replace(/"/g, '&quot;')}"
+                                    data-user-id="${item.user_id || ''}"
+                                    data-product-title="${(item.product_title || '').replace(/"/g, '&quot;')}"
+                                    onclick="showComplaintDetails(this)"
+                                    style="cursor: pointer;"
+                                >
+                                    <td>${item.id}</td>
+                                    <td>${userName}</td>
+                                    <td>${reasonText}<br><small style="color: #94a3b8;">${objectLabel}</small></td>
+                                    <td>${text}</td>
+                                    <td><span class="badge">${item.status}</span></td>
+                                    <td>${actions}</td>
+                                </tr>
+                            `;
+                        }).join('')}
                     </tbody>
                 </table>
             `;
+
+            document.querySelectorAll('[data-ban-user-id]').forEach(button => {
+                button.addEventListener('click', async function (event) {
+                    event.stopPropagation();
+                    const userId = Number(this.dataset.banUserId);
+                    try {
+                        await apiFetch(`/api/v1/admin/users/${userId}/ban`, { method: 'POST' });
+                        await loadComplaints();
+                    } catch (error) {
+                        alert(error.message || 'Не вдалося забанити користувача');
+                    }
+                });
+            });
+
+            document.querySelectorAll('[data-delete-product-id]').forEach(button => {
+                button.addEventListener('click', async function (event) {
+                    event.stopPropagation();
+                    const productId = Number(this.dataset.deleteProductId);
+                    try {
+                        await apiFetch(`/api/v1/admin/products/${productId}`, { method: 'DELETE' });
+                        await loadComplaints();
+                    } catch (error) {
+                        alert(error.message || 'Не вдалося видалити товар');
+                    }
+                });
+            });
         } catch (error) {
             document.getElementById('complaintsList').innerHTML = `<div class="error">${error.message}</div>`;
         }

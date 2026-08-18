@@ -37,7 +37,7 @@ async def get_current_user(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token is missing user id")
 
     user = await db.get(User, int(user_id))
-    if user is None or not user.is_active:
+    if user is None or not user.is_active or getattr(user, "is_banned", False):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive")
     return user
 

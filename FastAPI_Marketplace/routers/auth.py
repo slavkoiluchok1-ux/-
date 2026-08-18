@@ -24,7 +24,7 @@ async def register_user(payload: UserCreate, request: Request, db: AsyncSession 
         select(User).where((User.email == payload.email.lower()) | (User.username == payload.username))
     )
     if existing_user:
-        raise HTTPException(status_code=400, detail="User with this email or username already exists")
+        raise HTTPException(status_code=400, detail="Користувач з таким email або логіном вже існує")
 
     user = User(
         username=payload.username,
@@ -40,7 +40,15 @@ async def register_user(payload: UserCreate, request: Request, db: AsyncSession 
     await db.refresh(user)
 
     access_token = create_access_token(user.id)
-    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    response = JSONResponse(
+        content={
+            "status": "success",
+            "message": "Реєстрація успішна",
+            "redirect_url": "/",
+            "access_token": access_token,
+            "token_type": "bearer",
+        }
+    )
     response.set_cookie(
         key="access_token",
         value=f"Bearer {access_token}",

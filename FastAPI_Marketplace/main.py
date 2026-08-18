@@ -12,7 +12,7 @@ import httpx
 import jwt
 from fastapi import Cookie, Depends, FastAPI, File, Form, HTTPException, Query, Request, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -613,10 +613,80 @@ async def update_order_status(
     )
 
 
+REASON_LABELS = {
+    "profanity": "Нецензурна лексика",
+    "threats": "Погрози",
+    "sexual": "Контент сексуального характеру",
+    "fraud": "Шахрайство",
+    "spam": "Спам / Реклама",
+    "other": "Інше",
+}
+
+
+def format_reason_label(reason: str | None) -> str:
+    if not reason:
+        return "Інше"
+    return REASON_LABELS.get(reason, reason)
+
+
 @app.get("/api/v1/admin/complaints", response_model=list[ComplaintOut])
 async def admin_get_complaints(current_user: User = Depends(get_current_admin), db: AsyncSession = Depends(get_db)):
     complaints = (await db.execute(select(Complaint).order_by(Complaint.created_at.desc()))).scalars().all()
-    return complaints
+    result = []
+    for item in complaints:
+        reporter = await db.get(User, item.reporter_id)
+        product = await db.get(Product, item.target_id) if item.target_type == "product" else None
+        complaint_data = ComplaintOut.model_validate(item)
+        complaint_data.user_id = item.reporter_id
+        complaint_data.product_id = item.target_id if item.target_type == "product" else None
+        complaint_data.username = reporter.username if reporter else None
+        complaint_data.user_email = reporter.email if reporter else None
+        complaint_data.subject = format_reason_label(item.reason)
+        complaint_data.title = complaint_data.subject
+        complaint_data.text = item.comment or ""
+        if item.target_type == "product" and product is not None:
+            complaint_data.object_label = f'Товар "{product.title}" (ID: {product.id})'
+        elif reporter is not None:
+            complaint_data.object_label = f'Користувач "{reporter.username}" (ID: {reporter.id})'
+        result.append(complaint_data)
+    return result
+
+
+@app.post("/api/v1/admin/users/{user_id}/ban", response_model=UserPublic)
+async def ban_user_by_admin(
+    user_id: int,
+    current_user: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    target = await db.get(User, user_id)
+    if target is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    if target.is_superuser:
+        raise HTTPException(status_code=403, detail="Cannot ban superuser")
+
+    target.is_banned = True
+    target.is_active = False
+    await db.commit()
+    await db.refresh(target)
+    return target
+
+
+@app.delete("/api/v1/admin/products/{product_id}")
+async def delete_product_by_admin(
+    product_id: int,
+    current_user: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    product = await db.get(Product, product_id)
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    await db.execute(delete(CartItem).where(CartItem.product_id == product_id))
+    await db.execute(delete(Favorite).where(Favorite.product_id == product_id))
+    await db.execute(delete(OrderItem).where(OrderItem.product_id == product_id))
+    await db.delete(product)
+    await db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.get("/api/v1/admin/stats", response_model=StatsOut)

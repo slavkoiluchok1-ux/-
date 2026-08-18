@@ -59,12 +59,18 @@
                 body: JSON.stringify(payload)
             });
 
-            const responseText = await response.text();
+            const contentType = response.headers.get('content-type');
             let data = {};
-            try {
-                data = responseText ? JSON.parse(responseText) : {};
-            } catch (error) {
-                data = { detail: responseText || 'Помилка реєстрації' };
+
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                    return;
+                }
+                showMessage('Помилка сервера. Спробуйте пізніше.', 'error');
+                return;
             }
 
             if (response.status === 503) {
@@ -72,21 +78,20 @@
                 return;
             }
 
-            if (response.ok) {
-                const tokenData = data.access_token ? data : JSON.parse(responseText);
-                if (tokenData.access_token) {
-                    localStorage.setItem('token', tokenData.access_token);
-                }
-                showMessage('Реєстрація успішна! Входимо в акаунт...', 'success');
-                setTimeout(() => window.location.href = '/', 1500);
+            if (!response.ok) {
+                const errorMessage = Array.isArray(data.detail)
+                    ? data.detail.map(item => item.msg || item).join(', ')
+                    : (data.detail || 'Помилка реєстрації');
+                showMessage(errorMessage, 'error');
                 return;
             }
 
-            const errorMessage = Array.isArray(data.detail)
-                ? data.detail.map(item => item.msg || item).join(', ')
-                : (data.detail || 'Помилка реєстрації');
+            if (data.access_token) {
+                localStorage.setItem('token', data.access_token);
+            }
 
-            showMessage(errorMessage, 'error');
+            showMessage(data.message || 'Реєстрація успішна! Входимо в акаунт...', 'success');
+            setTimeout(() => window.location.href = data.redirect_url || '/', 1500);
         } catch (error) {
             showMessage(error.message || 'Помилка реєстрації', 'error');
         }
