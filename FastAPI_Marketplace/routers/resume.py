@@ -9,9 +9,8 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from auth_utils import decode_access_token
 from database import get_db
-from dependencies import get_current_user
+from dependencies import get_current_user, get_current_user_or_redirect, get_optional_current_user
 from models import Resume, User
 
 router = APIRouter(tags=["resume"])
@@ -45,20 +44,14 @@ async def _save_cv_file(file: UploadFile | None) -> str | None:
 
 
 @router.get("/resume", response_class=HTMLResponse)
-async def resume_page(request: Request, db: AsyncSession = Depends(get_db)):
-    current_user = None
-    token_value = request.cookies.get("access_token")
-    if token_value:
-        try:
-            payload = decode_access_token(token_value.replace("Bearer ", "").strip())
-            user_id = payload.get("sub")
-            if user_id is not None:
-                current_user = await db.get(User, int(user_id))
-        except Exception:
-            current_user = None
-
-    if current_user is None:
-        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+async def resume_page(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    result: User | RedirectResponse = Depends(get_current_user_or_redirect),
+):
+    if isinstance(result, RedirectResponse):
+        return result
+    current_user = result
 
     resume = await _get_resume_for_user(db, current_user.id)
     return templates.TemplateResponse(
@@ -75,22 +68,17 @@ async def resume_page(request: Request, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/resume/{user_id}", response_class=HTMLResponse)
-async def public_resume_page(request: Request, user_id: int, db: AsyncSession = Depends(get_db)):
+async def public_resume_page(
+    request: Request,
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_optional_current_user),
+):
     user = await db.get(User, user_id)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Кандидата не знайдено")
 
     resume = await _get_resume_for_user(db, user.id)
-    current_user = None
-    token_value = request.cookies.get("access_token")
-    if token_value:
-        try:
-            payload = decode_access_token(token_value.replace("Bearer ", "").strip())
-            current_user_id = payload.get("sub")
-            if current_user_id is not None:
-                current_user = await db.get(User, int(current_user_id))
-        except Exception:
-            current_user = None
 
     return templates.TemplateResponse(
         request,

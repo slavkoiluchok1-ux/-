@@ -60,7 +60,7 @@ async def register_user(payload: UserCreate, request: Request, db: AsyncSession 
     return response
 
 
-async def _parse_login_credentials(request: Request) -> tuple[str, str]:
+async def _parse_login_credentials(request: Request) -> tuple[str, str, str | None]:
     content_type = request.headers.get("content-type", "").lower()
 
     if "application/json" in content_type:
@@ -69,21 +69,23 @@ async def _parse_login_credentials(request: Request) -> tuple[str, str]:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Невірний формат даних для входу")
         identifier = str(payload.get("email") or payload.get("username") or "").strip()
         password = str(payload.get("password") or "")
+        next_param = str(payload.get("next") or "").strip() or None
     else:
         form = await request.form()
         identifier = str(form.get("email") or form.get("username") or "").strip()
         password = str(form.get("password") or "")
+        next_param = str(form.get("next") or "").strip() or None
 
     if not identifier or not password:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Відсутні дані для входу")
 
-    return identifier, password
+    return identifier, password, next_param
 
 
 @router.post("/login")
 async def login_user(request: Request, db: AsyncSession = Depends(get_db)):
     content_type = request.headers.get("content-type", "").lower()
-    identifier, password = await _parse_login_credentials(request)
+    identifier, password, next_param = await _parse_login_credentials(request)
 
     user = await db.scalar(
         select(User).where(or_(User.email == identifier.lower(), User.username == identifier))
@@ -93,7 +95,7 @@ async def login_user(request: Request, db: AsyncSession = Depends(get_db)):
             return templates.TemplateResponse(
                 request,
                 "login.html",
-                {"request": request, "current_user": None, "error": "Невірний логін або пароль"},
+                {"request": request, "current_user": None, "error": "Невірний логін або пароль", "next": next_param or ""},
             )
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
     if not user.is_active:
@@ -101,12 +103,17 @@ async def login_user(request: Request, db: AsyncSession = Depends(get_db)):
             return templates.TemplateResponse(
                 request,
                 "login.html",
-                {"request": request, "current_user": None, "error": "Обліковий запис деактивовано"},
+                {"request": request, "current_user": None, "error": "Обліковий запис деактивовано", "next": next_param or ""},
             )
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is inactive")
 
     access_token = create_access_token(user.id)
-    redirect_url = "/admin" if (user.is_superuser or user.is_admin) else "/"
+
+    default_redirect = "/admin" if (user.is_superuser or user.is_admin) else "/"
+    if next_param and not (user.is_superuser or user.is_admin):
+        redirect_url = next_param
+    else:
+        redirect_url = default_redirect
 
     cookie_kwargs = {
         "key": "access_token",

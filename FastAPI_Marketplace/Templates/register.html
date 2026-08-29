@@ -8,6 +8,9 @@
     <p class="subtitle">Створіть обліковий запис у Fast Money</p>
 
     <form id="registerForm">
+        {% if next %}
+        <input type="hidden" name="next" value="{{ next }}" />
+        {% endif %}
         <div class="form-group">
             <label for="username">Ім'я користувача</label>
             <input id="username" name="username" type="text" placeholder="Введіть username" required />
@@ -36,15 +39,25 @@
     const form = document.getElementById('registerForm');
     const message = document.getElementById('message');
 
+    function getNextParam() {
+        const hidden = document.querySelector('input[name="next"]');
+        if (hidden && hidden.value) return hidden.value;
+        const params = new URLSearchParams(window.location.search);
+        return params.get('next') || '';
+    }
+
     form.addEventListener('submit', async function (event) {
         event.preventDefault();
         message.textContent = '';
         message.className = 'message';
 
+        const nextParam = getNextParam();
+
         const payload = {
             username: document.getElementById('username').value.trim(),
             email: document.getElementById('email').value.trim(),
-            password: document.getElementById('password').value
+            password: document.getElementById('password').value,
+            next: nextParam
         };
 
         if (!payload.username || !payload.email || !payload.password) {
@@ -91,7 +104,9 @@
             }
 
             showMessage(data.message || 'Реєстрація успішна! Входимо в акаунт...', 'success');
-            setTimeout(() => window.location.href = data.redirect_url || '/', 1500);
+            const isAdmin = !!data.is_admin || !!data.is_superuser;
+            const target = (!isAdmin && nextParam) ? nextParam : (data.redirect_url || '/');
+            setTimeout(() => window.location.href = target, 1500);
         } catch (error) {
             showMessage(error.message || 'Помилка реєстрації', 'error');
         }

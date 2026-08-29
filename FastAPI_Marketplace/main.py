@@ -22,7 +22,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from database import Base, DatabaseUnavailableError, async_session, cleanup_html_redirect_product, engine, ensure_schema, get_db
-from dependencies import get_current_admin_user, get_current_superuser, get_current_user
+from dependencies import (
+    get_current_admin_or_redirect,
+    get_current_admin_user,
+    get_current_superuser,
+    get_current_superuser_or_redirect,
+    get_current_user,
+    get_current_user_or_redirect,
+    get_optional_current_user,
+)
+from auth_utils import create_access_token, decode_access_token
 from models import CartItem, Complaint, Favorite, Order, OrderItem, Product, Review, Resume, User
 from routers.auth import router as auth_router
 from routers.cart import router as cart_router
@@ -32,6 +41,7 @@ from routers.favorites import router as favorites_router
 from routers.orders import router as orders_router
 from routers.profile import router as profile_router
 from routers.resume import router as resume_router
+from routers.reports import router as reports_router
 from routers.admin import router as admin_router
 from schemas import (
     CartItemCreate,
@@ -73,7 +83,6 @@ IMAGES_DIR = BASE_DIR / "images"
 for directory in (UPLOAD_DIR, PHOTO_DIR, VIDEO_DIR, STATIC_DIR, IMAGES_DIR):
     directory.mkdir(parents=True, exist_ok=True)
 
-SECRET_KEY = os.getenv("SECRET_KEY", "super-secret-marketplace-key")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "mock_token")
@@ -141,6 +150,7 @@ app.include_router(cart_router)
 app.include_router(orders_router)
 app.include_router(favorites_router)
 app.include_router(complaints_router)
+app.include_router(reports_router)
 app.include_router(resume_router)
 app.include_router(profile_router)
 app.include_router(admin_router)
@@ -167,25 +177,11 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 templates = Jinja2Templates(directory=str(BASE_DIR / "Templates"))
 
 
-async def get_template_user(request: Request, db: AsyncSession) -> User | None:
-    token = request.cookies.get("access_token")
-    if not token:
-        return None
-
-    clean_token = token.replace("Bearer ", "").strip()
-    try:
-        payload = decode_access_token(clean_token)
-        user_id = payload.get("sub")
-        if user_id is None:
-            return None
-        return await db.get(User, int(user_id))
-    except HTTPException:
-        return None
-
-
 @app.get("/", response_class=HTMLResponse)
-async def home(request: Request, db: AsyncSession = Depends(get_db)):
-    current_user = await get_template_user(request, db)
+async def home(
+    request: Request,
+    current_user: User | None = Depends(get_optional_current_user),
+):
     return templates.TemplateResponse(
         request,
         "index.html",
@@ -194,9 +190,19 @@ async def home(request: Request, db: AsyncSession = Depends(get_db)):
 
 
 @app.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request, db: AsyncSession = Depends(get_db)):
-    current_user = await get_template_user(request, db)
-    return templates.TemplateResponse(request, "login.html", {"request": request, "current_user": current_user})
+async def login_page(
+    request: Request,
+    next: str | None = Query(default=None),
+    current_user: User | None = Depends(get_optional_current_user),
+):
+    if current_user is not None:
+        target = next or ("/admin" if (current_user.is_admin or current_user.is_superuser) else "/")
+        return RedirectResponse(url=target, status_code=status.HTTP_303_SEE_OTHER)
+    return templates.TemplateResponse(
+        request,
+        "login.html",
+        {"request": request, "current_user": None, "next": next or ""},
+    )
 
 
 @app.post("/login")
@@ -204,6 +210,7 @@ async def login_page_submit(
     request: Request,
     email: str = Form(...),
     password: str = Form(...),
+    next: str | None = Form(default=None),
     db: AsyncSession = Depends(get_db),
 ):
     identifier = email.strip()
@@ -220,12 +227,14 @@ async def login_page_submit(
         return templates.TemplateResponse(
             request,
             "login.html",
-            {"request": request, "current_user": None, "error": error},
+            {"request": request, "current_user": None, "error": error, "next": next or ""},
         )
 
     access_token = create_access_token(user.id)
 
-    if user.is_superuser or user.is_admin:
+    if next:
+        redirect_url = next
+    elif user.is_superuser or user.is_admin:
         redirect_url = "/admin"
     else:
         redirect_url = "/"
@@ -243,9 +252,19 @@ async def login_page_submit(
 
 
 @app.get("/register", response_class=HTMLResponse)
-async def register_page(request: Request, db: AsyncSession = Depends(get_db)):
-    current_user = await get_template_user(request, db)
-    return templates.TemplateResponse(request, "register.html", {"request": request, "current_user": current_user})
+async def register_page(
+    request: Request,
+    next: str | None = Query(default=None),
+    current_user: User | None = Depends(get_optional_current_user),
+):
+    if current_user is not None:
+        target = next or "/"
+        return RedirectResponse(url=target, status_code=status.HTTP_303_SEE_OTHER)
+    return templates.TemplateResponse(
+        request,
+        "register.html",
+        {"request": request, "current_user": None, "next": next or ""},
+    )
 
 
 @app.get("/logout")
@@ -258,82 +277,17 @@ async def logout_shortcut(request: Request):
 
 
 @app.get("/admin", response_class=HTMLResponse)
-async def admin_page(request: Request, db: AsyncSession = Depends(get_db)):
-    current_user = None
-    token_value = request.cookies.get("access_token")
-    if token_value:
-        try:
-            payload = decode_access_token(token_value.replace("Bearer ", "").strip())
-            user_id = payload.get("sub")
-            if user_id is not None:
-                current_user = await db.get(User, int(user_id))
-        except Exception:
-            current_user = None
-
-    if current_user is None or not current_user.is_active:
-        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-
-    if not (current_user.is_admin or current_user.is_superuser):
-        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-
+async def admin_page(
+    request: Request,
+    result: User | RedirectResponse = Depends(get_current_admin_or_redirect),
+):
+    if isinstance(result, RedirectResponse):
+        return result
     return templates.TemplateResponse(
         request,
         "admin.html",
-        {"request": request, "current_user": current_user},
+        {"request": request, "current_user": result},
     )
-
-
-def create_access_token(subject: str | int, expires_delta: timedelta | None = None) -> str:
-    if expires_delta is None:
-        expires_delta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    expire = datetime.now(timezone.utc) + expires_delta
-    payload = {"sub": str(subject), "exp": expire}
-    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-
-
-def decode_access_token(token: str) -> dict[str, Any]:
-    try:
-        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except jwt.PyJWTError as exc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token") from exc
-
-
-async def get_current_user(
-    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security)],
-    db: AsyncSession = Depends(get_db),
-    access_token_cookie: str | None = Cookie(default=None),
-) -> User:
-    token_value = None
-
-    if credentials is not None and credentials.credentials:
-        token_value = credentials.credentials
-    elif access_token_cookie:
-        token_value = access_token_cookie.replace("Bearer ", "").strip()
-
-    if token_value is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authorization required")
-
-    payload = decode_access_token(token_value)
-    user_id = payload.get("sub")
-    if user_id is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token is missing user id")
-
-    user = await db.get(User, int(user_id))
-    if user is None or not user.is_active:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive")
-    return user
-
-
-async def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
-    if not current_user.is_admin and not current_user.is_superuser:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
-    return current_user
-
-
-async def get_current_superuser(current_user: User = Depends(get_current_user)) -> User:
-    if not current_user.is_superuser:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Superuser access required")
-    return current_user
 
 
 async def send_telegram_message(text: str) -> None:
@@ -454,7 +408,7 @@ async def get_product(product_id: int, db: AsyncSession = Depends(get_db)):
 @app.post("/api/v1/products/", response_model=ProductOut, status_code=status.HTTP_201_CREATED)
 async def create_product(
     payload: ProductCreate,
-    current_user: User = Depends(get_current_admin),
+    current_user: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
     product = Product(
@@ -509,7 +463,7 @@ async def get_resumes(db: AsyncSession = Depends(get_db)):
 @app.post("/api/v1/resume/", response_model=ResumeOut, status_code=status.HTTP_201_CREATED)
 async def upsert_resume(
     payload: ResumeCreate,
-    current_user: User = Depends(get_current_admin),
+    current_user: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
     existing = await db.scalar(select(Resume).where(and_(Resume.name == payload.name, Resume.role == payload.role)))
@@ -549,7 +503,7 @@ async def update_user_role(
 
 
 @app.get("/api/v1/admin/orders", response_model=list[OrderOut])
-async def admin_get_orders(current_user: User = Depends(get_current_admin), db: AsyncSession = Depends(get_db)):
+async def admin_get_orders(current_user: User = Depends(get_current_admin_user), db: AsyncSession = Depends(get_db)):
     orders = (await db.execute(select(Order).order_by(Order.created_at.desc()))).scalars().all()
     result = []
     for order in orders:
@@ -581,7 +535,7 @@ async def admin_get_orders(current_user: User = Depends(get_current_admin), db: 
 async def update_order_status(
     order_id: int,
     payload: OrderStatusUpdate,
-    current_user: User = Depends(get_current_admin),
+    current_user: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
     order = await db.get(Order, order_id)
@@ -630,7 +584,7 @@ def format_reason_label(reason: str | None) -> str:
 
 
 @app.get("/api/v1/admin/complaints", response_model=list[ComplaintOut])
-async def admin_get_complaints(current_user: User = Depends(get_current_admin), db: AsyncSession = Depends(get_db)):
+async def admin_get_complaints(current_user: User = Depends(get_current_admin_user), db: AsyncSession = Depends(get_db)):
     complaints = (await db.execute(select(Complaint).order_by(Complaint.created_at.desc()))).scalars().all()
     result = []
     for item in complaints:
@@ -655,7 +609,7 @@ async def admin_get_complaints(current_user: User = Depends(get_current_admin), 
 @app.post("/api/v1/admin/users/{user_id}/ban", response_model=UserPublic)
 async def ban_user_by_admin(
     user_id: int,
-    current_user: User = Depends(get_current_admin),
+    current_user: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
     target = await db.get(User, user_id)
@@ -674,7 +628,7 @@ async def ban_user_by_admin(
 @app.delete("/api/v1/admin/products/{product_id}")
 async def delete_product_by_admin(
     product_id: int,
-    current_user: User = Depends(get_current_admin),
+    current_user: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
     product = await db.get(Product, product_id)
@@ -690,7 +644,7 @@ async def delete_product_by_admin(
 
 
 @app.get("/api/v1/admin/stats", response_model=StatsOut)
-async def admin_stats(current_user: User = Depends(get_current_admin), db: AsyncSession = Depends(get_db)):
+async def admin_stats(current_user: User = Depends(get_current_admin_user), db: AsyncSession = Depends(get_db)):
     revenue_result = await db.execute(select(func.coalesce(func.sum(Order.total_price), 0)).select_from(Order))
     order_count_result = await db.execute(select(func.count(Order.id)).select_from(Order))
     total_revenue = int(revenue_result.scalar_one() or 0)

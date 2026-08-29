@@ -7,9 +7,8 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from auth_utils import decode_access_token
 from database import get_db
-from dependencies import get_current_user
+from dependencies import get_current_user, get_current_user_or_redirect
 from models import CartItem, Order, OrderItem, Product, User
 from schemas import CartItemCreate, CartItemOut, MessageResponse, OrderCreate, OrderOut, ProductListOut
 
@@ -18,20 +17,13 @@ templates = Jinja2Templates(directory="Templates")
 
 
 @router.get("/cart", response_class=HTMLResponse)
-async def cart_page(request: Request, db: AsyncSession = Depends(get_db)):
-    current_user = None
-    token_value = request.cookies.get("access_token")
-    if token_value:
-        try:
-            payload = decode_access_token(token_value.replace("Bearer ", "").strip())
-            user_id = payload.get("sub")
-            if user_id is not None:
-                current_user = await db.get(User, int(user_id))
-        except Exception:
-            current_user = None
-
-    if current_user is None:
-        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+async def cart_page(
+    request: Request,
+    result: User | RedirectResponse = Depends(get_current_user_or_redirect),
+):
+    if isinstance(result, RedirectResponse):
+        return result
+    current_user = result
 
     return templates.TemplateResponse(
         request,
@@ -102,6 +94,7 @@ async def _parse_cart_item_create(request: Request) -> CartItemCreate:
     return CartItemCreate(product_id=int(product_id), quantity=max(1, int(quantity)))
 
 
+@router.post("/api/v1/cart/items", response_model=MessageResponse)
 @router.post("/api/v1/cart/add", response_model=MessageResponse)
 @router.post("/api/v1/cart", response_model=MessageResponse)
 async def add_to_cart(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
@@ -110,12 +103,21 @@ async def add_to_cart(request: Request, current_user: User = Depends(get_current
     product = await db.get(Product, payload.product_id)
     if product is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Товар не знайдено")
+    if product.owner_id == current_user.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ви не можете додати свій власний товар у кошик")
+    if product.stock <= 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Товару немає в наявності")
 
-    item = await db.scalar(
+    existing_item = await db.scalar(
         select(CartItem).where(CartItem.user_id == current_user.id, CartItem.product_id == payload.product_id)
     )
-    if item is not None:
-        item.quantity += payload.quantity
+    current_cart_quantity = existing_item.quantity if existing_item else 0
+    new_total = current_cart_quantity + payload.quantity
+    if new_total > product.stock:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Максимально доступна кількість: {product.stock}")
+
+    if existing_item is not None:
+        existing_item.quantity = new_total
     else:
         db.add(CartItem(user_id=current_user.id, product_id=payload.product_id, quantity=payload.quantity))
 
@@ -133,12 +135,21 @@ async def add_to_cart_redirect(
     product = await db.get(Product, product_id)
     if product is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Товар не знайдено")
+    if product.user_id == current_user.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ви не можете додати свій власний товар у кошик")
+    if product.stock <= 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Товару немає в наявності")
 
     item = await db.scalar(
         select(CartItem).where(CartItem.user_id == current_user.id, CartItem.product_id == product_id)
     )
+    current_quantity = item.quantity if item else 0
+    new_total = current_quantity + quantity
+    if new_total > product.stock:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Максимально доступна кількість: {product.stock}")
+
     if item is not None:
-        item.quantity += quantity
+        item.quantity = new_total
     else:
         db.add(CartItem(user_id=current_user.id, product_id=product_id, quantity=quantity))
 
@@ -235,6 +246,14 @@ async def update_cart_item(
     item = await db.get(CartItem, target_item_id)
     if not item or item.user_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Товар у кошику не знайдено")
+
+    product = await db.get(Product, item.product_id)
+    if product is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Товар не знайдено")
+    if product.quantity <= 0 and effective_quantity > 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Товару немає в наявності")
+    if effective_quantity > product.quantity:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Максимально доступна кількість: {product.quantity}")
 
     if effective_quantity <= 0:
         await db.delete(item)

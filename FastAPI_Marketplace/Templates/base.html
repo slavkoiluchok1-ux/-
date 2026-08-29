@@ -51,9 +51,94 @@
         {% block content %}{% endblock %}
     </main>
 
+    <div id="reportToast" class="report-toast" aria-live="polite" aria-atomic="true"></div>
+
+    <div id="reportModal" class="app-modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="app-modal-backdrop" data-close-report="1"></div>
+        <div class="app-modal-dialog" role="document">
+            <div class="app-modal-header">
+                <h3>Подати скаргу</h3>
+                <button type="button" class="app-modal-close" data-close-report="1" aria-label="Закрити">&times;</button>
+            </div>
+            <div class="app-modal-body">
+                <form id="report-form" class="product-form-card">
+                    <input type="hidden" name="product_id" id="report-product-id" value="">
+                    <input type="hidden" name="user_id" id="report-user-id" value="">
+                    <input type="hidden" name="comment_id" id="report-comment-id" value="">
+
+                    <div class="form-section">
+                        <label class="full">
+                            <span>Причина</span>
+                            <select name="reason" required>
+                                <option value="Шахрайство">Шахрайство</option>
+                                <option value="Спам">Спам</option>
+                                <option value="Невідповідність товару / опису">Невідповідність товару / опису</option>
+                                <option value="Образлива поведінка">Образлива поведінка</option>
+                                <option value="Інше">Інше</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div class="form-section">
+                        <label class="full">
+                            <span>Опис проблеми</span>
+                            <textarea name="details" rows="5" placeholder="Опишіть проблему детальніше..."></textarea>
+                        </label>
+                    </div>
+
+                    <div id="report-message" class="form-success" style="display:none;margin-bottom:12px;"></div>
+                </form>
+            </div>
+            <div class="app-modal-footer">
+                <button type="button" class="btn btn-secondary" data-close-report="1">Скасувати</button>
+                <button type="submit" form="report-form" class="btn btn-danger">Надіслати скаргу</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="global-complaint-modal" class="app-modal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;">
+        <div class="app-modal-backdrop" data-close-complaint="1"></div>
+        <div class="app-modal-dialog" role="document">
+            <div class="app-modal-header">
+                <h3>Поскаржитися</h3>
+                <button type="button" class="app-modal-close" data-close-complaint="1" aria-label="Закрити">&times;</button>
+            </div>
+            <div class="app-modal-body">
+                <form id="global-complaint-form" class="product-form-card">
+                    <input type="hidden" name="product_id" id="complaint-product-id" value="">
+                    <input type="hidden" name="user_id" id="complaint-user-id" value="">
+                    <input type="hidden" name="comment_id" id="complaint-comment-id" value="">
+                    <div class="form-section">
+                        <label class="full">
+                            <span>Причина</span>
+                            <select name="reason" required>
+                                <option value="Шахрайство">Шахрайство</option>
+                                <option value="Спам">Спам</option>
+                                <option value="Невідповідність товару / опису">Невідповідність товару / опису</option>
+                                <option value="Образлива поведінка">Образлива поведінка</option>
+                                <option value="Інше">Інше</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="form-section">
+                        <label class="full">
+                            <span>Опис</span>
+                            <textarea name="description" rows="5" placeholder="Опишіть проблему..."></textarea>
+                        </label>
+                    </div>
+                    <div id="global-complaint-message" class="form-success" style="display:none;margin-bottom:12px;"></div>
+                </form>
+            </div>
+            <div class="app-modal-footer">
+                <button type="button" class="btn btn-secondary" data-close-complaint="1">Скасувати</button>
+                <button type="submit" form="global-complaint-form" class="btn btn-danger">Надіслати</button>
+            </div>
+        </div>
+    </div>
+
     <div id="add-product-modal" class="app-modal" role="dialog" aria-modal="true" aria-hidden="true">
         <div class="app-modal-backdrop" data-close-add-product="1"></div>
-        <div class="app-modal-dialog" role="document">
+        <div class="app-modal-dialog wide-modal" role="document">
             <div class="app-modal-header">
                 <h3>Додати свій товар</h3>
                 <button type="button" class="app-modal-close" data-close-add-product="1" aria-label="Закрити">&times;</button>
@@ -61,32 +146,125 @@
             <div class="app-modal-body">
                 <form id="add-product-form" method="post" action="/api/v1/products" enctype="multipart/form-data" class="product-form-card">
                     <div id="add-product-form-error" class="form-success" style="display:none;background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.35);color:#fca5a5;margin-bottom:14px;"></div>
-                    <div class="form-grid">
-                        <label>
-                            <span>Назва</span>
-                            <input type="text" name="title" required>
-                        </label>
-                        <label>
-                            <span>Ціна</span>
-                            <input type="number" name="price" min="0" required>
-                        </label>
-                        <label>
-                            <span>Кількість в наявності</span>
-                            <input type="number" name="quantity" min="0" required>
-                        </label>
-                        <label>
-                            <span>Номер телефону для зв'язку</span>
-                            <input type="text" name="seller_phone" id="add-product-phone" placeholder="За замовчуванням з вашого профілю">
+
+                    <div class="form-section">
+                        <h4 class="section-title">Основна інформація</h4>
+                        <div class="form-grid">
+                            <label class="full">
+                                <span>Назва товару *</span>
+                                <input type="text" name="title" maxlength="250" required>
+                            </label>
+                            <label>
+                                <span>Тип товару *</span>
+                                <select name="product_type" id="add-product-type" required>
+                                    <option value="physical">📦 Фізичний товар</option>
+                                    <option value="digital">💾 Цифровий товар / файл</option>
+                                    <option value="game_item">🎮 Ігровий предмет / послуга</option>
+                                </select>
+                            </label>
+                            <label>
+                                <span>Артикул (SKU)</span>
+                                <input type="text" name="sku" maxlength="120" placeholder="Напр. SKU-001">
+                            </label>
+                            <label>
+                                <span>Ціна (₴) *</span>
+                                <input type="number" name="price" id="add-product-price" min="0" step="1" required>
+                            </label>
+                            <label>
+                                <span>Ціна зі знижкою (₴)</span>
+                                <input type="number" name="sale_price" id="add-product-sale-price" min="0" step="0.01" placeholder="Необов'язково">
+                            </label>
+                            <label data-stock-field>
+                                <span>Кількість на складі (stock) *</span>
+                                <input type="number" name="quantity" min="0" step="1" value="1" required>
+                            </label>
+                            <label>
+                                <span>Номер телефону</span>
+                                <input type="text" name="seller_phone" id="add-product-phone" placeholder="За замовчуванням з профілю">
+                            </label>
+                            <label class="checkbox-row">
+                                <input type="checkbox" name="is_draft" id="add-is-draft">
+                                <span for="add-is-draft">Зберегти як чернетку (не публікувати)</span>
+                            </label>
+                            <label class="full">
+                                <span>Теги</span>
+                                <input type="text" name="tags_raw" id="add-product-tags" placeholder="Наприклад: новинка, популярне, arcade">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <label class="full">
+                            <span>Опис товару *</span>
+                            <textarea name="description" rows="4" required></textarea>
                         </label>
                     </div>
-                    <label>
-                        <span>Опис</span>
-                        <textarea name="description" rows="4" required></textarea>
-                    </label>
-                    <label>
-                        <span>Фото або відео (до 1 ГБ)</span>
-                        <input type="file" name="files" multiple accept="image/*,video/*">
-                    </label>
+
+                    <div class="form-section" id="add-sale-preview-section" style="display:none;">
+                        <div class="form-grid">
+                            <div class="full" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+                                <span style="font-size:13px;font-weight:600;color:var(--text);">Попередній перегляд знижки</span>
+                                <span id="add-product-discount-preview" style="padding:6px 10px;border-radius:999px;background:rgba(251,191,36,0.12);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);font-weight:700;display:none;">0% знижки</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section" id="add-digital-section" style="display:none;">
+                        <h4 class="section-title">💾 Цифровий / ігровий вміст</h4>
+                        <label class="full">
+                            <span>Цифровий ключ / Посилання на файл / Текстовий вміст</span>
+                            <textarea name="digital_content" rows="3" placeholder="URL для завантаження, ліцензійний ключ, код активації тощо.&#10;Буде доступно покупцю після успішної оплати."></textarea>
+                        </label>
+                    </div>
+
+                    <div class="form-section type-specific type-physical" data-type="physical">
+                        <h4 class="section-title">📦 Параметри фізичного товару</h4>
+                        <div class="form-grid">
+                            <label>
+                                <span>Вага / Габарити</span>
+                                <input type="text" name="weight_dimensions" maxlength="200" placeholder="Напр. 500г, 20×15×5 см">
+                            </label>
+                            <label>
+                                <span>Варіанти доставки</span>
+                                <input type="text" name="shipping_options" maxlength="250" placeholder="Нова Пошта, Укрпошта, самовивіз">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-section type-specific type-game_item" data-type="game_item" style="display:none;">
+                        <h4 class="section-title">🎮 Параметри ігрового товару</h4>
+                        <div class="form-grid">
+                            <label>
+                                <span>Сервер / Платформа</span>
+                                <input type="text" name="platform_server" maxlength="200" placeholder="Steam, PS5, WoW: Голдринн">
+                            </label>
+                            <label>
+                                <span>Рідкісність (Rarity)</span>
+                                <input type="text" name="rarity" maxlength="120" placeholder="Common / Rare / Epic / Legendary">
+                            </label>
+                            <label class="full">
+                                <span>Час виконання / передачі</span>
+                                <input type="text" name="execution_time" maxlength="200" placeholder="Напр. 10-15 хв після оплати">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4 class="section-title">⚙️ Додаткові характеристики</h4>
+                        <label class="full">
+                            <span>Специфічні атрибути у форматі «ключ: значення» або JSON</span>
+                            <textarea name="attributes_raw" rows="4" placeholder="Колір: Чорний&#10;Матеріал: Бавовна&#10;Гарантія: 12 місяців&#10;&#10;Або JSON: {\"Колір\":\"Чорний\"}"></textarea>
+                            <small class="form-help">Кожен атрибут з нового рядка. Не дублюйте поля, що вже заповнені вище.</small>
+                        </label>
+                    </div>
+
+                    <div class="form-section physical-only">
+                        <h4 class="section-title">📸 Медіа (фото / відео)</h4>
+                        <label class="full">
+                            <span>Фото або відео (до 1 ГБ кожне)</span>
+                            <input type="file" name="files" multiple accept="image/*,video/*">
+                        </label>
+                    </div>
                 </form>
             </div>
             <div class="app-modal-footer">
@@ -96,10 +274,58 @@
         </div>
     </div>
 
+    <style>
+        .wide-modal .app-modal-dialog { max-width: 720px; }
+        .form-section { margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
+        .form-section:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .section-title { margin: 0 0 12px; font-size: 0.95rem; color: var(--text); font-weight: 700; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+        .form-grid .full { grid-column: 1 / -1; }
+        .form-grid label { display: flex; flex-direction: column; gap: 4px; }
+        .form-grid label > span { font-size: 13px; font-weight: 600; color: var(--text); }
+        .form-grid input[type="text"],
+        .form-grid input[type="number"],
+        .form-grid select,
+        .form-grid textarea {
+            width: 100%;
+            padding: 9px 11px;
+            background: var(--surface-soft);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 13px;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        .form-grid textarea { resize: vertical; min-height: 80px; }
+        .form-grid input:focus, .form-grid select:focus, .form-grid textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+        }
+        .checkbox-row { flex-direction: row !important; align-items: center; gap: 8px !important; }
+        .checkbox-row input { width: auto; }
+        .checkbox-row span { margin: 0; font-weight: 500 !important; }
+        .form-help { color: var(--muted); font-size: 12px; margin-top: 4px; }
+        @media (max-width: 560px) { .form-grid { grid-template-columns: 1fr; } }
+    </style>
+
     <script>
+        const appUserAuthenticated = {{ 'true' if current_user else 'false' }};
+
         async function updateCartCount() {
+            if (!appUserAuthenticated) {
+                const cartCount = document.getElementById('cart-count');
+                if (cartCount) cartCount.style.display = 'none';
+                return;
+            }
             try {
                 const response = await fetch('/api/v1/cart', { credentials: 'include' });
+                if (response.status === 401 || response.status === 403) {
+                    const cartCount = document.getElementById('cart-count');
+                    if (cartCount) cartCount.style.display = 'none';
+                    return;
+                }
                 if (response.ok) {
                     const items = await response.json();
                     const cartCount = document.getElementById('cart-count');
@@ -114,8 +340,18 @@
         }
 
         async function updateFavoritesCount() {
+            if (!appUserAuthenticated) {
+                const favCount = document.getElementById('fav-count');
+                if (favCount) favCount.style.display = 'none';
+                return;
+            }
             try {
                 const response = await fetch('/api/v1/favorites', { credentials: 'include' });
+                if (response.status === 401 || response.status === 403) {
+                    const favCount = document.getElementById('fav-count');
+                    if (favCount) favCount.style.display = 'none';
+                    return;
+                }
                 if (response.ok) {
                     const items = await response.json();
                     const favCount = document.getElementById('fav-count');
@@ -147,11 +383,246 @@
             return false;
         }
 
+        function normalizeReportReason(reason) {
+            const normalized = String(reason || '').trim();
+            return normalized || 'Інше';
+        }
+
+        function showReportToast(message) {
+            const toast = document.getElementById('reportToast');
+            if (!toast) {
+                window.alert(message);
+                return;
+            }
+
+            toast.textContent = message;
+            toast.classList.add('show');
+            clearTimeout(showReportToast.timeoutId);
+            showReportToast.timeoutId = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        async function submitReport(event) {
+            if (event) {
+                event.preventDefault();
+            }
+
+            const form = document.getElementById('report-form') || document.getElementById('global-complaint-form');
+            const message = document.getElementById('report-message') || document.getElementById('global-complaint-message');
+            const hiddenProductId = document.getElementById('report-product-id') || document.getElementById('complaint-product-id');
+            const hiddenUserId = document.getElementById('report-user-id') || document.getElementById('complaint-user-id');
+            const hiddenCommentId = document.getElementById('report-comment-id') || document.getElementById('complaint-comment-id');
+
+            if (!form || !message || !hiddenProductId || !hiddenUserId || !hiddenCommentId) {
+                return;
+            }
+
+            const formData = new FormData(form);
+            const reason = normalizeReportReason(formData.get('reason'));
+            const details = String(formData.get('details') || formData.get('description') || '').trim();
+            const payload = {
+                reason,
+                details: details || null,
+                reported_user_id: hiddenUserId.value ? Number(hiddenUserId.value) : null,
+                product_id: hiddenProductId.value ? Number(hiddenProductId.value) : null,
+                comment_id: hiddenCommentId.value ? Number(hiddenCommentId.value) : null,
+            };
+
+            if (!payload.reported_user_id && !payload.product_id && !payload.comment_id) {
+                message.textContent = 'Виберіть об’єкт скарги.';
+                message.style.display = 'block';
+                message.className = 'form-success';
+                message.style.background = 'rgba(239,68,68,0.12)';
+                message.style.borderColor = 'rgba(239,68,68,0.35)';
+                message.style.color = '#fca5a5';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v1/reports', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(payload)
+                });
+
+                const responseData = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    const detail = responseData.detail || 'Не вдалося надіслати скаргу.';
+                    throw new Error(Array.isArray(detail) ? detail.map(item => item.msg || item).join(', ') : detail);
+                }
+
+                showReportToast('Дякуємо! Вашу скаргу відправлено модераторам.');
+                closeReportModal();
+            } catch (error) {
+                message.textContent = error.message || 'Не вдалося надіслати скаргу.';
+                message.style.display = 'block';
+                message.className = 'form-success';
+                message.style.background = 'rgba(239,68,68,0.12)';
+                message.style.borderColor = 'rgba(239,68,68,0.35)';
+                message.style.color = '#fca5a5';
+            }
+        }
+
+        function openReportModal({ productId = '', userId = '', commentId = '' } = {}) {
+            const modal = document.getElementById('reportModal') || document.getElementById('global-complaint-modal');
+            const form = document.getElementById('report-form') || document.getElementById('global-complaint-form');
+            const message = document.getElementById('report-message') || document.getElementById('global-complaint-message');
+            const hiddenProductId = document.getElementById('report-product-id') || document.getElementById('complaint-product-id');
+            const hiddenUserId = document.getElementById('report-user-id') || document.getElementById('complaint-user-id');
+            const hiddenCommentId = document.getElementById('report-comment-id') || document.getElementById('complaint-comment-id');
+            if (!modal || !form || !hiddenProductId || !hiddenUserId || !hiddenCommentId) return;
+
+            hiddenProductId.value = productId ? String(productId) : '';
+            hiddenUserId.value = userId ? String(userId) : '';
+            hiddenCommentId.value = commentId ? String(commentId) : '';
+
+            if (message) {
+                message.style.display = 'none';
+                message.textContent = '';
+                message.className = 'form-success';
+                message.style.background = '';
+                message.style.borderColor = '';
+                message.style.color = '';
+            }
+
+            form.reset();
+            modal.classList.add('open');
+            modal.setAttribute('aria-hidden', 'false');
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeReportModal() {
+            const modal = document.getElementById('reportModal') || document.getElementById('global-complaint-modal');
+            const form = document.getElementById('report-form') || document.getElementById('global-complaint-form');
+            const message = document.getElementById('report-message') || document.getElementById('global-complaint-message');
+            if (!modal) return;
+            modal.classList.remove('open');
+            modal.setAttribute('aria-hidden', 'true');
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+            if (form) form.reset();
+            if (message) {
+                message.style.display = 'none';
+                message.textContent = '';
+                message.className = 'form-success';
+                message.style.background = '';
+                message.style.borderColor = '';
+                message.style.color = '';
+            }
+        }
+
+        function bindReportModalEvents() {
+            const modal = document.getElementById('reportModal') || document.getElementById('global-complaint-modal');
+            const form = document.getElementById('report-form') || document.getElementById('global-complaint-form');
+            if (!modal || !form) return;
+
+            document.querySelectorAll('[data-close-report], [data-close-complaint]').forEach((el) => {
+                el.addEventListener('click', closeReportModal);
+            });
+
+            form.addEventListener('submit', submitReport);
+        }
+
+        document.addEventListener('click', function (event) {
+            const trigger = event.target.closest('[data-report-target]');
+            if (!trigger) return;
+
+            const productId = trigger.dataset.productId || trigger.dataset.product || '';
+            const userId = trigger.dataset.userId || trigger.dataset.user || '';
+            const commentId = trigger.dataset.commentId || trigger.dataset.comment || '';
+            openReportModal({ productId, userId, commentId });
+        });
+
+        function openComplaintModal(productId) {
+            openReportModal({ productId: productId || '' });
+        }
+
+        function closeComplaintModal() {
+            closeReportModal();
+        }
+
+        function openGlobalComplaintModal(productId, userId, commentId) {
+            openReportModal({ productId: productId || '', userId: userId || '', commentId: commentId || '' });
+        }
+
+        function updateDiscountPreview() {
+            const priceInput = document.getElementById('add-product-price');
+            const saleInput = document.getElementById('add-product-sale-price');
+            const preview = document.getElementById('add-product-discount-preview');
+            const previewSection = document.getElementById('add-sale-preview-section');
+            if (!priceInput || !saleInput || !preview || !previewSection) return;
+
+            const basePrice = Number(priceInput.value || 0);
+            const salePrice = Number(saleInput.value || 0);
+            const hasValidSale = Number.isFinite(salePrice) && salePrice > 0 && salePrice < basePrice && basePrice > 0;
+
+            if (hasValidSale) {
+                const percent = Math.round(100 - (salePrice / basePrice) * 100);
+                preview.textContent = `${percent}% знижки`;
+                preview.style.display = 'inline-block';
+                previewSection.style.display = 'block';
+            } else {
+                preview.textContent = '0% знижки';
+                preview.style.display = 'none';
+                previewSection.style.display = 'none';
+            }
+        }
+
+        function toggleProductTypeFields(type, scope) {
+            const root = scope || document;
+            const isDigital = type === 'digital';
+            const isGame = type === 'game_item';
+            const isPhysical = type === 'physical';
+            const showDigitalBlock = isDigital || isGame;
+
+            const digitalSection = root.querySelector('#add-digital-section') || root.querySelector('#digital-section');
+            if (digitalSection) {
+                digitalSection.style.display = showDigitalBlock ? 'block' : 'none';
+            }
+
+            const allTypeSections = root.querySelectorAll('.type-specific');
+            allTypeSections.forEach(section => {
+                const sectionType = section.getAttribute('data-type') || '';
+                if (sectionType === type) {
+                    section.style.display = 'block';
+                } else {
+                    section.style.display = 'none';
+                }
+            });
+
+            const physicalOnly = root.querySelectorAll('.physical-only');
+            physicalOnly.forEach(el => {
+                if (isPhysical) {
+                    el.style.opacity = '1';
+                    el.style.pointerEvents = '';
+                } else {
+                    el.style.opacity = '0.55';
+                    el.style.pointerEvents = 'none';
+                }
+            });
+
+            const stockQuantityWrap = root.querySelectorAll('[data-stock-field]');
+            stockQuantityWrap.forEach(el => {
+                if (isPhysical) {
+                    el.style.display = '';
+                } else {
+                    el.style.display = 'none';
+                }
+            });
+        }
+
         function openAddProductModal(defaultPhone) {
             const modal = document.getElementById('add-product-modal');
             const form = document.getElementById('add-product-form');
             const errEl = document.getElementById('add-product-form-error');
             const phoneInput = document.getElementById('add-product-phone');
+            const typeSelect = document.getElementById('add-product-type');
             if (!modal || !form) return;
             if (form) form.reset();
             if (errEl) {
@@ -160,6 +631,10 @@
             }
             if (phoneInput && defaultPhone) {
                 phoneInput.value = defaultPhone;
+            }
+            if (typeSelect) {
+                typeSelect.value = 'physical';
+                toggleProductTypeFields('physical', modal);
             }
             modal.classList.add('open');
             modal.setAttribute('aria-hidden', 'false');
@@ -186,6 +661,22 @@
             const form = document.getElementById('add-product-form');
             if (!modal || !form) return;
 
+            const typeSelect = document.getElementById('add-product-type');
+            const priceInput = document.getElementById('add-product-price');
+            const saleInput = document.getElementById('add-product-sale-price');
+
+            if (typeSelect) {
+                typeSelect.addEventListener('change', function (e) {
+                    toggleProductTypeFields(e.target.value, modal);
+                });
+            }
+            if (priceInput) {
+                priceInput.addEventListener('input', updateDiscountPreview);
+            }
+            if (saleInput) {
+                saleInput.addEventListener('input', updateDiscountPreview);
+            }
+
             document.querySelectorAll('[data-close-add-product]').forEach(function (el) {
                 el.addEventListener('click', closeAddProductModal);
             });
@@ -206,6 +697,9 @@
 
                 const formData = new FormData(form);
                 formData.set('seller_phone', formData.get('seller_phone') || '');
+                if (!formData.get('is_draft')) {
+                    formData.delete('is_draft');
+                }
 
                 const submitBtn = modal.querySelector('button[type="submit"][form="add-product-form"]');
                 const originalBtnText = submitBtn ? submitBtn.textContent : null;
@@ -262,6 +756,7 @@
             updateCartCount();
             updateFavoritesCount();
             bindAddProductModalEvents();
+            bindReportModalEvents();
         });
 
         window.updateCartCount = updateCartCount;
@@ -270,6 +765,14 @@
         window.handleAuthRedirect = handleAuthRedirect;
         window.openAddProductModal = openAddProductModal;
         window.closeAddProductModal = closeAddProductModal;
+        window.toggleProductTypeFields = toggleProductTypeFields;
+        window.openComplaintModal = openComplaintModal;
+        window.closeComplaintModal = closeComplaintModal;
+        window.openReportModal = openReportModal;
+        window.closeReportModal = closeReportModal;
+        window.openGlobalComplaintModal = openGlobalComplaintModal;
+        window.submitReport = submitReport;
+        window.showReportToast = showReportToast;
     </script>
 </body>
 </html>

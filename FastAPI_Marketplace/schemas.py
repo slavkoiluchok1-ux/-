@@ -1,9 +1,19 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal, Optional
+from enum import Enum
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+class ProductType(str, Enum):
+    PHYSICAL = "physical"
+    DIGITAL = "digital"
+    GAME_ITEM = "game_item"
+
+
+ProductTypeLiteral = Literal["physical", "digital", "game_item"]
 
 
 class Token(BaseModel):
@@ -167,11 +177,30 @@ class ProductMediaResponse(BaseModel):
     media_type: Literal["photo", "video"]
 
 
+class TagResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    slug: str
+
+
 class ProductCreate(BaseModel):
     title: str = Field(..., min_length=2, max_length=250)
     description: str = Field(..., min_length=5)
     price: int = Field(..., ge=0)
+    sale_price: Optional[float] = Field(default=None, ge=0)
     quantity: int = Field(..., ge=0)
+    sku: Optional[str] = Field(default=None, max_length=120)
+    product_type: ProductType = ProductType.PHYSICAL
+    is_draft: bool = False
+    attributes: Optional[dict[str, Any]] = None
+    digital_content: Optional[str] = None
+    weight_dimensions: Optional[str] = None
+    shipping_options: Optional[str] = None
+    platform_server: Optional[str] = None
+    rarity: Optional[str] = None
+    execution_time: Optional[str] = None
     seller_phone: Optional[str] = None
 
 
@@ -182,12 +211,28 @@ class ProductResponse(BaseModel):
     title: str
     description: str
     price: int
+    sale_price: Optional[float] = None
     quantity: int
+    stock: int = 0
+    sku: Optional[str] = None
+    product_type: ProductType = ProductType.PHYSICAL
+    is_draft: bool = False
+    attributes: Optional[dict[str, Any]] = None
+    digital_content: Optional[str] = None
+    weight_dimensions: Optional[str] = None
+    shipping_options: Optional[str] = None
+    platform_server: Optional[str] = None
+    rarity: Optional[str] = None
+    execution_time: Optional[str] = None
     seller_phone: Optional[str] = None
     user_id: int
     sales_count: int = 0
+    in_stock: bool = True
+    stock_status_label: str = "В наявності"
     created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
     media: list[ProductMediaResponse] = Field(default_factory=list)
+    tags: list[TagResponse] = Field(default_factory=list)
 
 
 class ProductListOut(ProductResponse):
@@ -305,27 +350,98 @@ class OrderStatusUpdate(BaseModel):
     status: Literal["created", "completed", "cancelled"]
 
 
-class ComplaintCreate(BaseModel):
-    product_id: int
-    reason: str = Field(..., min_length=1, max_length=50)
-    description: Optional[str] = Field(default=None, max_length=2000)
+class ReportCreate(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    reported_user_id: Optional[int] = None
+    product_id: Optional[int] = None
+    comment_id: Optional[int] = None
+    reason: str = Field(..., min_length=1, max_length=100)
+    details: Optional[str] = Field(default=None, max_length=5000)
+    description: Optional[str] = Field(default=None, max_length=5000)
+    status: Optional[Literal["pending", "resolved", "rejected"]] = None
+
+    @field_validator("details", "description", mode="before")
+    @classmethod
+    def normalize_details(cls, value: Any, info: Any) -> Optional[str]:
+        if value is None:
+            return None
+        text = str(value).strip()
+        if not text:
+            return None
+        return text
+
+    @field_validator("reason")
+    @classmethod
+    def normalize_reason(cls, value: str) -> str:
+        return str(value).strip()
+
+    @property
+    def normalized_details(self) -> Optional[str]:
+        return self.details or self.description
 
 
-class ComplaintResponse(BaseModel):
+class ReportStatusUpdate(BaseModel):
+    status: Literal["pending", "resolved", "rejected"]
+
+
+class ReportResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     reporter_id: int
-    target_type: str
-    target_id: int
+    reported_user_id: Optional[int] = None
+    product_id: Optional[int] = None
+    comment_id: Optional[int] = None
     reason: str
+    details: Optional[str] = None
+    status: str = "pending"
+    created_at: Optional[datetime] = None
+
+
+class AdminReportResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    reporter_id: int
+    reporter_name: Optional[str] = None
+    reporter_email: Optional[str] = None
+    reported_user_id: Optional[int] = None
+    reported_user_name: Optional[str] = None
+    reported_user_email: Optional[str] = None
+    product_id: Optional[int] = None
+    product_title: Optional[str] = None
+    comment_id: Optional[int] = None
+    comment_body: Optional[str] = None
+    reason: str
+    details: Optional[str] = None
+    status: str = "pending"
+    created_at: Optional[datetime] = None
+    target_type: Optional[str] = None
+    target_label: Optional[str] = None
+
+
+class ReportOut(ReportResponse):
+    pass
+
+
+class ComplaintCreate(ReportCreate):
+    pass
+
+
+class ComplaintStatusUpdate(BaseModel):
+    status: Literal["pending", "resolved", "rejected", "opened", "in_progress"]
+
+
+class ComplaintResponse(ReportResponse):
+    model_config = ConfigDict(from_attributes=True)
+
+    target_type: Optional[str] = None
+    target_id: Optional[int] = None
     subject: Optional[str] = None
     object_label: Optional[str] = None
     comment: Optional[str] = None
-    created_at: Optional[datetime] = None
-    status: str = "opened"
     user_id: Optional[int] = None
-    product_id: Optional[int] = None
     username: Optional[str] = None
     user_email: Optional[str] = None
     title: Optional[str] = None

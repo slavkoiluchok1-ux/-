@@ -36,12 +36,12 @@ button, input, select, textarea { font: inherit; }
 }
 
 .site-header {
-  background: rgba(15, 23, 42, 0.9);
+  background: rgba(15, 23, 42, 0.88);
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
   z-index: 10;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(10px);
 }
 
 .nav-inner {
@@ -54,14 +54,16 @@ button, input, select, textarea { font: inherit; }
 
 .brand {
   font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #f8fbff;
+  text-shadow: 0 0 18px rgba(96, 165, 250, 0.35);
 }
 
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
@@ -71,15 +73,23 @@ button, input, select, textarea { font: inherit; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 10px 14px;
   border: 1px solid transparent;
-  transition: 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   cursor: pointer;
 }
 
-.nav-links a { color: var(--text); background: transparent; }
-.nav-links a:hover, .btn:hover { transform: translateY(-1px); }
+.nav-links a {
+  color: var(--text);
+  background: rgba(148, 163, 184, 0.05);
+  border: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.nav-links a:hover, .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(59, 130, 246, 0.18);
+}
 
 .user-badge {
   display: inline-flex;
@@ -130,7 +140,10 @@ button, input, select, textarea { font: inherit; }
 
 .hero {
   text-align: center;
-  padding: 48px 24px 36px;
+  padding: 60px 26px 42px;
+  background:
+    radial-gradient(circle at top, rgba(59, 130, 246, 0.18), transparent 45%),
+    rgba(17, 24, 39, 0.92);
 }
 
 .eyebrow {
@@ -146,6 +159,7 @@ button, input, select, textarea { font: inherit; }
 .page-intro h1 {
   margin: 0 0 12px;
   font-size: clamp(2rem, 4vw, 3rem);
+  letter-spacing: -0.04em;
 }
 
 .hero p,

@@ -7,9 +7,8 @@ from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from auth_utils import decode_access_token
 from database import get_db
-from dependencies import get_current_user
+from dependencies import get_current_user, get_current_user_or_redirect
 from models import Favorite, Product, User
 from schemas import FavoriteOut, MessageResponse, ProductListOut
 
@@ -18,20 +17,13 @@ templates = Jinja2Templates(directory="Templates")
 
 
 @router.get("/favorites", response_class=HTMLResponse)
-async def favorites_page(request: Request, db: AsyncSession = Depends(get_db)):
-    current_user = None
-    token_value = request.cookies.get("access_token")
-    if token_value:
-        try:
-            payload = decode_access_token(token_value.replace("Bearer ", "").strip())
-            user_id = payload.get("sub")
-            if user_id is not None:
-                current_user = await db.get(User, int(user_id))
-        except Exception:
-            current_user = None
-
-    if current_user is None:
-        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+async def favorites_page(
+    request: Request,
+    result: User | RedirectResponse = Depends(get_current_user_or_redirect),
+):
+    if isinstance(result, RedirectResponse):
+        return result
+    current_user = result
 
     return templates.TemplateResponse(
         request,

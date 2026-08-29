@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import AsyncGenerator
 
 from dotenv import load_dotenv
@@ -8,7 +9,11 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 load_dotenv()
 
-DEFAULT_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./fastmoney.db")
+BASE_DIR = Path(__file__).resolve().parent
+DEFAULT_DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    f"sqlite+aiosqlite:///{(BASE_DIR / 'fastmoney.db').resolve()}"
+)
 DATABASE_URL = DEFAULT_DATABASE_URL
 
 if "localhost" in DATABASE_URL:
@@ -115,6 +120,97 @@ async def ensure_order_table_columns() -> None:
             pass
 
 
+async def ensure_product_table_columns() -> None:
+    async with engine.begin() as connection:
+        if not DATABASE_URL.startswith("sqlite"):
+            return
+
+        try:
+            table_check = await connection.execute(
+                text("SELECT name FROM sqlite_master WHERE type='table' AND name='products'")
+            )
+            if table_check.fetchone() is None:
+                return
+
+            columns = await connection.execute(text("PRAGMA table_info(products)"))
+            existing = {row[1] for row in columns.fetchall()}
+
+            required_columns = {
+                "sale_price": "FLOAT",
+                "sku": "VARCHAR(120)",
+                "product_type": "VARCHAR(20) DEFAULT 'physical' NOT NULL",
+                "is_draft": "BOOLEAN DEFAULT 0 NOT NULL",
+                "attributes": "JSON",
+                "digital_content": "TEXT",
+                "weight_dimensions": "VARCHAR(200)",
+                "shipping_options": "VARCHAR(250)",
+                "platform_server": "VARCHAR(200)",
+                "rarity": "VARCHAR(120)",
+                "execution_time": "VARCHAR(200)",
+                "seller_phone": "VARCHAR(80)",
+                "user_id": "INTEGER",
+                "sales_count": "INTEGER DEFAULT 0 NOT NULL",
+                "created_at": "DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL",
+                "updated_at": "DATETIME",
+            }
+
+            for column_name, column_def in required_columns.items():
+                if column_name not in existing:
+                    try:
+                        await connection.execute(text(f"ALTER TABLE products ADD COLUMN {column_name} {column_def}"))
+                    except Exception:
+                        if column_name == "updated_at":
+                            await connection.execute(text("ALTER TABLE products ADD COLUMN updated_at DATETIME"))
+                        else:
+                            raise
+        except Exception:
+            try:
+                await connection.execute(text("ALTER TABLE products ADD COLUMN updated_at DATETIME"))
+            except Exception:
+                pass
+
+
+async def ensure_tagging_tables() -> None:
+    async with engine.begin() as connection:
+        if not DATABASE_URL.startswith("sqlite"):
+            return
+
+        try:
+            tables = {
+                row[0]
+                for row in (
+                    await connection.execute(
+                        text("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('tags','product_tags')")
+                    )
+                ).fetchall()
+            }
+
+            if "tags" not in tables:
+                await connection.execute(
+                    text(
+                        "CREATE TABLE tags ("
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                        "name VARCHAR(80) NOT NULL UNIQUE, "
+                        "slug VARCHAR(100) NOT NULL UNIQUE, "
+                        "created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL"
+                        ")"
+                    )
+                )
+
+            if "product_tags" not in tables:
+                await connection.execute(
+                    text(
+                        "CREATE TABLE product_tags ("
+                        "product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE, "
+                        "tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE, "
+                        "PRIMARY KEY (product_id, tag_id)"
+                        ")"
+                    )
+                )
+        except Exception:
+            pass
+
+
 async def ensure_schema() -> None:
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
@@ -128,6 +224,8 @@ async def ensure_schema() -> None:
 
     await ensure_resume_table_columns()
     await ensure_order_table_columns()
+    await ensure_product_table_columns()
+    await ensure_tagging_tables()
 
 
 async def cleanup_html_redirect_product() -> None:
@@ -135,32 +233,26 @@ async def cleanup_html_redirect_product() -> None:
         await db.execute(
             text(
                 "DELETE FROM cart_items WHERE product_id IN ("
-                "SELECT id FROM products WHERE title LIKE '%HTML redirect product%' "
-                "OR name LIKE '%HTML redirect product%'"
+                "SELECT id FROM products WHERE title LIKE '%HTML redirect product%'"
                 ")"
             )
         )
         await db.execute(
             text(
                 "DELETE FROM order_items WHERE product_id IN ("
-                "SELECT id FROM products WHERE title LIKE '%HTML redirect product%' "
-                "OR name LIKE '%HTML redirect product%'"
+                "SELECT id FROM products WHERE title LIKE '%HTML redirect product%'"
                 ")"
             )
         )
         await db.execute(
             text(
                 "DELETE FROM favorites WHERE product_id IN ("
-                "SELECT id FROM products WHERE title LIKE '%HTML redirect product%' "
-                "OR name LIKE '%HTML redirect product%'"
+                "SELECT id FROM products WHERE title LIKE '%HTML redirect product%'"
                 ")"
             )
         )
         await db.execute(
-            text(
-                "DELETE FROM products WHERE title LIKE '%HTML redirect product%' "
-                "OR name LIKE '%HTML redirect product%'"
-            )
+            text("DELETE FROM products WHERE title LIKE '%HTML redirect product%'")
         )
         await db.commit()
 
