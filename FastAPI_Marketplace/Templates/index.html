@@ -22,6 +22,36 @@
         </div>
     </section>
 
+    {% if current_user %}
+    <section class="card" style="margin-bottom: 24px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+            <div>
+                <span class="eyebrow">Telegram-бот</span>
+                <h3 style="margin: 8px 0 0;">Повідомлення про продажі</h3>
+            </div>
+            {% if current_user.telegram_chat_id %}
+                <span style="display:inline-flex; align-items:center; padding:8px 12px; border-radius:999px; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.45); color:#86efac; font-weight:700;">🟢 Бот прив'язаний</span>
+            {% endif %}
+        </div>
+
+        {% if current_user.telegram_chat_id %}
+            <div style="margin-top:16px; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+                <a href="https://t.me/{{ BOT_USERNAME }}?start={{ current_user.tg_link_code or 'TG-00000' }}" target="_blank" rel="noreferrer" class="btn btn-primary">Відкрити Telegram-бота</a>
+                <button type="button" class="btn btn-danger" id="unbind-telegram-btn">Відв'язати</button>
+            </div>
+        {% else %}
+            <div style="margin-top:16px; display:flex; flex-direction:column; gap:12px;">
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <span id="tg-code-value" style="font-weight:700; letter-spacing:0.06em; background:#0f172a; color:#e2e8f0; border:1px solid var(--border); border-radius:10px; padding:10px 12px;">{{ current_user.tg_link_code or 'TG-00000' }}</span>
+                    <button type="button" class="btn btn-secondary" onclick="copyTelegramCode()">Скопіювати</button>
+                </div>
+                <a href="https://t.me/{{ BOT_USERNAME }}?start={{ current_user.tg_link_code or 'TG-00000' }}" target="_blank" rel="noreferrer" style="color: var(--accent); text-decoration: none; font-weight: 600;">Відкрити Telegram-бота</a>
+                <p style="margin:0; color:var(--muted);">Надішліть цей код боту в Telegram, щоб прив'язати акаунт і отримувати сповіщення про продажі.</p>
+            </div>
+        {% endif %}
+    </section>
+    {% endif %}
+
     <div class="grid">
         <article class="card">
             <h3>Каталог</h3>
@@ -41,4 +71,37 @@
         </article>
     </div>
 </div>
+
+<script>
+    function copyTelegramCode() {
+        const value = document.getElementById('tg-code-value')?.textContent?.trim();
+        if (!value) return;
+        navigator.clipboard.writeText(value)
+            .then(() => alert('Код прив’язки скопійовано в буфер обміну.'))
+            .catch(() => alert('Не вдалося скопіювати код прив’язки.'));
+    }
+
+    async function unbindTelegram() {
+        try {
+            const response = await fetch('/api/v1/users/unbind-telegram', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(data.detail || 'Не вдалося відв’язати Telegram');
+            }
+            window.location.reload();
+        } catch (error) {
+            alert(error.message || 'Не вдалося відв’язати Telegram');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const unbindButton = document.getElementById('unbind-telegram-btn');
+        if (unbindButton) {
+            unbindButton.addEventListener('click', unbindTelegram);
+        }
+    });
+</script>
 {% endblock %}

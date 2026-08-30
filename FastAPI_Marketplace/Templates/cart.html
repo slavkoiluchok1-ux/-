@@ -62,12 +62,6 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
-        cursor: pointer;
-        transition: transform 0.2s ease;
-    }
-
-    .cart-product .thumb img:hover {
-        transform: scale(1.05);
     }
 
     .cart-product .thumb span {
@@ -221,25 +215,28 @@
                 return `
                     <div class="cart-row">
                         <div class="cart-product">
-                            <div class="thumb">${item.product.image_url ? `<img src="${item.product.image_url}" alt="${item.product.title}" onclick="openImageModal('${item.product.image_url}')" class="cursor-pointer" />` : '<span>Фото</span>'}</div>
+                            <div class="thumb" onclick="openImageModal('${item.product.image_url || ''}')" class="cursor-pointer transition-transform hover:scale-105" style="cursor:pointer;">
+                                ${item.product.image_url ? `<img src="${item.product.image_url}" alt="${item.product.title}" class="cursor-pointer transition-transform hover:scale-105" />` : '<span>Фото</span>'}
+                            </div>
                             <div>
                                 <a href="/products/${productId}" class="cart-title">${item.product.title}</a>
                                 <div class="cart-price">${price} ₴</div>
                             </div>
                         </div>
                         <div class="qty-controls">
-                            <button type="button" class="qty-btn" data-qty-minus="${item.id}" data-product-id="${productId}" data-max="${item.product.quantity || 0}">−</button>
+                            <button type="button" class="qty-btn" data-qty-minus="${item.id}" data-product-id="${productId}">−</button>
                             <input
                                 type="number"
                                 name="quantity"
                                 min="1"
-                                max="${item.product.quantity || 0}"
+                                max="${item.product.stock || 9999}"
                                 value="${quantity}"
                                 data-item-id="${item.id}"
                                 data-product-id="${productId}"
+                                data-max="${item.product.stock || 9999}"
                                 class="cart-quantity-input"
                             />
-                            <button type="button" class="qty-btn" data-qty-plus="${item.id}" data-product-id="${productId}" data-max="${item.product.quantity || 0}">+</button>
+                            <button type="button" class="qty-btn" data-qty-plus="${item.id}" data-product-id="${productId}" data-max="${item.product.stock || 9999}">+</button>
                         </div>
                         <button type="button" class="remove-btn" data-remove-item="${item.id}">Видалити</button>
                     </div>
@@ -252,44 +249,69 @@
             attachCartEventListeners();
         }
 
+        async function saveCartQuantity(itemId, newQuantity) {
+            try {
+                const response = await fetch('/api/v1/cart/update', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ item_id: itemId, new_quantity: newQuantity })
+                });
+
+                if (window.handleAuthRedirect && window.handleAuthRedirect(response)) {
+                    return { ok: false, redirected: true };
+                }
+
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    const detail = data.detail || 'Не вдалося оновити кількість';
+                    const msg = Array.isArray(detail)
+                        ? detail.map((item) => item.msg || item).join(', ')
+                        : String(detail);
+                    throw new Error(msg);
+                }
+
+                return { ok: true, data };
+            } catch (err) {
+                console.error('[Cart update] error:', err);
+                if (window.showToast) {
+                    window.showToast(err.message || 'Не вдалося оновити кількість', {
+                        type: 'error',
+                        title: 'Помилка',
+                        duration: 4200
+                    });
+                }
+                throw err;
+            }
+        }
+
         function attachCartEventListeners() {
             cartTable.querySelectorAll('.cart-quantity-input').forEach(input => {
                 input.addEventListener('focus', function () {
                     this.dataset.prevQty = String(this.value || '1');
                 });
+
                 input.addEventListener('change', async function () {
-                    const productId = parseInt(this.dataset.productId, 10);
-                    const prevQty = parseInt(this.dataset.prevQty || this.value || '1', 10);
-                    const nextQty = Math.max(1, parseInt(this.value || '1', 10));
+                    const itemId = Number(this.dataset.itemId);
+                    const prevQty = Number(this.dataset.prevQty || this.value || '1');
+                    const nextQty = Math.max(1, Number(this.value || '1'));
                     this.value = String(nextQty);
 
-                    if (Number.isNaN(productId) || Number.isNaN(nextQty)) {
+                    if (!itemId || Number.isNaN(nextQty)) {
                         this.value = String(prevQty);
                         return;
                     }
 
                     try {
-                        const response = await fetch('/api/v1/cart/update', {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            credentials: 'include',
-                            body: JSON.stringify({ product_id: productId, quantity: nextQty })
-                        });
-
-                        if (window.handleAuthRedirect && window.handleAuthRedirect(response)) {
-                            return;
-                        }
-
-                        const data = await response.json().catch(() => ({}));
-                        if (!response.ok) {
+                        const result = await saveCartQuantity(itemId, nextQty);
+                        if (!result.ok) {
                             this.value = String(prevQty);
                             return;
                         }
 
-                        if (data.items) {
-                            updateCartUI(data.items, data.total);
+                        if (result.data && result.data.items) {
+                            updateCartUI(result.data.items, result.data.total);
                         }
-
                         if (typeof updateCartCount === 'function') {
                             updateCartCount();
                         }
@@ -301,43 +323,29 @@
 
             cartTable.querySelectorAll('[data-qty-plus]').forEach(button => {
                 button.addEventListener('click', async function () {
-                    const productId = parseInt(this.dataset.productId, 10);
-                    const itemId = this.dataset.qtyPlus;
-                    const maxQty = Number(this.dataset.max || 0);
+                    const itemId = Number(this.dataset.qtyPlus);
                     const input = cartTable.querySelector(`[data-item-id="${itemId}"]`);
-                    const currentQty = parseInt(input?.value || '1', 10);
-                    const nextQty = currentQty + 1;
+                    if (!input) return;
 
-                    if (!input || Number.isNaN(productId) || Number.isNaN(currentQty)) return;
-                    if (maxQty > 0 && currentQty >= maxQty) {
-                        input.value = String(maxQty);
+                    const max = Number(this.dataset.max || input.dataset.max || 9999);
+                    const currentQty = Math.max(1, Number(input.value || '1'));
+                    if (currentQty >= max) {
                         return;
                     }
 
+                    const nextQty = currentQty + 1;
                     input.value = String(nextQty);
 
                     try {
-                        const response = await fetch('/api/v1/cart/update', {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            credentials: 'include',
-                            body: JSON.stringify({ product_id: productId, quantity: nextQty })
-                        });
-
-                        if (window.handleAuthRedirect && window.handleAuthRedirect(response)) {
-                            return;
-                        }
-
-                        const data = await response.json().catch(() => ({}));
-                        if (!response.ok) {
+                        const result = await saveCartQuantity(itemId, nextQty);
+                        if (!result.ok) {
                             input.value = String(currentQty);
                             return;
                         }
 
-                        if (data.items) {
-                            updateCartUI(data.items, data.total);
+                        if (result.data && result.data.items) {
+                            updateCartUI(result.data.items, result.data.total);
                         }
-
                         if (typeof updateCartCount === 'function') {
                             updateCartCount();
                         }
@@ -349,38 +357,24 @@
 
             cartTable.querySelectorAll('[data-qty-minus]').forEach(button => {
                 button.addEventListener('click', async function () {
-                    const productId = parseInt(this.dataset.productId, 10);
-                    const itemId = this.dataset.qtyMinus;
+                    const itemId = Number(this.dataset.qtyMinus);
                     const input = cartTable.querySelector(`[data-item-id="${itemId}"]`);
-                    const currentQty = parseInt(input?.value || '1', 10);
+                    if (!input) return;
+
+                    const currentQty = Math.max(1, Number(input.value || '1'));
                     const nextQty = Math.max(1, currentQty - 1);
-
-                    if (!input || Number.isNaN(productId) || Number.isNaN(currentQty)) return;
-
                     input.value = String(nextQty);
 
                     try {
-                        const response = await fetch('/api/v1/cart/update', {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            credentials: 'include',
-                            body: JSON.stringify({ product_id: productId, quantity: nextQty })
-                        });
-
-                        if (window.handleAuthRedirect && window.handleAuthRedirect(response)) {
-                            return;
-                        }
-
-                        const data = await response.json().catch(() => ({}));
-                        if (!response.ok) {
+                        const result = await saveCartQuantity(itemId, nextQty);
+                        if (!result.ok) {
                             input.value = String(currentQty);
                             return;
                         }
 
-                        if (data.items) {
-                            updateCartUI(data.items, data.total);
+                        if (result.data && result.data.items) {
+                            updateCartUI(result.data.items, result.data.total);
                         }
-
                         if (typeof updateCartCount === 'function') {
                             updateCartCount();
                         }
@@ -393,26 +387,49 @@
             cartTable.querySelectorAll('[data-remove-item]').forEach(button => {
                 button.addEventListener('click', async function () {
                     const itemId = Number(this.dataset.removeItem);
+                    const row = this.closest('.cart-row');
                     const originalText = this.textContent;
                     try {
-                        const response = await fetch(`/api/v1/cart/remove/${itemId}`, { method: 'DELETE', credentials: 'include' });
+                        const response = await fetch(`/api/v1/cart/remove/${itemId}`, {
+                            method: 'DELETE',
+                            credentials: 'same-origin',
+                            headers: { 'Accept': 'application/json' }
+                        });
 
                         if (window.handleAuthRedirect && window.handleAuthRedirect(response)) {
                             return;
                         }
 
-                        if (response.ok) {
-                            if (window.flashButtonText) {
-                                window.flashButtonText(this, 'Видалено ✓', originalText, 1500);
-                            }
-                            setTimeout(() => {
-                                refreshCart();
-                                if (typeof updateCartCount === 'function') {
-                                    updateCartCount();
-                                }
-                            }, 400);
+                        const payload = await response.json().catch(() => ({}));
+                        if (!response.ok) {
+                            const detail = payload.detail || 'Не вдалося видалити позицію';
+                            const msg = Array.isArray(detail)
+                                ? detail.map((x) => x.msg || x).join(', ')
+                                : String(detail);
+                            throw new Error(msg);
+                        }
+
+                        if (row) row.remove();
+                        if (typeof updateCartCount === 'function') {
+                            updateCartCount();
+                        }
+                        await refreshCart();
+                        if (window.showToast) {
+                            window.showToast(payload.message || 'Товар видалено з кошика', {
+                                type: 'success',
+                                title: 'Кошик оновлено',
+                                duration: 2500
+                            });
                         }
                     } catch (error) {
+                        console.error('[Cart remove] error:', error);
+                        if (window.showToast) {
+                            window.showToast(error.message || 'Не вдалося видалити товар', {
+                                type: 'error',
+                                title: 'Помилка',
+                                duration: 4200
+                            });
+                        }
                     }
                 });
             });
@@ -420,7 +437,15 @@
 
         async function refreshCart() {
             try {
-                const response = await fetch('/api/v1/cart', { credentials: 'include' });
+                const response = await fetch('/api/v1/cart', {
+                    credentials: 'same-origin',
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (window.handleAuthRedirect && window.handleAuthRedirect(response)) {
+                    return;
+                }
+
                 if (!response.ok) throw new Error('Не вдалося завантажити кошик');
                 const items = await response.json();
 
@@ -441,25 +466,28 @@
                     return `
                         <div class="cart-row">
                             <div class="cart-product">
-                                <div class="thumb">${item.product.image_url ? `<img src="${item.product.image_url}" alt="${item.product.title}" onclick="openImageModal('${item.product.image_url}')" class="cursor-pointer" />` : '<span>Фото</span>'}</div>
+                                <div class="thumb" onclick="openImageModal('${item.product.image_url || ''}')" style="cursor:pointer;">
+                                    ${item.product.image_url ? `<img src="${item.product.image_url}" alt="${item.product.title}" class="cursor-pointer transition-transform hover:scale-105" />` : '<span>Фото</span>'}
+                                </div>
                                 <div>
                                     <a href="/products/${productId}" class="cart-title">${item.product.title}</a>
                                     <div class="cart-price">${price} ₴</div>
                                 </div>
                             </div>
                             <div class="qty-controls">
-                                <button type="button" class="qty-btn" data-qty-minus="${item.id}" data-product-id="${productId}" data-max="${item.product.quantity || 0}">−</button>
+                                <button type="button" class="qty-btn" data-qty-minus="${item.id}" data-product-id="${productId}">−</button>
                                 <input
                                     type="number"
                                     name="quantity"
                                     min="1"
-                                    max="${item.product.quantity || 0}"
+                                    max="${item.product.stock || item.product.quantity || 9999}"
                                     value="${quantity}"
                                     data-item-id="${item.id}"
                                     data-product-id="${productId}"
+                                    data-max="${item.product.stock || item.product.quantity || 9999}"
                                     class="cart-quantity-input"
                                 />
-                                <button type="button" class="qty-btn" data-qty-plus="${item.id}" data-product-id="${productId}" data-max="${item.product.quantity || 0}">+</button>
+                                <button type="button" class="qty-btn" data-qty-plus="${item.id}" data-product-id="${productId}" data-max="${item.product.stock || item.product.quantity || 9999}">+</button>
                             </div>
                             <button type="button" class="remove-btn" data-remove-item="${item.id}">Видалити</button>
                         </div>
@@ -470,11 +498,24 @@
                 if (checkoutBtn) checkoutBtn.disabled = false;
                 if (checkoutForm) checkoutForm.hidden = false;
 
-                // Attach event listeners to the newly rendered cart items
                 attachCartEventListeners();
             } catch (error) {
-                cartTable.innerHTML = '<div class="empty-state">Не вдалося завантажити кошик.</div>';
+                console.error('[Cart refresh] error:', error);
+                if (window.showToast) {
+                    window.showToast(error.message || 'Не вдалося завантажити кошик', {
+                        type: 'error',
+                        title: 'Помилка завантаження',
+                        duration: 4500
+                    });
+                }
+                cartTable.innerHTML = `<div class="empty-state">${escapeHtml(error.message || 'Не вдалося завантажити кошик.')}</div>`;
             }
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[char]));
         }
 
         if (checkoutBtn) {
@@ -489,21 +530,37 @@
                 const paymentMethod = document.getElementById('payment-method')?.value.trim() || 'Оплата при отриманні';
 
                 if (!deliveryAddress) {
-                    checkoutStatus.textContent = 'Вкажіть адресу або № відділення доставки.';
-                    checkoutStatus.hidden = false;
+                    const msg = 'Вкажіть адресу або № відділення доставки.';
+                    if (checkoutStatus) {
+                        checkoutStatus.textContent = msg;
+                        checkoutStatus.hidden = false;
+                    }
+                    if (window.showToast) {
+                        window.showToast(msg, { type: 'warning', title: 'Необхідні дані', duration: 3500 });
+                    }
                     return;
                 }
 
                 if (!phone) {
-                    checkoutStatus.textContent = 'Вкажіть контактний номер телефону.';
-                    checkoutStatus.hidden = false;
+                    const msg = 'Вкажіть контактний номер телефону.';
+                    if (checkoutStatus) {
+                        checkoutStatus.textContent = msg;
+                        checkoutStatus.hidden = false;
+                    }
+                    if (window.showToast) {
+                        window.showToast(msg, { type: 'warning', title: 'Необхідні дані', duration: 3500 });
+                    }
                     return;
                 }
+
+                const originalBtnText = checkoutBtn.textContent;
+                checkoutBtn.disabled = true;
+                checkoutBtn.textContent = 'Оформлюється...';
 
                 try {
                     const response = await fetch('/api/v1/orders/checkout', {
                         method: 'POST',
-                        credentials: 'include',
+                        credentials: 'same-origin',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             delivery_address: deliveryAddress,
@@ -511,6 +568,13 @@
                             payment_method: paymentMethod
                         })
                     });
+
+                    if (window.handleAuthRedirect && window.handleAuthRedirect(response)) {
+                        checkoutBtn.disabled = false;
+                        checkoutBtn.textContent = originalBtnText;
+                        return;
+                    }
+
                     const payload = await response.json().catch(() => ({}));
                     if (!response.ok) {
                         const detail = payload.detail;
@@ -519,11 +583,32 @@
                             : (detail || 'Не вдалося оформити замовлення');
                         throw new Error(message);
                     }
-                    window.location.href = '/orders';
+
+                    if (window.showToast) {
+                        window.showToast('Замовлення успішно оформлено!', {
+                            type: 'success',
+                            title: 'Замовлення',
+                            duration: 3000
+                        });
+                    }
+                    setTimeout(() => {
+                        window.location.href = '/orders';
+                    }, 500);
                 } catch (error) {
+                    console.error('[Checkout] error:', error);
+                    checkoutBtn.disabled = false;
+                    checkoutBtn.textContent = originalBtnText;
+                    const msg = error.message || 'Помилка оформлення.';
                     if (checkoutStatus) {
-                        checkoutStatus.textContent = error.message || 'Помилка оформлення.';
+                        checkoutStatus.textContent = msg;
                         checkoutStatus.hidden = false;
+                    }
+                    if (window.showToast) {
+                        window.showToast(msg, {
+                            type: 'error',
+                            title: 'Помилка оформлення',
+                            duration: 5000
+                        });
                     }
                 }
             });
@@ -578,9 +663,9 @@
 </div>
 
 <div id="cartImageModal" class="fixed inset-0 bg-black/80 hidden z-[100] flex items-center justify-center p-4 cursor-pointer backdrop-blur-sm" onclick="this.classList.add('hidden')">
-    <div class="relative max-w-3xl w-full flex justify-center">
+    <div class="relative max-w-3xl w-full flex justify-center" onclick="event.stopPropagation()">
         <img id="cartModalImg" class="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl" src="" alt="Full size photo">
-        <button type="button" class="absolute -top-4 -right-4 bg-gray-800 text-white rounded-full p-2 hover:bg-gray-700 border border-gray-600 focus:outline-none" onclick="document.getElementById('cartImageModal').classList.add('hidden'); event.stopPropagation();">
+        <button type="button" onclick="document.getElementById('cartImageModal').classList.add('hidden')" class="absolute -top-4 -right-4 bg-gray-800 text-white rounded-full p-2 hover:bg-gray-700 border border-gray-600 focus:outline-none">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
     </div>
@@ -591,7 +676,6 @@
         if (!imageUrl || imageUrl === 'None' || imageUrl === '') return;
         const modal = document.getElementById('cartImageModal');
         const modalImg = document.getElementById('cartModalImg');
-        if (!modal || !modalImg) return;
         modalImg.src = imageUrl;
         modal.classList.remove('hidden');
     }

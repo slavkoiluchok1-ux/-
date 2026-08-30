@@ -1,31 +1,21 @@
 from __future__ import annotations
 
-import enum
-import re
-import unicodedata
+from datetime import date, datetime
+from enum import Enum
 
 import bcrypt
-from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, Enum as SAEnum, Float, ForeignKey, Integer, JSON, String, Table, Text, UniqueConstraint
+from sqlalchemy import Boolean, CheckConstraint, Column, Date, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from database import Base
 
-
-def slugify(value: str) -> str:
-    value = (value or "").strip().lower()
-    value = unicodedata.normalize("NFKD", value)
-    value = value.encode("ascii", "ignore").decode("ascii")
-    value = re.sub(r"[^\w\s-]", "", value)
-    value = re.sub(r"[\s_-]+", "-", value)
-    value = value.strip("-_")
-    return value or "tag"
-
-
-class ProductType(str, enum.Enum):
+class ProductType(str, Enum):
     PHYSICAL = "physical"
     DIGITAL = "digital"
+    GAME = "game"
     GAME_ITEM = "game_item"
+
+from database import Base
 
 
 class User(Base):
@@ -34,9 +24,16 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(80), unique=True, index=True, nullable=False)
     email = Column(String(255), unique=True, index=True, nullable=False)
+    first_name = Column(String(80), nullable=True)
+    last_name = Column(String(80), nullable=True)
+    birth_date = Column(Date, nullable=True)
+    is_age_locked = Column(Boolean, default=False, nullable=False)
     hashed_password = Column(String(255), nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     is_banned = Column(Boolean, default=False, nullable=False)
+    banned_until = Column(DateTime(timezone=True), nullable=True)
+    tg_link_code = Column(String(30), unique=True, index=True, nullable=True)
+    telegram_chat_id = Column(String(80), unique=True, index=True, nullable=True)
     is_admin = Column(Boolean, default=False, nullable=False)
     is_superuser = Column(Boolean, default=False, nullable=False)
 
@@ -51,17 +48,19 @@ class User(Base):
     specialty = Column(String(200), nullable=True)
     experience = Column(String(255), nullable=True)
     skills = Column(Text, nullable=True)
+    avatar_url = Column(String(500), nullable=True)
+    last_login_ip = Column(String(64), nullable=True)
+    last_login_at = Column(DateTime(timezone=True), nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     products = relationship("Product", back_populates="seller", foreign_keys="Product.user_id")
     reviews = relationship("Review", back_populates="user")
-    comments = relationship("Comment", back_populates="user", cascade="all, delete-orphan")
-    reports = relationship("Report", back_populates="reporter", foreign_keys="Report.reporter_id")
-    complaints = relationship("Report", back_populates="reporter", foreign_keys="Report.reporter_id")
+    complaints = relationship("Complaint", back_populates="reporter", foreign_keys="Complaint.reporter_id")
     favorites = relationship("Favorite", back_populates="user")
     cart_items = relationship("CartItem", back_populates="user")
     orders = relationship("Order", back_populates="user")
+    portfolio = relationship("Portfolio", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
     def set_password(self, raw_password: str) -> None:
         self.hashed_password = bcrypt.hashpw(raw_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
@@ -84,6 +83,20 @@ class User(Base):
         return (self.display_name or self.username).strip() if self.display_name else self.username
 
 
+class Category(Base):
+    __tablename__ = "categories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), unique=True, nullable=False)
+    slug = Column(String(100), unique=True, index=True, nullable=False)
+    icon = Column(String(255), nullable=True)
+    parent_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
+
+    parent = relationship("Category", remote_side="Category.id", back_populates="children", uselist=False)
+    children = relationship("Category", back_populates="parent", cascade="all, delete-orphan")
+    products = relationship("Product", back_populates="category")
+
+
 class Product(Base):
     __tablename__ = "products"
 
@@ -91,77 +104,27 @@ class Product(Base):
     title = Column(String(250), nullable=False)
     description = Column(Text, nullable=False)
     price = Column(Integer, nullable=False, default=0)
-    sale_price = Column(Float, nullable=True)
     quantity = Column(Integer, nullable=False, default=0)
-    sku = Column(String(120), nullable=True)
-    product_type = Column(
-        SAEnum(ProductType, values_callable=lambda enum_cls: [item.value for item in enum_cls], native_enum=False),
-        nullable=False,
-        default=ProductType.PHYSICAL,
-    )
-    is_draft = Column(Boolean, nullable=False, default=False)
-    attributes = Column(JSON, nullable=True)
-    digital_content = Column(Text, nullable=True)
-    weight_dimensions = Column(String(200), nullable=True)
-    shipping_options = Column(String(250), nullable=True)
-    platform_server = Column(String(200), nullable=True)
-    rarity = Column(String(120), nullable=True)
-    execution_time = Column(String(200), nullable=True)
     seller_phone = Column(String(80), nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
     sales_count = Column(Integer, nullable=False, default=0)
+    product_type = Column(String(30), nullable=False, default=ProductType.PHYSICAL.value)
+    sku = Column(String(80), nullable=True, unique=True, index=True)
+    sale_price = Column(Integer, nullable=True)
+    is_draft = Column(Boolean, nullable=False, default=False)
+    tags = Column(Text, nullable=True)
+    attributes = Column(Text, nullable=True)
+    digital_content = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     seller = relationship("User", back_populates="products", foreign_keys=[user_id])
+    category = relationship("Category", back_populates="products")
     media = relationship("ProductMedia", back_populates="product", cascade="all, delete-orphan")
     reviews = relationship("Review", back_populates="product", cascade="all, delete-orphan")
-    comments = relationship("Comment", back_populates="product", cascade="all, delete-orphan")
-    reports = relationship("Report", back_populates="product", cascade="all, delete-orphan")
     favorites = relationship("Favorite", back_populates="product", cascade="all, delete-orphan")
     cart_items = relationship("CartItem", back_populates="product", cascade="all, delete-orphan")
     order_items = relationship("OrderItem", back_populates="product")
-    tags = relationship(
-        "Tag",
-        secondary="product_tags",
-        back_populates="products",
-        lazy="selectin",
-    )
-
-    @property
-    def stock(self) -> int:
-        return int(self.quantity or 0)
-
-    @stock.setter
-    def stock(self, value: int) -> None:
-        self.quantity = int(value or 0)
-
-    @property
-    def owner_id(self) -> int:
-        return int(self.user_id)
-
-
-product_tags = Table(
-    "product_tags",
-    Base.metadata,
-    Column("product_id", ForeignKey("products.id"), primary_key=True),
-    Column("tag_id", ForeignKey("tags.id"), primary_key=True),
-)
-
-
-class Tag(Base):
-    __tablename__ = "tags"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(80), unique=True, nullable=False, index=True)
-    slug = Column(String(100), unique=True, nullable=False, index=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-
-    products = relationship(
-        "Product",
-        secondary="product_tags",
-        back_populates="tags",
-    )
 
 
 class ProductMedia(Base):
@@ -204,40 +167,20 @@ class ReviewMedia(Base):
     review = relationship("Review", back_populates="media")
 
 
-class Comment(Base):
-    __tablename__ = "comments"
-
-    id = Column(Integer, primary_key=True, index=True)
-    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    body = Column(Text, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-
-    product = relationship("Product", back_populates="comments")
-    user = relationship("User", back_populates="comments")
-    reports = relationship("Report", back_populates="comment", cascade="all, delete-orphan")
-
-
-class Report(Base):
-    __tablename__ = "reports"
+class Complaint(Base):
+    __tablename__ = "complaints"
 
     id = Column(Integer, primary_key=True, index=True)
     reporter_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    reported_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    product_id = Column(Integer, ForeignKey("products.id"), nullable=True)
-    comment_id = Column(Integer, ForeignKey("comments.id"), nullable=True)
-    reason = Column(String(100), nullable=False)
-    details = Column(Text, nullable=True)
-    status = Column(String(20), default="pending", nullable=False)
+    target_type = Column(String(30), nullable=False)
+    target_id = Column(Integer, nullable=False)
+    target_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    reason = Column(String(50), nullable=False)
+    comment = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    status = Column(String(30), default="opened", nullable=False)
 
-    reporter = relationship("User", foreign_keys=[reporter_id], back_populates="reports")
-    reported_user = relationship("User", foreign_keys=[reported_user_id], back_populates=None)
-    product = relationship("Product", back_populates="reports")
-    comment = relationship("Comment", back_populates="reports")
-
-
-Complaint = Report
+    reporter = relationship("User", back_populates="complaints", foreign_keys=[reporter_id])
 
 
 class Favorite(Base):
@@ -252,8 +195,30 @@ class Favorite(Base):
     product = relationship("Product", back_populates="favorites")
 
 
+class Report(Base):
+    __tablename__ = "reports"
+    __table_args__ = (
+        CheckConstraint("status IN ('pending', 'resolved', 'rejected')", name="ck_reports_status"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    reporter_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    reported_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    product_id = Column(Integer, ForeignKey("products.id"), nullable=True)
+    comment_id = Column(Integer, ForeignKey("reviews.id"), nullable=True)
+    reason = Column(String(100), nullable=False)
+    details = Column(Text, nullable=True)
+    status = Column(String(20), default="pending", nullable=False)
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+
+    reporter = relationship("User", foreign_keys=[reporter_id], backref="reports_submitted")
+    reported_user = relationship("User", foreign_keys=[reported_user_id], backref="reports_received")
+    product = relationship("Product", backref="reports")
+
+
 class CartItem(Base):
     __tablename__ = "cart_items"
+    __table_args__ = (UniqueConstraint("user_id", "product_id", name="uq_cart_user_product"),)
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -293,8 +258,8 @@ class OrderItem(Base):
     product = relationship("Product", back_populates="order_items")
 
 
-class Resume(Base):
-    __tablename__ = "resumes"
+class Portfolio(Base):
+    __tablename__ = "portfolios"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True)
@@ -322,4 +287,7 @@ class Resume(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    user = relationship("User", backref="resume")
+    user = relationship("User", back_populates="portfolio")
+
+
+Resume = Portfolio

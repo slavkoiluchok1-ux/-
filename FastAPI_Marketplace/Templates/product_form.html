@@ -1,0 +1,164 @@
+{% macro render_category_select(selected_id=None, select_id="category", select_name="category", add_empty=True, empty_label="Оберіть категорію / підкатегорію") %}
+<select id="{{ select_id }}" name="{{ select_name }}"
+        data-product-type-auto="1"
+        style="width:100%; padding:11px 13px; border-radius:9px; border:1px solid var(--border); background:var(--surface-soft); color:var(--text); font-size:14px; box-sizing:border-box;">
+    {% if add_empty %}
+        <option value="" {% if not selected_id %}selected{% endif %}>{{ empty_label }}</option>
+    {% endif %}
+    <optgroup label="Автотовари" data-category-slug="auto">
+        <option value="auto" data-product-type="physical" data-category-slug="auto" {% if selected_id in ["auto", "avtotovary", "21"] %}selected{% endif %}>Автотовари (Вся категорія)</option>
+        <option value="auto_parts" data-product-type="physical" data-category-slug="auto_parts" {% if selected_id in ["auto_parts", "zapchastyny", "22"] %}selected{% endif %}>Запчастини</option>
+        <option value="auto_chem" data-product-type="physical" data-category-slug="auto_chem" {% if selected_id in ["auto_chem", "avtokhimiya", "23"] %}selected{% endif %}>Автохімія</option>
+        <option value="auto_interior" data-product-type="physical" data-category-slug="auto_interior" {% if selected_id in ["auto_interior", "salon", "24"] %}selected{% endif %}>Салон</option>
+    </optgroup>
+    <optgroup label="Дім та сад" data-category-slug="home_garden">
+        <option value="home_garden" data-product-type="physical" data-category-slug="home_garden" {% if selected_id in ["home_garden", "dim-ta-sad", "11"] %}selected{% endif %}>Дім та сад (Вся категорія)</option>
+        <option value="furniture" data-product-type="physical" data-category-slug="furniture" {% if selected_id in ["furniture", "mebli", "12"] %}selected{% endif %}>Меблі</option>
+        <option value="home_decor" data-product-type="physical" data-category-slug="home_decor" {% if selected_id in ["home_decor", "dekor", "13"] %}selected{% endif %}>Декор</option>
+        <option value="tools" data-product-type="physical" data-category-slug="tools" {% if selected_id in ["tools", "instrumenty", "14"] %}selected{% endif %}>Інструменти</option>
+        <option value="tableware" data-product-type="physical" data-category-slug="tableware" {% if selected_id in ["tableware", "posud", "15"] %}selected{% endif %}>Посуд</option>
+    </optgroup>
+    <optgroup label="Електроніка" data-category-slug="electronics">
+        <option value="electronics" data-product-type="physical" data-category-slug="electronics" {% if selected_id in ["electronics", "elektronika", "1"] %}selected{% endif %}>Електроніка (Вся категорія)</option>
+        <option value="smartphones" data-product-type="physical" data-category-slug="smartphones" {% if selected_id in ["smartphones", "smartfony", "2"] %}selected{% endif %}>Смартфони</option>
+        <option value="laptops" data-product-type="physical" data-category-slug="laptops" {% if selected_id in ["laptops", "noutbuki", "3"] %}selected{% endif %}>Ноутбуки</option>
+        <option value="components" data-product-type="physical" data-category-slug="components" {% if selected_id in ["components", "komplektuyuchi", "4"] %}selected{% endif %}>Комплектуючі</option>
+        <option value="accessories" data-product-type="physical" data-category-slug="accessories" {% if selected_id in ["accessories", "aksesuary", "5"] %}selected{% endif %}>Аксесуари</option>
+    </optgroup>
+    <optgroup label="Краса та здоров'я" data-category-slug="beauty_health">
+        <option value="beauty_health" data-product-type="physical" data-category-slug="beauty_health" {% if selected_id in ["beauty_health", "krasa-ta-zdorovya", "29"] %}selected{% endif %}>Краса та здоров'я (Вся категорія)</option>
+        <option value="cosmetics" data-product-type="physical" data-category-slug="cosmetics" {% if selected_id in ["cosmetics", "kosmetyka", "30"] %}selected{% endif %}>Косметика</option>
+        <option value="perfumery" data-product-type="physical" data-category-slug="perfumery" {% if selected_id in ["perfumery", "parfumeriya", "31"] %}selected{% endif %}>Парфумерія</option>
+        <option value="care" data-product-type="physical" data-category-slug="care" {% if selected_id in ["care", "dohlyad", "32"] %}selected{% endif %}>Догляд</option>
+    </optgroup>
+    <optgroup label="Крафт та Хендмейд" data-category-slug="craft">
+        <option value="craft" data-product-type="physical" data-category-slug="craft" {% if selected_id in ["craft", "kraft-ta-hendmeyd", "33"] %}selected{% endif %}>Крафт та Хендмейд (Вся категорія)</option>
+        <option value="jewelry" data-product-type="physical" data-category-slug="jewelry" {% if selected_id in ["jewelry", "prykrasy", "34"] %}selected{% endif %}>Прикраси</option>
+        <option value="handmade_decor" data-product-type="physical" data-category-slug="handmade_decor" {% if selected_id in ["handmade_decor", "dekor-ruchnoyi-roboty", "35"] %}selected{% endif %}>Декор ручної роботи</option>
+    </optgroup>
+    <optgroup label="Одяг та взуття" data-category-slug="clothing">
+        <option value="clothing" data-product-type="physical" data-category-slug="clothing" {% if selected_id in ["clothing", "odyag-ta-vzuttya", "6"] %}selected{% endif %}>Одяг та взуття (Вся категорія)</option>
+        <option value="mens" data-product-type="physical" data-category-slug="mens" {% if selected_id in ["mens", "cholovichiy", "7"] %}selected{% endif %}>Чоловічий</option>
+        <option value="womens" data-product-type="physical" data-category-slug="womens" {% if selected_id in ["womens", "zhinochiy", "8"] %}selected{% endif %}>Жіночий</option>
+        <option value="kids_clothes" data-product-type="physical" data-category-slug="kids_clothes" {% if selected_id in ["kids_clothes", "dityachiy", "9"] %}selected{% endif %}>Дитячий</option>
+        <option value="shoes" data-product-type="physical" data-category-slug="shoes" {% if selected_id in ["shoes", "vzuttia", "10"] %}selected{% endif %}>Взуття</option>
+    </optgroup>
+    <optgroup label="Спорт та відпочинок" data-category-slug="sports">
+        <option value="sports" data-product-type="physical" data-category-slug="sports" {% if selected_id in ["sports", "sport-ta-vidpochynok", "25"] %}selected{% endif %}>Спорт та відпочинок (Вся категорія)</option>
+        <option value="fitness" data-product-type="physical" data-category-slug="fitness" {% if selected_id in ["fitness", "trenazhery", "26"] %}selected{% endif %}>Тренажери</option>
+        <option value="tourism" data-product-type="physical" data-category-slug="tourism" {% if selected_id in ["tourism", "turystychni-tovary", "27"] %}selected{% endif %}>Туризм</option>
+        <option value="bicycles" data-product-type="physical" data-category-slug="bicycles" {% if selected_id in ["bicycles", "velosyped", "28"] %}selected{% endif %}>Велосипеди</option>
+    </optgroup>
+    <optgroup label="Цифрові товари" data-category-slug="digital_goods">
+        <option value="digital_goods" data-product-type="digital" data-category-slug="digital_goods" {% if selected_id in ["digital_goods", "tsyfrovi-tovary", "16"] %}selected{% endif %}>Цифрові товари (Вся категорія)</option>
+        <option value="games" data-product-type="game_item" data-category-slug="games" {% if selected_id in ["games", "igry", "17"] %}selected{% endif %}>Ігри</option>
+        <option value="software" data-product-type="digital" data-category-slug="software" {% if selected_id in ["software", "soft", "18"] %}selected{% endif %}>Софт</option>
+        <option value="accounts" data-product-type="game_item" data-category-slug="accounts" {% if selected_id in ["accounts", "rahunky", "19"] %}selected{% endif %}>Акаунти</option>
+        <option value="courses" data-product-type="digital" data-category-slug="courses" {% if selected_id in ["courses", "kursy", "20"] %}selected{% endif %}>Курси</option>
+    </optgroup>
+</select>
+{% endmacro %}
+
+{% macro setup_product_category_binding(category_select_selector, product_type_select_selector, digital_field_selector=None) %}
+<script>
+(function () {
+    function initCategoryBinding() {
+        const categorySelect = typeof category_select_selector === 'string'
+            ? document.querySelector(category_select_selector)
+            : (category_select_selector || null);
+        const productTypeSelect = typeof product_type_select_selector === 'string'
+            ? document.querySelector(product_type_select_selector)
+            : (product_type_select_selector || null);
+        const digitalField = typeof digital_field_selector === 'string'
+            ? document.querySelector(digital_field_selector)
+            : (digital_field_selector || null);
+
+        if (!categorySelect || !productTypeSelect) return;
+        if (categorySelect.dataset.boundCategoryBinding === '1') return;
+        categorySelect.dataset.boundCategoryBinding = '1';
+
+        let userOverriddenType = false;
+
+        function updateDigitalFieldVisibility() {
+            if (!digitalField) return;
+            const currentType = (productTypeSelect.value || '').trim().toLowerCase();
+            const isDigital = currentType === 'digital' || currentType === 'game_item' || currentType === 'game';
+            digitalField.style.display = isDigital ? 'block' : 'none';
+        }
+
+        function triggerChange(el) {
+            try {
+                const ev = new Event('change', { bubbles: true });
+                el.dispatchEvent(ev);
+            } catch (e) {}
+        }
+
+        function autoSuggestFromCategory() {
+            if (userOverriddenType) return;
+            const option = categorySelect.options[categorySelect.selectedIndex];
+            if (!option) return;
+            let suggested = (option.getAttribute('data-product-type') || '').trim().toLowerCase();
+            if (!suggested) {
+                const optVal = (option.value || '').toLowerCase();
+                if (optVal === 'games' || optVal === 'accounts' || optVal === 'igry' || optVal === 'rahunky') {
+                    suggested = 'game_item';
+                } else if (optVal === 'software' || optVal === 'courses' || optVal === 'digital_goods' || optVal === 'soft' || optVal === 'kursy' || optVal === 'tsyfrovi-tovary') {
+                    suggested = 'digital';
+                }
+            }
+
+            const allowed = ['physical', 'digital', 'game_item', 'game'];
+            if (suggested && allowed.indexOf(suggested) !== -1) {
+                let targetVal = suggested;
+                let hasDirectOption = false;
+                for (let i = 0; i < productTypeSelect.options.length; i++) {
+                    if (productTypeSelect.options[i].value === targetVal) {
+                        hasDirectOption = true;
+                        break;
+                    }
+                }
+                if (!hasDirectOption && targetVal === 'game_item') {
+                    for (let i = 0; i < productTypeSelect.options.length; i++) {
+                        if (productTypeSelect.options[i].value === 'game') {
+                            targetVal = 'game';
+                            break;
+                        }
+                    }
+                }
+
+                if (productTypeSelect.value !== targetVal) {
+                    productTypeSelect.value = targetVal;
+                    triggerChange(productTypeSelect);
+                }
+            }
+            updateDigitalFieldVisibility();
+        }
+
+        categorySelect.addEventListener('click', function (e) {
+            e.stopPropagation();
+        });
+        categorySelect.addEventListener('change', function (e) {
+            e.stopPropagation();
+            autoSuggestFromCategory();
+        });
+
+        productTypeSelect.addEventListener('change', function () {
+            userOverriddenType = true;
+            updateDigitalFieldVisibility();
+        });
+        productTypeSelect.addEventListener('click', function () {
+            userOverriddenType = true;
+        });
+
+        updateDigitalFieldVisibility();
+        autoSuggestFromCategory();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCategoryBinding);
+    } else {
+        initCategoryBinding();
+    }
+})();
+</script>
+{% endmacro %}

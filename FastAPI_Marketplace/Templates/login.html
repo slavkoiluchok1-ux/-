@@ -12,9 +12,6 @@
     {% endif %}
 
     <form id="loginForm" action="/login" method="post">
-        {% if next %}
-            <input type="hidden" name="next" value="{{ next }}" />
-        {% endif %}
         <div class="form-group">
             <label for="email">Email або логін</label>
             <input id="email" name="email" type="text" placeholder="Введіть email або username" required value="{{ request.form.email if request.form else '' }}" />
@@ -29,6 +26,26 @@
         <div id="message" class="message" aria-live="polite"></div>
     </form>
 
+    <div id="birthDateModal" class="app-modal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;">
+        <div class="app-modal-backdrop" data-close-birth-date-modal="1"></div>
+        <div class="app-modal-dialog" role="document" style="max-width: 520px;">
+            <div class="app-modal-header">
+                <h3>Необхідно вказати дату народження</h3>
+                <button type="button" class="app-modal-close" data-close-birth-date-modal="1" aria-label="Закрити">&times;</button>
+            </div>
+            <div class="app-modal-body">
+                <p>Щоб продовжити роботу, вкажіть вашу дату народження.</p>
+                <form id="birthDateForm" method="post" action="/profile">
+                    <div class="form-group">
+                        <label for="birth_date_modal">Дата народження</label>
+                        <input id="birth_date_modal" name="birth_date" type="date" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary">Зберегти</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div class="link-row">
         Немає акаунту? <a href="/register">Зареєструватися</a>
     </div>
@@ -39,13 +56,6 @@
     const message = document.getElementById('message');
     const serverMessage = document.getElementById('server-message');
 
-    function getNextParam() {
-        const input = form.querySelector('input[name="next"]');
-        if (input && input.value) return input.value;
-        const params = new URLSearchParams(window.location.search);
-        return params.get('next') || '';
-    }
-
     if (serverMessage) {
         setTimeout(() => {
             serverMessage.style.transition = 'opacity 0.4s';
@@ -54,17 +64,44 @@
         }, 4000);
     }
 
+    const birthDateModal = document.getElementById('birthDateModal');
+    const birthDateForm = document.getElementById('birthDateForm');
+
+    function openBirthDateModal() {
+        if (birthDateModal) {
+            birthDateModal.style.display = 'flex';
+            birthDateModal.setAttribute('aria-hidden', 'false');
+        }
+    }
+
+    function closeBirthDateModal() {
+        if (birthDateModal) {
+            birthDateModal.style.display = 'none';
+            birthDateModal.setAttribute('aria-hidden', 'true');
+        }
+    }
+
+    document.querySelectorAll('[data-close-birth-date-modal="1"]').forEach((trigger) => {
+        trigger.addEventListener('click', closeBirthDateModal);
+    });
+
+    if (birthDateForm) {
+        birthDateForm.addEventListener('submit', function (event) {
+            const birthDateInput = document.getElementById('birth_date_modal');
+            if (!birthDateInput || !birthDateInput.value) {
+                event.preventDefault();
+                showMessage('Вкажіть дату народження.', 'error');
+            }
+        });
+    }
+
     form.addEventListener('submit', async function (event) {
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
-        const nextParam = getNextParam();
         const payload = {
             email: (emailInput.value || '').trim(),
             password: passwordInput.value || ''
         };
-        if (nextParam) {
-            payload.next = nextParam;
-        }
 
         if (!payload.email || !payload.password) {
             event.preventDefault();
@@ -97,6 +134,10 @@
             if (!response.ok) {
                 event.preventDefault();
                 const detail = isJson ? (data.detail || 'Невірний логін або пароль') : 'Невірний логін або пароль';
+                if (detail === 'Birth date is required') {
+                    openBirthDateModal();
+                    return;
+                }
                 throw new Error(Array.isArray(detail) ? detail.map(d => d.msg || d).join(', ') : detail);
             }
 
@@ -109,8 +150,7 @@
 
             showMessage('Вхід успішний! Перехід...', 'success');
 
-            const target = (nextParam && data.redirect_url !== '/admin' && !data.redirect_url?.startsWith('/admin')) ? nextParam
-                : data.redirect_url
+            const target = data.redirect_url
                 || ((data.is_admin || data.is_superuser) ? '/admin' : '/');
 
             setTimeout(() => {

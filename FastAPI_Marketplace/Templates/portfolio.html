@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Fast Money | Портфоліо{% endblock %}
+
+{% block content %}
+<div class="container">
+    <section class="page-intro" style="display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;">
+        <div>
+            <span class="eyebrow">Портфоліо</span>
+            <h1>Команда та експертиза</h1>
+            <p>Переглядайте портфоліо користувачів платформи та керуйте своїм профілем.</p>
+        </div>
+
+        {% if current_user %}
+            {% if has_current_portfolio %}
+                <a href="/portfolio/{{ current_user.id }}" class="btn btn-primary">Моє портфоліо</a>
+            {% else %}
+                <button type="button" class="btn btn-primary" id="openPortfolioModalBtn">Створити портфоліо</button>
+            {% endif %}
+        {% endif %}
+    </section>
+
+    <div class="grid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:18px;">
+        {% for item in portfolios %}
+            {% set p = item.portfolio %}
+            {% set user = item.user %}
+            <article class="resume-card" style="display:flex; flex-direction:column; justify-content:space-between; gap:12px;">
+                <div>
+                    <span class="product-badge">Профіль</span>
+                    <h3>{{ user.display_name or user.username }}</h3>
+                    <p>{{ p.specialty or p.title or 'Портфоліо користувача' }}</p>
+                </div>
+
+                <div style="color:#94a3b8; display:grid; gap:6px;">
+                    {% if p.experience_years %}<div>Досвід: {{ p.experience_years }}</div>{% endif %}
+                    {% if p.skills %}<div>Навички: {{ p.skills[:90] }}{% if p.skills|length > 90 %}...{% endif %}</div>{% endif %}
+                </div>
+
+                <div class="action-row" style="display:flex; justify-content:flex-start; gap:10px; flex-wrap:wrap;">
+                    <a href="/portfolio/{{ user.id }}" class="btn btn-secondary">Переглянути</a>
+                </div>
+            </article>
+        {% else %}
+            <div class="resume-card" style="grid-column:1 / -1; text-align:center;">
+                <h3>Портфоліо ще не створено</h3>
+                <p>Станьте першим, хто поділиться своїм досвідом.</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% if view_user and portfolio %}
+        <section class="resume-card" style="max-width:1000px; margin:32px auto 0;">
+            <div class="resume-header" style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+                <div>
+                    <span class="eyebrow">Профіль</span>
+                    <h2>{{ portfolio.title or portfolio.specialty or view_user.display_name or view_user.username }}</h2>
+                    {% if portfolio.specialty %}<p class="resume-specialty" style="color:#93c5fd; margin:6px 0 0;">{{ portfolio.specialty }}</p>{% endif %}
+                </div>
+                {% if portfolio.experience_years %}<span class="status-pill">{{ portfolio.experience_years }}</span>{% endif %}
+            </div>
+
+            {% if portfolio.summary %}
+                <div style="margin-top:18px;">
+                    <h3>Опис</h3>
+                    <p>{{ portfolio.summary }}</p>
+                </div>
+            {% endif %}
+
+            {% if portfolio.skills %}
+                <div style="margin-top:18px;">
+                    <h3>Навички</h3>
+                    <ul>
+                        {% for skill in portfolio.skills.split(',') %}
+                            {% if skill.strip() %}<li>{{ skill.strip() }}</li>{% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {% if portfolio.experience %}
+                <div style="margin-top:18px;">
+                    <h3>Досвід</h3>
+                    <p>{{ portfolio.experience }}</p>
+                </div>
+            {% endif %}
+
+            {% if portfolio.public_contacts %}
+                <div style="margin-top:18px;">
+                    <h3>Контакти</h3>
+                    <p>{{ portfolio.public_contacts | replace('\n', '<br>') | safe }}</p>
+                </div>
+            {% endif %}
+
+            {% if portfolio.cv_file_path %}
+                <div style="margin-top:18px;">
+                    <a href="{{ portfolio.cv_file_path }}" class="btn btn-primary" target="_blank" rel="noreferrer">Завантажити CV</a>
+                </div>
+            {% endif %}
+        </section>
+    {% endif %}
+</div>
+
+{% if current_user and not has_current_portfolio %}
+    <div id="portfolioModal" class="app-modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="app-modal-backdrop" data-close-portfolio-modal="1"></div>
+        <div class="app-modal-dialog" role="document">
+            <div class="app-modal-header">
+                <h3>Створити портфоліо</h3>
+                <button type="button" class="app-modal-close" data-close-portfolio-modal="1" aria-label="Закрити">&times;</button>
+            </div>
+            <div class="app-modal-body">
+                <form id="portfolioForm" method="post" action="/portfolio" enctype="multipart/form-data" class="product-form-card">
+                    <label>
+                        <span>Назва / посада</span>
+                        <input type="text" name="title" placeholder="Python / FastAPI Developer" required>
+                    </label>
+                    <label>
+                        <span>Спеціалізація</span>
+                        <input type="text" name="specialty" placeholder="Backend Developer">
+                    </label>
+                    <label>
+                        <span>Досвід</span>
+                        <input type="text" name="experience_years" placeholder="3 роки">
+                    </label>
+                    <label>
+                        <span>Навички</span>
+                        <input type="text" name="skills" placeholder="Python, FastAPI, SQLAlchemy, Docker">
+                    </label>
+                    <label>
+                        <span>Telegram</span>
+                        <input type="text" name="telegram" placeholder="@username">
+                    </label>
+                    <label>
+                        <span>Телефон</span>
+                        <input type="text" name="phone" placeholder="+380...">
+                    </label>
+                    <label>
+                        <span>Email</span>
+                        <input type="email" name="public_email" placeholder="you@example.com">
+                    </label>
+                    <label>
+                        <span>Короткий опис</span>
+                        <textarea name="summary" rows="5" placeholder="Розкажіть, чим ви займаєтесь, який досвід маєте та які задачі вмієте вирішувати."></textarea>
+                    </label>
+                    <label>
+                        <span>Повний опис</span>
+                        <textarea name="bio" rows="4" placeholder="Додаткова інформація про вас"></textarea>
+                    </label>
+                    <label>
+                        <span>Контакти</span>
+                        <textarea name="public_contacts" rows="4" placeholder="Phone: +380...&#10;Telegram: @username&#10;Email: hello@example.com"></textarea>
+                    </label>
+                    <label>
+                        <span>Резюме / CV (PDF, DOCX, JPG, PNG)</span>
+                        <input type="file" name="cv_file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp">
+                    </label>
+                </form>
+            </div>
+            <div class="app-modal-footer">
+                <button type="button" class="btn btn-secondary" data-close-portfolio-modal="1">Скасувати</button>
+                <button type="submit" form="portfolioForm" class="btn btn-primary">Зберегти</button>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<script>
+    const portfolioModal = document.getElementById('portfolioModal');
+    const openPortfolioModalBtn = document.getElementById('openPortfolioModalBtn');
+
+    function openPortfolioModal() {
+        if (!portfolioModal) return;
+        portfolioModal.classList.add('open');
+        portfolioModal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePortfolioModal() {
+        if (!portfolioModal) return;
+        portfolioModal.classList.remove('open');
+        portfolioModal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+    }
+
+    if (openPortfolioModalBtn) {
+        openPortfolioModalBtn.addEventListener('click', openPortfolioModal);
+    }
+
+    document.querySelectorAll('[data-close-portfolio-modal="1"]').forEach((el) => {
+        el.addEventListener('click', closePortfolioModal);
+    });
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && portfolioModal && portfolioModal.classList.contains('open')) {
+            closePortfolioModal();
+        }
+    });
+</script>
+{% endblock %}

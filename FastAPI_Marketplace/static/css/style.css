@@ -36,12 +36,12 @@ button, input, select, textarea { font: inherit; }
 }
 
 .site-header {
-  background: rgba(15, 23, 42, 0.88);
+  background: rgba(15, 23, 42, 0.9);
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
   z-index: 10;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(8px);
 }
 
 .nav-inner {
@@ -49,21 +49,20 @@ button, input, select, textarea { font: inherit; }
   justify-content: space-between;
   align-items: center;
   min-height: 72px;
-  gap: 18px;
+  gap: 1rem;
 }
 
 .brand {
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  color: #f8fbff;
-  text-shadow: 0 0 18px rgba(96, 165, 250, 0.35);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
 }
 
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 1rem;
   flex-wrap: wrap;
 }
 
@@ -73,33 +72,37 @@ button, input, select, textarea { font: inherit; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
-  padding: 10px 14px;
+  border-radius: 10px;
+  padding: 8px 12px;
   border: 1px solid transparent;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  transition: 0.2s ease;
   cursor: pointer;
 }
 
-.nav-links a {
-  color: var(--text);
-  background: rgba(148, 163, 184, 0.05);
-  border: 1px solid rgba(148, 163, 184, 0.08);
+.nav-link {
+  font-size: 0.875rem;
+  line-height: 1.2;
+  padding: 8px 10px;
 }
 
-.nav-links a:hover, .btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(59, 130, 246, 0.18);
-}
+.nav-links a { color: var(--text); background: transparent; }
+.nav-links a:hover, .btn:hover { transform: translateY(-1px); }
 
 .user-badge {
   display: inline-flex;
   align-items: center;
-  padding: 8px 12px;
+  padding: 7px 10px;
   background: rgba(59, 130, 246, 0.12);
   border: 1px solid rgba(59, 130, 246, 0.3);
   border-radius: 999px;
   color: #bfdbfe;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
+}
+
+.nav-auth-btn {
+  font-size: 0.8rem;
+  padding: 7px 10px;
+  line-height: 1.2;
 }
 
 .btn {
@@ -140,26 +143,25 @@ button, input, select, textarea { font: inherit; }
 
 .hero {
   text-align: center;
-  padding: 60px 26px 42px;
-  background:
-    radial-gradient(circle at top, rgba(59, 130, 246, 0.18), transparent 45%),
-    rgba(17, 24, 39, 0.92);
+  padding: 48px 24px 36px;
 }
 
 .eyebrow {
   display: inline-block;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #93c5fd;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.08);
 }
 
 .hero h1,
 .page-intro h1 {
-  margin: 0 0 12px;
-  font-size: clamp(2rem, 4vw, 3rem);
-  letter-spacing: -0.04em;
+  margin: 0 0 10px;
+  font-size: clamp(1.9rem, 3vw, 2.5rem);
 }
 
 .hero p,

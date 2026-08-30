@@ -44,7 +44,11 @@
         align-items: stretch;
         padding: 16px;
         box-sizing: border-box;
-        height: 100%;
+    }
+    .product-card-footer {
+        margin-top: auto;
+        padding-top: 12px;
+        width: 100%;
     }
     .product-media {
         position: relative;
@@ -69,39 +73,7 @@
         flex: 1;
         text-align: center;
         align-items: center;
-    }
-    .product-type-badge {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        padding: 4px 8px;
-        border-radius: 999px;
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 0.02em;
-        color: #fff;
-        z-index: 1;
-        box-shadow: 0 8px 20px rgba(15,23,42,0.25);
-    }
-    .product-type-physical { background: #2563eb; }
-    .product-type-digital { background: #16a34a; }
-    .product-type-game_item { background: #7c3aed; }
-    .stock-status {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 4px 8px;
-        border-radius: 999px;
-        font-size: 11px;
-        font-weight: 700;
-    }
-    .stock-status.in-stock {
-        background: rgba(16,185,129,0.12);
-        color: #34d399;
-    }
-    .stock-status.out-of-stock {
-        background: rgba(239,68,68,0.12);
-        color: #fca5a5;
+        width: 100%;
     }
     .product-card-top {
         display: flex;
@@ -123,12 +95,17 @@
     }
     .product-card-top h3 a:hover { color: #93c5fd; }
     .favorite-btn {
-        background: none;
-        border: none;
-        color: #ef4444;
-        cursor: pointer;
-        font-size: 18px;
-        padding: 4px 8px;
+        padding: 8px 12px;
+        font-size: 13px;
+        width: 100%;
+        min-width: 0;
+        border-radius: 8px;
+        transition: all 0.2s ease-in-out;
+    }
+    .favorite-btn.favorite-active {
+        background: rgba(255, 77, 77, 0.06);
+        border-color: #ff4d4d;
+        color: #ff4d4d;
     }
     .product-card-body p {
         color: var(--muted);
@@ -152,6 +129,16 @@
         width: 100%;
         flex-wrap: wrap;
     }
+    .stock-status {
+        display: inline-block;
+        width: 100%;
+        text-align: center;
+        margin-top: 4px;
+        font-size: 0.7rem;
+        line-height: 1.4;
+        white-space: normal;
+        word-break: break-word;
+    }
     .price {
         font-size: 1.15rem;
         font-weight: 700;
@@ -163,20 +150,31 @@
         gap: 8px;
         width: 100%;
         box-sizing: border-box;
-        margin-top: auto;
+        min-width: 0;
     }
     .product-actions > * {
-        width: 100%;
         min-width: 0;
-        padding: 8px 10px;
-        font-size: 14px;
-        white-space: normal;
-        text-align: center;
+        width: 100%;
         box-sizing: border-box;
     }
-    .product-actions .btn {
+    .product-actions .btn,
+    .product-actions .delete-product-form,
+    .product-actions form {
         width: 100%;
-        max-width: none;
+        min-width: 0;
+    }
+    .product-actions .delete-product-form {
+        width: 100%;
+    }
+    .product-action--long {
+        font-size: 0.72rem;
+        line-height: 1.2;
+        padding: 0.55rem 0.5rem;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
     }
     .product-actions .btn-danger {
         background: transparent;
@@ -220,6 +218,46 @@
         max-width: 1200px;
         margin: 0 auto 24px;
     }
+    .page-intro {
+        padding: 10px 0 0;
+    }
+    .page-intro h1 {
+        font-size: clamp(1.8rem, 2.4vw, 2.4rem);
+        margin-bottom: 8px;
+    }
+    .page-intro p {
+        font-size: 0.875rem;
+        margin: 0;
+    }
+    .eyebrow {
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        padding: 5px 8px;
+        border-radius: 999px;
+        background: rgba(59, 130, 246, 0.10);
+    }
+    .chip {
+        appearance: none;
+        border: 1px solid var(--border);
+        background: var(--bg-card);
+        color: var(--text);
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .chip:hover {
+        border-color: rgba(147, 197, 253, 0.9);
+    }
+    .chip.active {
+        background: linear-gradient(135deg, rgba(59,130,246,0.18), rgba(168,85,247,0.18));
+        border-color: rgba(96, 165, 250, 0.9);
+        color: #dbeafe;
+    }
+    .child-chip {
+        margin-left: 8px;
+    }
 </style>
 
 <div class="page-intro-wrap">
@@ -242,38 +280,47 @@
 </div>
 
 <div class="catalog-toolbar">
-    <form method="get" action="/catalog" class="search-form">
-        <input type="text" name="q" value="{{ q }}" placeholder="Пошук за назвою або описом" />
+    <form method="get" action="/catalog" class="search-form" id="catalog-search-form">
+        <input type="text" name="q" value="{{ q }}" placeholder="Пошук за назвою, описом або категорією" />
         <button type="submit" class="btn btn-primary">Шукати</button>
     </form>
 </div>
 
 <div class="catalog-grid-wrap">
-    <div class="catalog-type-filters" style="display:flex; flex-wrap:wrap; gap:10px; margin: 18px 0 12px;">
-        <a href="/catalog{% if q %}?q={{ q|urlencode }}{% endif %}" class="btn btn-sm {% if not active_type %}btn-primary{% else %}btn-outline{% endif %}">Усі</a>
-        <a href="/catalog?type=physical{% if q %}&q={{ q|urlencode }}{% endif %}" class="btn btn-sm {% if active_type == 'physical' %}btn-primary{% else %}btn-outline{% endif %}">📦 Фізичні</a>
-        <a href="/catalog?type=digital{% if q %}&q={{ q|urlencode }}{% endif %}" class="btn btn-sm {% if active_type == 'digital' %}btn-primary{% else %}btn-outline{% endif %}">📁 Цифрові</a>
-        <a href="/catalog?type=game_item{% if q %}&q={{ q|urlencode }}{% endif %}" class="btn btn-sm {% if active_type == 'game_item' %}btn-primary{% else %}btn-outline{% endif %}">🎮 Ігрові</a>
-    </div>
+    <aside class="catalog-sidebar" style="margin-bottom:24px;">
+        <div class="category-filters" id="category-filters" style="display:flex; flex-wrap:wrap; gap:10px;">
+            <button type="button" class="chip {% if not selected_category %}active{% endif %}" data-category-id="" data-category-slug="">
+                Усі категорії
+            </button>
+            {% for category in categories %}
+                <button type="button" class="chip {% if selected_category and selected_category.id == category.id %}active{% endif %}" data-category-id="{{ category.id }}" data-category-slug="{{ category.slug }}">
+                    {{ category.icon or '•' }} {{ category.name }}
+                </button>
+                {% for child in category.children %}
+                    <button type="button" class="chip child-chip {% if selected_category and selected_category.id == child.id %}active{% endif %}" data-category-id="{{ child.id }}" data-category-slug="{{ child.slug }}">
+                        {{ child.name }}
+                    </button>
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </aside>
 
     {% if products %}
-    <div class="product-grid">
+    <div class="product-grid" id="catalog-products-grid">
         {% for product in products %}
-        <article class="product-card" style="{% if product.quantity == 0 %}opacity: 0.78;{% endif %}">
-            <div class="product-media">
-                {% if product.product_type == 'physical' %}
-                    <span class="product-type-badge product-type-physical">Фізичний</span>
-                {% elif product.product_type == 'digital' %}
-                    <span class="product-type-badge product-type-digital">Цифровий</span>
-                {% elif product.product_type == 'game_item' %}
-                    <span class="product-type-badge product-type-game_item">Ігровий</span>
-                {% endif %}
+        <article class="product-card flex flex-col h-full bg-[#111827] rounded-xl p-4 border border-slate-800 {% if (product.stock is defined and product.stock <= 0) or (product.quantity is defined and product.quantity <= 0) %}opacity-60 hover:opacity-100 transition-opacity{% endif %}">
+            <div class="product-media relative">
                 {% if product.image_url %}
                     <a href="/products/{{ product.id }}">
                         <img src="{{ product.image_url }}" alt="{{ product.title|e }}" />
                     </a>
                 {% else %}
                     <a href="/products/{{ product.id }}" class="product-placeholder">Без фото</a>
+                {% endif %}
+                {% if product.category %}
+                    <span class="absolute top-2 right-2 bg-slate-800/90 text-slate-200 border border-slate-700 text-[10px] font-medium px-2 py-0.5 rounded shadow z-10 backdrop-blur-sm">
+                        {{ product.category.name if product.category.name else product.category }}
+                    </span>
                 {% endif %}
             </div>
 
@@ -286,26 +333,37 @@
 
                 <div class="product-meta">
                     <span class="price">{{ product.price }} ₴</span>
-                    <span class="stock-status {% if product.in_stock %}in-stock{% else %}out-of-stock{% endif %}">{{ product.stock_status_label }}</span>
-                </div>
-                <div class="product-meta" style="margin-top: 0;">
-                    <span class="stock">Залишок: {{ product.quantity }}</span>
+                    {% if (product.stock is defined and product.stock <= 0) or (product.quantity is defined and product.quantity <= 0) %}
+                        <span class="stock-status inline-flex items-center justify-center text-xs font-medium w-full mt-1" style="color:#fca5a5; background: rgba(239, 68, 68, 0.18); border: 1px solid rgba(248, 113, 113, 0.4); border-radius: 999px; padding: 5px 10px;">
+                            <span class="inline-block w-2 h-2 rounded-full mr-2" style="background:#ef4444; box-shadow: 0 0 6px rgba(239,68,68,0.8);"></span>
+                            Немає в наявності
+                        </span>
+                    {% else %}
+                        <span class="stock-status inline-flex items-center justify-center text-xs font-medium w-full mt-1" style="color:#86efac; background: rgba(16, 185, 129, 0.16); border: 1px solid rgba(74, 222, 128, 0.4); border-radius: 999px; padding: 5px 10px;">
+                            <span class="inline-block w-2 h-2 rounded-full mr-2" style="background:#22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.8);"></span>
+                            В наявності
+                        </span>
+                    {% endif %}
                 </div>
             </div>
 
-            <div class="product-actions">
-                <a href="/products/{{ product.id }}" class="btn btn-primary w-full text-center">Переглянути</a>
-                {% if product.in_stock %}
-                    <a href="/products/{{ product.id }}" class="btn btn-outline w-full text-center">Додати в кошик</a>
-                {% else %}
-                    <button type="button" class="btn btn-secondary w-full text-center" disabled>Немає в наявності</button>
-                {% endif %}
-                <button type="button" class="btn btn-danger w-full text-center" data-report-target data-product-id="{{ product.id }}" data-user-id="{{ product.user_id }}">Поскаржитися</button>
-                {% if current_user and current_user.role in ['admin', 'superadmin'] %}
-                <form method="post" action="/admin/products/{{ product.id }}/delete" class="delete-product-form" data-product-id="{{ product.id }}" data-product-title="{{ product.title|e }}">
-                    <button type="submit" class="btn btn-danger w-full text-center" onclick="return confirm('Видалити товар {{ product.title|e }}?');">Видалити</button>
-                </form>
-                {% endif %}
+            <div class="product-card-footer mt-auto pt-3 min-w-0 w-full">
+                <div class="flex flex-col gap-2 w-full mt-auto">
+                    <a href="/products/{{ product.id }}" class="btn btn-primary w-full text-center py-2 px-3">Переглянути</a>
+                    {% if (product.stock is defined and product.stock <= 0) or (product.quantity is defined and product.quantity <= 0) %}
+                        <button type="button" class="btn w-full text-center py-2 px-3" style="background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(248,113,113,0.35); cursor: not-allowed;" disabled>
+                            Немає в наявності
+                        </button>
+                    {% else %}
+                        <button type="button" class="btn btn-primary add-to-cart-btn w-full text-center py-2 px-3" data-product-id="{{ product.id }}">В кошик</button>
+                        <button type="button" class="btn btn-outline favorite-btn w-full text-center py-2 px-3" data-product-id="{{ product.id }}">Додати в обране</button>
+                    {% endif %}
+                    {% if current_user and current_user.role in ['admin', 'superadmin'] %}
+                    <form method="post" action="/admin/products/{{ product.id }}/delete" class="delete-product-form w-full" data-product-id="{{ product.id }}" data-product-title="{{ product.title|e }}">
+                        <button type="submit" class="btn btn-danger w-full text-center py-2 px-3" onclick="return confirm('Видалити товар {{ product.title|e }}?');">Видалити</button>
+                    </form>
+                    {% endif %}
+                </div>
             </div>
         </article>
         {% endfor %}
@@ -314,4 +372,310 @@
         <div class="empty-state">Товарів за вашим запитом не знайдено.</div>
     {% endif %}
 </div>
+
+<script>
+    function setFavoriteButtonState(button, isFavorite) {
+        if (!button) return;
+        const text = isFavorite ? 'Видалити з обраного' : 'Додати в обране';
+        button.textContent = text;
+        button.classList.toggle('favorite-active', isFavorite);
+        button.setAttribute('aria-pressed', String(isFavorite));
+    }
+
+    function buildCatalogQueryFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        return {
+            q: params.get('q') || '',
+            category: params.get('category') || '',
+            sort: params.get('sort') || 'popular'
+        };
+    }
+
+    function updateCatalogUrl(params) {
+        const url = new URL(window.location.href);
+        url.search = '';
+
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== null && value !== undefined && String(value).trim() !== '') {
+                url.searchParams.set(key, String(value));
+            }
+        });
+
+        window.history.replaceState({}, '', url.toString());
+    }
+
+    function renderCatalogProducts(products) {
+        const grid = document.getElementById('catalog-products-grid');
+        if (!grid) return;
+
+        if (!products || !products.length) {
+            grid.innerHTML = '<div class="empty-state">Товарів за вашим запитом не знайдено.</div>';
+            return;
+        }
+
+        grid.innerHTML = products.map((product) => {
+            const categoryName = product.category && typeof product.category === 'object'
+                ? (product.category.name || '')
+                : (product.category || '');
+            const stockVal = Number(product.stock != null ? product.stock : (product.quantity != null ? product.quantity : 0));
+            const isInStock = stockVal > 0;
+            const outOfStockBadge = `<span class="stock-status inline-flex items-center justify-center text-xs font-medium w-full mt-1" style="color:#fca5a5; background: rgba(239, 68, 68, 0.18); border: 1px solid rgba(248, 113, 113, 0.4); border-radius: 999px; padding: 5px 10px;"><span class="inline-block w-2 h-2 rounded-full mr-2" style="background:#ef4444; box-shadow: 0 0 6px rgba(239,68,68,0.8);"></span>Немає в наявності</span>`;
+            const inStockBadge = `<span class="stock-status inline-flex items-center justify-center text-xs font-medium w-full mt-1" style="color:#86efac; background: rgba(16, 185, 129, 0.16); border: 1px solid rgba(74, 222, 128, 0.4); border-radius: 999px; padding: 5px 10px;"><span class="inline-block w-2 h-2 rounded-full mr-2" style="background:#22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.8);"></span>В наявності</span>`;
+
+            let actionButtonsHtml;
+            if (isInStock) {
+                actionButtonsHtml = `
+                    <button type="button" class="btn btn-primary add-to-cart-btn w-full text-center py-2 px-3" data-product-id="${product.id}">В кошик</button>
+                    <button type="button" class="btn btn-outline favorite-btn w-full text-center py-2 px-3" data-product-id="${product.id}">Додати в обране</button>
+                `;
+            } else {
+                actionButtonsHtml = `<button type="button" class="btn w-full text-center py-2 px-3" style="background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(248,113,113,0.35); cursor: not-allowed;" disabled>Немає в наявності</button>`;
+            }
+
+            return `
+            <article class="product-card flex flex-col h-full bg-[#111827] rounded-xl p-4 border border-slate-800 ${isInStock ? '' : 'opacity-60 hover:opacity-100 transition-opacity'}">
+                <div class="product-media relative">
+                    ${product.image_url ? `<a href="/products/${product.id}"><img src="${product.image_url}" alt="${product.title}" /></a>` : `<a href="/products/${product.id}" class="product-placeholder">Без фото</a>`}
+                    ${categoryName ? `<span class="absolute top-2 right-2 bg-slate-800/90 text-slate-200 border border-slate-700 text-[10px] font-medium px-2 py-0.5 rounded shadow z-10 backdrop-blur-sm">${categoryName}</span>` : ''}
+                </div>
+                <div class="product-card-body">
+                    <div class="product-card-top">
+                        <h3><a href="/products/${product.id}">${product.title}</a></h3>
+                    </div>
+                    <p>${(product.description || '').slice(0, 120)}${(product.description || '').length > 120 ? '...' : ''}</p>
+                    <div class="product-meta">
+                        <span class="price">${Number(product.price || 0)} ₴</span>
+                        ${isInStock ? inStockBadge : outOfStockBadge}
+                    </div>
+                </div>
+                <div class="product-card-footer mt-auto pt-3 min-w-0 w-full">
+                    <div class="flex flex-col gap-2 w-full mt-auto">
+                        <a href="/products/${product.id}" class="btn btn-primary w-full text-center py-2 px-3">Переглянути</a>
+                        ${actionButtonsHtml}
+                    </div>
+                </div>
+            </article>
+        `;
+        }).join('');
+
+        syncFavoriteButtons();
+        bindFavoriteClickHandlers();
+        bindCartClickHandlers();
+    }
+
+    async function loadCatalogProducts(params = {}) {
+        const query = new URLSearchParams();
+        const q = (params.q || '').trim();
+        const categoryId = params.category_id;
+        const categorySlug = params.category_slug || '';
+        const sort = (params.sort || '').trim();
+
+        if (q) query.set('q', q);
+        if (categoryId) query.set('category_id', String(categoryId));
+        if (categorySlug) query.set('category_slug', categorySlug);
+        if (sort) query.set('sort', sort);
+
+        try {
+            const response = await fetch(`/api/v1/products?${query.toString()}`, {
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json' }
+            });
+            if (!response.ok) {
+                throw new Error('Failed to fetch products');
+            }
+            const products = await response.json();
+            renderCatalogProducts(products);
+        } catch (error) {
+            console.error('Catalog fetch failed:', error);
+            if (window.showToast) {
+                window.showToast('Не вдалося завантажити товари. Спробуйте оновити сторінку.', {
+                    type: 'error',
+                    title: 'Помилка завантаження',
+                    duration: 4500
+                });
+            }
+        }
+    }
+
+    function bindFavoriteClickHandlers() {
+        document.querySelectorAll('.favorite-btn[data-product-id]').forEach((button) => {
+            if (button.dataset.boundFav === '1') return;
+            button.dataset.boundFav = '1';
+
+            button.onclick = async function () {
+                const productId = Number(this.dataset.productId);
+                const isCurrentlyFavorite = this.classList.contains('favorite-active');
+                const originalText = this.textContent;
+                try {
+                    const response = await fetch(`/api/v1/favorites/${productId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({})
+                    });
+
+                    if (window.handleAuthRedirect && window.handleAuthRedirect(response)) {
+                        return;
+                    }
+
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        const msg = payload.detail || 'Не вдалося оновити обране';
+                        throw new Error(msg);
+                    }
+
+                    const nextState = !isCurrentlyFavorite;
+                    setFavoriteButtonState(this, nextState);
+                    if (typeof updateFavoritesCount === 'function') {
+                        updateFavoritesCount();
+                    }
+                    if (window.showToast) {
+                        window.showToast(payload.message || (nextState ? 'Товар додано до обраного' : 'Товар видалено з обраного'), {
+                            type: 'success',
+                            title: nextState ? 'Додано в обране' : 'Видалено з обраного',
+                            duration: 2500
+                        });
+                    }
+                } catch (error) {
+                    console.error('[Favorites] error:', error);
+                    if (window.showToast) {
+                        window.showToast(error.message || 'Не вдалося оновити обране', {
+                            type: 'error',
+                            title: 'Помилка',
+                            duration: 4000
+                        });
+                    } else if (window.flashButtonText) {
+                        window.flashButtonText(this, 'Помилка ✗', originalText, 2000);
+                    }
+                }
+            };
+        });
+    }
+
+    function bindCartClickHandlers() {
+        document.querySelectorAll('.add-to-cart-btn[data-product-id]').forEach((button) => {
+            if (button.dataset.boundCart === '1') return;
+            button.dataset.boundCart = '1';
+
+            button.onclick = async function () {
+                const productId = Number(this.dataset.productId);
+                if (!productId || Number.isNaN(productId)) return;
+
+                const originalText = this.textContent;
+                if (window.flashButtonText) {
+                    window.flashButtonText(this, 'Додається...', originalText, 60000);
+                }
+                this.disabled = true;
+                this.textContent = 'Додається...';
+
+                try {
+                    const response = await fetch('/api/v1/cart/add', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({ product_id: productId, quantity: 1 })
+                    });
+
+                    if (window.handleAuthRedirect && window.handleAuthRedirect(response)) {
+                        this.disabled = false;
+                        this.textContent = originalText;
+                        return;
+                    }
+
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        const msg = payload.detail || 'Не вдалося додати товар до кошика';
+                        throw new Error(Array.isArray(msg) ? msg.map(x => x.msg || x).join(', ') : String(msg));
+                    }
+
+                    if (typeof updateCartCount === 'function') {
+                        updateCartCount();
+                    }
+                    if (window.showToast) {
+                        window.showToast(payload.message || 'Товар успішно додано в кошик', {
+                            type: 'success',
+                            title: 'Кошик оновлено',
+                            duration: 2800
+                        });
+                    }
+                } catch (error) {
+                    console.error('[Cart Add] error:', error);
+                    if (window.showToast) {
+                        window.showToast(error.message || 'Не вдалося додати товар до кошика', {
+                            type: 'error',
+                            title: 'Помилка додавання',
+                            duration: 4200
+                        });
+                    }
+                } finally {
+                    this.disabled = false;
+                    this.textContent = originalText;
+                }
+            };
+        });
+    }
+
+    async function syncFavoriteButtons() {
+        const buttons = document.querySelectorAll('.favorite-btn[data-product-id]');
+        if (!buttons.length) return;
+
+        try {
+            const response = await fetch('/api/v1/favorites', {
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json' }
+            });
+            if (response.status === 401) return;
+            if (!response.ok) return;
+            const favorites = await response.json();
+            const favoriteIds = new Set((favorites || []).map(item => Number(item.product_id)));
+
+            buttons.forEach((button) => {
+                const productId = Number(button.dataset.productId);
+                setFavoriteButtonState(button, favoriteIds.has(productId));
+            });
+        } catch (error) {
+            console.warn('[Favorites sync] failed:', error);
+            buttons.forEach((button) => setFavoriteButtonState(button, false));
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        syncFavoriteButtons();
+        bindFavoriteClickHandlers();
+        bindCartClickHandlers();
+
+        const currentUrlParams = buildCatalogQueryFromUrl();
+        document.querySelectorAll('.chip[data-category-id]').forEach((chip) => {
+            const chipId = chip.dataset.categoryId ? Number(chip.dataset.categoryId) : null;
+            const chipSlug = chip.dataset.categorySlug || '';
+            const selected = (
+                (currentUrlParams.category && chipSlug && currentUrlParams.category === chipSlug) ||
+                (chipId && currentUrlParams.category_id && Number(currentUrlParams.category_id) === chipId)
+            );
+            chip.classList.toggle('active', Boolean(selected));
+
+            chip.addEventListener('click', async function () {
+                const categoryId = this.dataset.categoryId ? Number(this.dataset.categoryId) : '';
+                const categorySlug = this.dataset.categorySlug || '';
+                const query = buildCatalogQueryFromUrl();
+                const nextParams = {
+                    q: query.q || '',
+                    category: categorySlug || '',
+                    category_id: categoryId || '',
+                    category_slug: categorySlug || '',
+                    sort: query.sort || 'popular'
+                };
+
+                updateCatalogUrl({ q: nextParams.q, category: nextParams.category, sort: nextParams.sort });
+                await loadCatalogProducts({ q: nextParams.q, category_id: nextParams.category_id, category_slug: nextParams.category_slug, sort: nextParams.sort });
+
+                document.querySelectorAll('.chip[data-category-id]').forEach((el) => {
+                    el.classList.toggle('active', el === this);
+                });
+            });
+        });
+    });
+</script>
 {% endblock %}

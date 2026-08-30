@@ -8,9 +8,16 @@
     <p class="subtitle">Створіть обліковий запис у Fast Money</p>
 
     <form id="registerForm">
-        {% if next %}
-        <input type="hidden" name="next" value="{{ next }}" />
-        {% endif %}
+        <div class="form-group">
+            <label for="first_name">Ім'я</label>
+            <input id="first_name" name="first_name" type="text" placeholder="Введіть ім'я" />
+        </div>
+
+        <div class="form-group">
+            <label for="last_name">Прізвище</label>
+            <input id="last_name" name="last_name" type="text" placeholder="Введіть прізвище" />
+        </div>
+
         <div class="form-group">
             <label for="username">Ім'я користувача</label>
             <input id="username" name="username" type="text" placeholder="Введіть username" required />
@@ -19,6 +26,11 @@
         <div class="form-group">
             <label for="email">Email</label>
             <input id="email" name="email" type="email" placeholder="Введіть email" required />
+        </div>
+
+        <div class="form-group">
+            <label for="birth_date">Дата народження</label>
+            <input id="birth_date" name="birth_date" type="date" required />
         </div>
 
         <div class="form-group">
@@ -39,29 +51,34 @@
     const form = document.getElementById('registerForm');
     const message = document.getElementById('message');
 
-    function getNextParam() {
-        const hidden = document.querySelector('input[name="next"]');
-        if (hidden && hidden.value) return hidden.value;
-        const params = new URLSearchParams(window.location.search);
-        return params.get('next') || '';
-    }
-
     form.addEventListener('submit', async function (event) {
         event.preventDefault();
         message.textContent = '';
         message.className = 'message';
 
-        const nextParam = getNextParam();
-
         const payload = {
+            first_name: document.getElementById('first_name').value.trim() || null,
+            last_name: document.getElementById('last_name').value.trim() || null,
             username: document.getElementById('username').value.trim(),
             email: document.getElementById('email').value.trim(),
-            password: document.getElementById('password').value,
-            next: nextParam
+            birth_date: document.getElementById('birth_date').value || null,
+            password: document.getElementById('password').value
         };
 
-        if (!payload.username || !payload.email || !payload.password) {
-            showMessage('Будь ласка, заповніть всі поля.', 'error');
+        if (!payload.username || !payload.email || !payload.password || !payload.birth_date) {
+            showMessage('Будь ласка, заповніть всі обов’язкові поля.', 'error');
+            return;
+        }
+
+        const birthDate = new Date(payload.birth_date + 'T00:00:00');
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        if (age < 18) {
+            showMessage('Реєстрацію дозволено лише особам від 18 років.', 'error');
             return;
         }
 
@@ -104,9 +121,7 @@
             }
 
             showMessage(data.message || 'Реєстрація успішна! Входимо в акаунт...', 'success');
-            const isAdmin = !!data.is_admin || !!data.is_superuser;
-            const target = (!isAdmin && nextParam) ? nextParam : (data.redirect_url || '/');
-            setTimeout(() => window.location.href = target, 1500);
+            setTimeout(() => window.location.href = data.redirect_url || '/', 1500);
         } catch (error) {
             showMessage(error.message || 'Помилка реєстрації', 'error');
         }

@@ -15,6 +15,275 @@
             margin-left: 4px;
             display: none;
         }
+
+        .birth-date-banner {
+            position: fixed;
+            left: 50%;
+            bottom: 18px;
+            transform: translateX(-50%);
+            width: min(760px, calc(100vw - 24px));
+            background: rgba(15, 23, 42, 0.96);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            border-radius: 18px;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.45);
+            padding: 16px 18px 14px;
+            z-index: 2000;
+            backdrop-filter: blur(10px);
+        }
+
+        .birth-date-banner__content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .birth-date-banner__title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #f8fafc;
+        }
+
+        .birth-date-banner__close {
+            border: none;
+            background: transparent;
+            color: #cbd5e1;
+            font-size: 1.3rem;
+            cursor: pointer;
+            line-height: 1;
+            padding: 4px;
+        }
+
+        .birth-date-banner__row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .birth-date-banner__note {
+            color: #e2e8f0;
+            font-size: 0.95rem;
+            flex: 1 1 250px;
+        }
+
+        .birth-date-banner__form {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-left: auto;
+        }
+
+        .birth-date-banner__input {
+            min-width: 180px;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            background: rgba(15, 23, 42, 0.7);
+            color: #f8fafc;
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+        .report-modal {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(2, 6, 23, 0.78);
+            z-index: 2000;
+        }
+
+        .report-modal.hidden {
+            display: none !important;
+        }
+
+        .report-modal-panel {
+            width: min(92vw, 560px);
+            background: #0f172a;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            border-radius: 18px;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.5);
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .report-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 22px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .report-modal-header h3 {
+            margin: 0;
+            color: #f8fafc;
+            font-size: 1.25rem;
+        }
+
+        .report-modal-close {
+            background: transparent;
+            border: none;
+            color: #e2e8f0;
+            font-size: 2rem;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .report-modal-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding: 22px;
+        }
+
+        .report-field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            color: #e2e8f0;
+        }
+
+        .report-field select,
+        .report-field textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            background: rgba(15, 23, 42, 0.7);
+            color: #f8fafc;
+            resize: vertical;
+        }
+
+        .report-field textarea {
+            min-height: 120px;
+        }
+
+        .report-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .report-error {
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            color: #fca5a5;
+        }
+
+        @media (max-width: 640px) {
+            .birth-date-banner {
+                bottom: 12px;
+                padding: 14px 14px 12px;
+            }
+
+            .birth-date-banner__content,
+            .birth-date-banner__row {
+                align-items: flex-start;
+            }
+
+            .birth-date-banner__form {
+                width: 100%;
+                margin-left: 0;
+            }
+
+            .birth-date-banner__input {
+                flex: 1 1 100%;
+            }
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 92px;
+            right: 20px;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+            max-width: 360px;
+        }
+
+        .toast {
+            background: #0f172a;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            border-left: 4px solid #3b82f6;
+            border-radius: 12px;
+            padding: 14px 18px 14px 14px;
+            color: #f8fafc;
+            font-size: 14px;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.45);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            opacity: 0;
+            transform: translateX(40px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            pointer-events: auto;
+            position: relative;
+        }
+
+        .toast.toast-visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .toast.toast-success { border-left-color: #10b981; }
+        .toast.toast-error   { border-left-color: #ef4444; }
+        .toast.toast-warning { border-left-color: #f59e0b; }
+        .toast.toast-info    { border-left-color: #3b82f6; }
+
+        .toast-icon {
+            font-size: 18px;
+            line-height: 1.2;
+            flex-shrink: 0;
+        }
+
+        .toast-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .toast-title {
+            font-weight: 700;
+            margin: 0 0 2px;
+            font-size: 0.9rem;
+        }
+
+        .toast-text {
+            margin: 0;
+            color: #cbd5e1;
+            font-size: 0.82rem;
+            line-height: 1.4;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+            padding: 0 0 0 6px;
+            flex-shrink: 0;
+        }
+
+        .toast-close:hover { color: #f8fafc; }
+
+        @media (max-width: 640px) {
+            .toast-container {
+                top: 80px;
+                left: 12px;
+                right: 12px;
+                max-width: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -22,123 +291,125 @@
         <div class="container nav-inner">
             <a href="/" class="brand">Fast Money</a>
             <nav class="nav-links">
-                <a href="/">Головна</a>
-                <a href="/catalog">Каталог</a>
-                <a href="/cart">Кошик <span class="cart-count" id="cart-count">0</span></a>
-                <a href="/favorites">Обране <span class="cart-count" id="fav-count" style="background:#10b981;">0</span></a>
-                <a href="/orders">Замовлення</a>
-                <a href="/resume">Резюме</a>
+                <a href="/" class="nav-link">Головна</a>
+                <a href="/catalog" class="nav-link">Каталог</a>
+                <a href="/cart" class="nav-link">Кошик <span class="cart-count" id="cart-count">0</span></a>
+                <a href="/favorites" class="nav-link">Обране <span class="cart-count" id="fav-count" style="background:#10b981;">0</span></a>
+                <a href="/orders" class="nav-link">Замовлення</a>
 
                 {% if current_user and (current_user.is_admin or current_user.is_superuser) %}
-                    <a href="/admin">Адмін-панель</a>
+                    <a href="/admin" class="nav-link">Адмін-панель</a>
                 {% endif %}
 
                 {% if current_user %}
                     {% if current_user.role not in ['admin', 'superadmin'] %}
-                        <a href="/my-products">Мої товари</a>
+                        <a href="/my-products" class="nav-link">Мої товари</a>
                     {% endif %}
                     <a href="/profile" class="user-badge">{{ current_user.display_name or current_user.username }}</a>
-                    <a href="/logout" class="btn btn-secondary">Вийти</a>
+                    <a href="/logout" class="btn btn-secondary nav-auth-btn">Вийти</a>
                 {% else %}
-                    <a href="/login">Увійти</a>
-                    <a href="/register">Зареєструватися</a>
+                    <a href="/login" class="btn btn-secondary nav-auth-btn">Увійти</a>
+                    <a href="/register" class="btn btn-primary nav-auth-btn">Зареєструватися</a>
                 {% endif %}
             </nav>
+
+            <div class="header-search-wrap" style="position:relative; margin-left:16px; min-width:260px;">
+                <form id="global-search-form" action="/catalog" method="get" style="display:flex; align-items:center; gap:8px; position:relative;">
+                    <input id="global-search-input" type="text" name="q" value="" placeholder="Пошук товарів..." autocomplete="off" style="min-width: 220px; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(148,163,184,0.3); background: rgba(15,23,42,0.2); color: var(--text);" />
+                    <button type="submit" class="btn btn-primary" style="padding: 10px 12px;">OK</button>
+                </form>
+                <div id="global-search-results" style="position:absolute; top:48px; left:0; right:0; background:#0f172a; border:1px solid rgba(148,163,184,0.25); border-radius:12px; padding:8px; display:none; z-index:2000; box-shadow:0 12px 30px rgba(15,23,42,0.4);"></div>
+            </div>
         </div>
     </header>
 
-    <main class="page-shell">
+    <main class="page-shell container mx-auto px-4 max-w-7xl">
+        <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
         {% block content %}{% endblock %}
     </main>
 
-    <div id="reportToast" class="report-toast" aria-live="polite" aria-atomic="true"></div>
-
-    <div id="reportModal" class="app-modal" role="dialog" aria-modal="true" aria-hidden="true">
-        <div class="app-modal-backdrop" data-close-report="1"></div>
-        <div class="app-modal-dialog" role="document">
-            <div class="app-modal-header">
-                <h3>Подати скаргу</h3>
-                <button type="button" class="app-modal-close" data-close-report="1" aria-label="Закрити">&times;</button>
+    {% if current_user and not current_user.birth_date and not request.url.path.startswith('/admin') and not request.url.path.startswith('/login') and not request.url.path.startswith('/register') and not current_user.is_admin and not current_user.is_superuser %}
+        <div id="birthDateModal" class="birth-date-banner" role="dialog" aria-modal="true" aria-hidden="false">
+            <div class="birth-date-banner__content">
+                <div class="birth-date-banner__title">Вкажіть дату народження</div>
+                <button type="button" id="closeBirthDateBanner" class="birth-date-banner__close" aria-label="Закрити">✕</button>
             </div>
-            <div class="app-modal-body">
-                <form id="report-form" class="product-form-card">
-                    <input type="hidden" name="product_id" id="report-product-id" value="">
-                    <input type="hidden" name="user_id" id="report-user-id" value="">
-                    <input type="hidden" name="comment_id" id="report-comment-id" value="">
-
-                    <div class="form-section">
-                        <label class="full">
-                            <span>Причина</span>
-                            <select name="reason" required>
-                                <option value="Шахрайство">Шахрайство</option>
-                                <option value="Спам">Спам</option>
-                                <option value="Невідповідність товару / опису">Невідповідність товару / опису</option>
-                                <option value="Образлива поведінка">Образлива поведінка</option>
-                                <option value="Інше">Інше</option>
-                            </select>
-                        </label>
-                    </div>
-
-                    <div class="form-section">
-                        <label class="full">
-                            <span>Опис проблеми</span>
-                            <textarea name="details" rows="5" placeholder="Опишіть проблему детальніше..."></textarea>
-                        </label>
-                    </div>
-
-                    <div id="report-message" class="form-success" style="display:none;margin-bottom:12px;"></div>
+            <div class="birth-date-banner__row">
+                <div class="birth-date-banner__note">Це необхідно для доступу до всіх функцій каталогу.</div>
+                <form id="birthDateForm" class="birth-date-banner__form">
+                    <input id="birthDateInput" class="birth-date-banner__input" name="birth_date" type="date" required />
+                    <button type="submit" class="btn btn-primary">Зберегти</button>
                 </form>
             </div>
-            <div class="app-modal-footer">
-                <button type="button" class="btn btn-secondary" data-close-report="1">Скасувати</button>
-                <button type="submit" form="report-form" class="btn btn-danger">Надіслати скаргу</button>
+        </div>
+    {% endif %}
+
+    <div id="user-profile-modal" class="app-modal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;">
+        <div class="app-modal-backdrop" data-close-user-profile-modal="1"></div>
+        <div class="app-modal-dialog" role="document" style="max-width: 860px; width: min(92vw, 860px);">
+            <div class="app-modal-header">
+                <h3 id="user-profile-modal-title">Профіль користувача</h3>
+                <button type="button" class="app-modal-close" data-close-user-profile-modal="1" aria-label="Закрити">&times;</button>
+            </div>
+            <div class="app-modal-body">
+                <div id="user-profile-loading" style="padding: 18px 0; color: var(--muted);">Завантаження...</div>
+                <div id="user-profile-content" style="display:none;">
+                    <div style="display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; align-items:center; margin-bottom:22px;">
+                        <div>
+                            <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);">Користувач</div>
+                            <h4 id="user-profile-name" style="margin: 8px 0 0; font-size: 1.8rem;">—</h4>
+                        </div>
+                        <button type="button" id="user-profile-report-btn" class="btn btn-danger">Поскаржитись</button>
+                    </div>
+
+                    <div style="margin-bottom: 18px;">
+                        <label style="display:block; margin-bottom:8px; color: var(--muted);">Пошук товарів продавця</label>
+                        <input id="user-profile-search" type="text" placeholder="Введіть назву товару..." style="width:100%; padding: 10px 12px; border-radius: 12px; border:1px solid var(--border); background: rgba(15,23,42,0.18); color: var(--text);" />
+                    </div>
+
+                    <div id="user-profile-products" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px;"></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="global-complaint-modal" class="app-modal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;">
-        <div class="app-modal-backdrop" data-close-complaint="1"></div>
-        <div class="app-modal-dialog" role="document">
-            <div class="app-modal-header">
-                <h3>Поскаржитися</h3>
-                <button type="button" class="app-modal-close" data-close-complaint="1" aria-label="Закрити">&times;</button>
+    <div id="complaint-modal" class="modal" style="display:none; position: fixed; inset: 0; background: rgba(2,6,23,0.72); z-index: 1200; align-items: center; justify-content: center;">
+        <div class="modal-content" style="width:min(92vw, 560px); background:#111827; border:1px solid rgba(148,163,184,0.25); border-radius:18px; padding:0; overflow:hidden;">
+            <div class="modal-header" style="padding:20px 22px; border-bottom:1px solid rgba(148,163,184,0.2); display:flex; align-items:center; justify-content:space-between;">
+                <h3 style="margin:0;">Поскаржитися</h3>
+                <button type="button" id="close-complaint-modal" class="close-btn" data-close-complaint-modal="1" aria-label="Закрити" style="background:none; border:none; font-size:28px; color:#fff; cursor:pointer;">×</button>
             </div>
-            <div class="app-modal-body">
-                <form id="global-complaint-form" class="product-form-card">
-                    <input type="hidden" name="product_id" id="complaint-product-id" value="">
-                    <input type="hidden" name="user_id" id="complaint-user-id" value="">
-                    <input type="hidden" name="comment_id" id="complaint-comment-id" value="">
-                    <div class="form-section">
-                        <label class="full">
-                            <span>Причина</span>
-                            <select name="reason" required>
-                                <option value="Шахрайство">Шахрайство</option>
-                                <option value="Спам">Спам</option>
-                                <option value="Невідповідність товару / опису">Невідповідність товару / опису</option>
-                                <option value="Образлива поведінка">Образлива поведінка</option>
-                                <option value="Інше">Інше</option>
-                            </select>
-                        </label>
-                    </div>
-                    <div class="form-section">
-                        <label class="full">
-                            <span>Опис</span>
-                            <textarea name="description" rows="5" placeholder="Опишіть проблему..."></textarea>
-                        </label>
-                    </div>
-                    <div id="global-complaint-message" class="form-success" style="display:none;margin-bottom:12px;"></div>
-                </form>
-            </div>
-            <div class="app-modal-footer">
-                <button type="button" class="btn btn-secondary" data-close-complaint="1">Скасувати</button>
-                <button type="submit" form="global-complaint-form" class="btn btn-danger">Надіслати</button>
-            </div>
+            <form id="complaint-form" style="padding:22px; display:flex; flex-direction:column; gap:14px;">
+                <input type="hidden" id="complaint-target-type" name="target_type" value="user" />
+                <input type="hidden" id="complaint-target-id" name="target_id" value="" />
+                <input type="hidden" id="complaint-target-user-id" name="target_user_id" value="" />
+
+                <label>
+                    <span>Причина</span>
+                    <select name="reason" required style="width:100%; margin-top:6px; border-radius:10px; padding:10px 12px; border:1px solid rgba(148,163,184,0.25); background:#0f172a; color:#e2e8f0;">
+                        <option value="profanity">Нецензурна лексика</option>
+                        <option value="threats">Погрози</option>
+                        <option value="sexual">Контент сексуального характеру</option>
+                        <option value="fraud">Шахрайство</option>
+                        <option value="spam">Спам / Реклама</option>
+                        <option value="other">Інше</option>
+                    </select>
+                </label>
+
+                <label>
+                    <span>Опис</span>
+                    <textarea name="description" rows="5" placeholder="Опишіть проблему..." style="width:100%; margin-top:6px; border-radius:10px; padding:10px 12px; border:1px solid rgba(148,163,184,0.25); background:#0f172a; color:#e2e8f0; resize:vertical;"></textarea>
+                </label>
+
+                <div id="complaint-message" class="form-error" hidden></div>
+                <button type="submit" class="btn btn-danger">Надіслати</button>
+            </form>
         </div>
     </div>
 
     <div id="add-product-modal" class="app-modal" role="dialog" aria-modal="true" aria-hidden="true">
         <div class="app-modal-backdrop" data-close-add-product="1"></div>
-        <div class="app-modal-dialog wide-modal" role="document">
+        <div class="app-modal-dialog" role="document">
             <div class="app-modal-header">
                 <h3>Додати свій товар</h3>
                 <button type="button" class="app-modal-close" data-close-add-product="1" aria-label="Закрити">&times;</button>
@@ -146,125 +417,123 @@
             <div class="app-modal-body">
                 <form id="add-product-form" method="post" action="/api/v1/products" enctype="multipart/form-data" class="product-form-card">
                     <div id="add-product-form-error" class="form-success" style="display:none;background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.35);color:#fca5a5;margin-bottom:14px;"></div>
-
-                    <div class="form-section">
-                        <h4 class="section-title">Основна інформація</h4>
-                        <div class="form-grid">
-                            <label class="full">
-                                <span>Назва товару *</span>
-                                <input type="text" name="title" maxlength="250" required>
-                            </label>
-                            <label>
-                                <span>Тип товару *</span>
-                                <select name="product_type" id="add-product-type" required>
-                                    <option value="physical">📦 Фізичний товар</option>
-                                    <option value="digital">💾 Цифровий товар / файл</option>
-                                    <option value="game_item">🎮 Ігровий предмет / послуга</option>
-                                </select>
-                            </label>
-                            <label>
-                                <span>Артикул (SKU)</span>
-                                <input type="text" name="sku" maxlength="120" placeholder="Напр. SKU-001">
-                            </label>
-                            <label>
-                                <span>Ціна (₴) *</span>
-                                <input type="number" name="price" id="add-product-price" min="0" step="1" required>
-                            </label>
-                            <label>
-                                <span>Ціна зі знижкою (₴)</span>
-                                <input type="number" name="sale_price" id="add-product-sale-price" min="0" step="0.01" placeholder="Необов'язково">
-                            </label>
-                            <label data-stock-field>
-                                <span>Кількість на складі (stock) *</span>
-                                <input type="number" name="quantity" min="0" step="1" value="1" required>
-                            </label>
-                            <label>
-                                <span>Номер телефону</span>
-                                <input type="text" name="seller_phone" id="add-product-phone" placeholder="За замовчуванням з профілю">
-                            </label>
-                            <label class="checkbox-row">
-                                <input type="checkbox" name="is_draft" id="add-is-draft">
-                                <span for="add-is-draft">Зберегти як чернетку (не публікувати)</span>
-                            </label>
-                            <label class="full">
-                                <span>Теги</span>
-                                <input type="text" name="tags_raw" id="add-product-tags" placeholder="Наприклад: новинка, популярне, arcade">
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="form-section">
-                        <label class="full">
-                            <span>Опис товару *</span>
-                            <textarea name="description" rows="4" required></textarea>
+                    <div class="form-grid">
+                        <label style="grid-column: 1 / -1;">
+                            <span>Назва</span>
+                            <input type="text" name="title" required>
+                        </label>
+                        <label style="grid-column: 1 / -1;">
+                            <span>Категорія / Підкатегорія</span>
+                            <select name="category" id="add-product-category" data-product-type-auto="1">
+                                <option value="" selected>Оберіть категорію / підкатегорію</option>
+                                <optgroup label="Автотовари">
+                                    <option value="auto" data-product-type="physical">Автотовари (Вся категорія)</option>
+                                    <option value="auto_parts" data-product-type="physical">Запчастини</option>
+                                    <option value="auto_chem" data-product-type="physical">Автохімія</option>
+                                    <option value="auto_interior" data-product-type="physical">Салон</option>
+                                </optgroup>
+                                <optgroup label="Дім та сад">
+                                    <option value="home_garden" data-product-type="physical">Дім та сад (Вся категорія)</option>
+                                    <option value="furniture" data-product-type="physical">Меблі</option>
+                                    <option value="home_decor" data-product-type="physical">Декор</option>
+                                    <option value="tools" data-product-type="physical">Інструменти</option>
+                                    <option value="tableware" data-product-type="physical">Посуд</option>
+                                </optgroup>
+                                <optgroup label="Електроніка">
+                                    <option value="electronics" data-product-type="physical">Електроніка (Вся категорія)</option>
+                                    <option value="smartphones" data-product-type="physical">Смартфони</option>
+                                    <option value="laptops" data-product-type="physical">Ноутбуки</option>
+                                    <option value="components" data-product-type="physical">Комплектуючі</option>
+                                    <option value="accessories" data-product-type="physical">Аксесуари</option>
+                                </optgroup>
+                                <optgroup label="Краса та здоров'я">
+                                    <option value="beauty_health" data-product-type="physical">Краса та здоров'я (Вся категорія)</option>
+                                    <option value="cosmetics" data-product-type="physical">Косметика</option>
+                                    <option value="perfumery" data-product-type="physical">Парфумерія</option>
+                                    <option value="care" data-product-type="physical">Догляд</option>
+                                </optgroup>
+                                <optgroup label="Крафт та Хендмейд">
+                                    <option value="craft" data-product-type="physical">Крафт та Хендмейд (Вся категорія)</option>
+                                    <option value="jewelry" data-product-type="physical">Прикраси</option>
+                                    <option value="handmade_decor" data-product-type="physical">Декор ручної роботи</option>
+                                </optgroup>
+                                <optgroup label="Одяг та взуття">
+                                    <option value="clothing" data-product-type="physical">Одяг та взуття (Вся категорія)</option>
+                                    <option value="mens" data-product-type="physical">Чоловічий</option>
+                                    <option value="womens" data-product-type="physical">Жіночий</option>
+                                    <option value="kids_clothes" data-product-type="physical">Дитячий</option>
+                                    <option value="shoes" data-product-type="physical">Взуття</option>
+                                </optgroup>
+                                <optgroup label="Спорт та відпочинок">
+                                    <option value="sports" data-product-type="physical">Спорт та відпочинок (Вся категорія)</option>
+                                    <option value="fitness" data-product-type="physical">Тренажери</option>
+                                    <option value="tourism" data-product-type="physical">Туризм</option>
+                                    <option value="bicycles" data-product-type="physical">Велосипеди</option>
+                                </optgroup>
+                                <optgroup label="Цифрові товари">
+                                    <option value="digital_goods" data-product-type="digital">Цифрові товари (Вся категорія)</option>
+                                    <option value="games" data-product-type="game_item">Ігри</option>
+                                    <option value="software" data-product-type="digital">Софт</option>
+                                    <option value="accounts" data-product-type="game_item">Акаунти</option>
+                                    <option value="courses" data-product-type="digital">Курси</option>
+                                </optgroup>
+                            </select>
+                            <span style="font-size:12px;color:#94a3b8;margin-top:4px;display:block;">Після вибору категорії ми підкажемо бажаний тип товару. Ви завжди зможете змінити його вручну.</span>
+                        </label>
+                        <label>
+                            <span>Тип товару</span>
+                            <select name="product_type" id="add-product-type">
+                                <option value="physical" selected>Фізичний товар</option>
+                                <option value="digital">Цифровий товар</option>
+                                <option value="game_item">Ігровий / аккаунт</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Ціна</span>
+                            <input type="number" name="price" min="0" required>
+                        </label>
+                        <label>
+                            <span>Знижена ціна</span>
+                            <input type="number" name="sale_price" min="0" placeholder="Не обов'язково">
+                        </label>
+                        <label>
+                            <span>Кількість в наявності</span>
+                            <input type="number" name="quantity" min="0" required>
+                        </label>
+                        <label>
+                            <span>SKU / артикул</span>
+                            <input type="text" name="sku" maxlength="80" placeholder="Наприклад: PM-001">
+                        </label>
+                        <label style="grid-column: 1 / -1;">
+                            <span>Теги</span>
+                            <input type="text" name="tags" placeholder="Наприклад: новинка, попит, xbox">
+                        </label>
+                        <label>
+                            <span>Номер телефону для зв'язку</span>
+                            <input type="text" name="seller_phone" id="add-product-phone" placeholder="За замовчуванням з вашого профілю">
+                        </label>
+                        <label>
+                            <span>Характеристики</span>
+                            <input type="text" name="attributes" placeholder="key:value; key2:value2">
                         </label>
                     </div>
-
-                    <div class="form-section" id="add-sale-preview-section" style="display:none;">
-                        <div class="form-grid">
-                            <div class="full" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
-                                <span style="font-size:13px;font-weight:600;color:var(--text);">Попередній перегляд знижки</span>
-                                <span id="add-product-discount-preview" style="padding:6px 10px;border-radius:999px;background:rgba(251,191,36,0.12);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);font-weight:700;display:none;">0% знижки</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-section" id="add-digital-section" style="display:none;">
-                        <h4 class="section-title">💾 Цифровий / ігровий вміст</h4>
-                        <label class="full">
-                            <span>Цифровий ключ / Посилання на файл / Текстовий вміст</span>
-                            <textarea name="digital_content" rows="3" placeholder="URL для завантаження, ліцензійний ключ, код активації тощо.&#10;Буде доступно покупцю після успішної оплати."></textarea>
-                        </label>
-                    </div>
-
-                    <div class="form-section type-specific type-physical" data-type="physical">
-                        <h4 class="section-title">📦 Параметри фізичного товару</h4>
-                        <div class="form-grid">
-                            <label>
-                                <span>Вага / Габарити</span>
-                                <input type="text" name="weight_dimensions" maxlength="200" placeholder="Напр. 500г, 20×15×5 см">
-                            </label>
-                            <label>
-                                <span>Варіанти доставки</span>
-                                <input type="text" name="shipping_options" maxlength="250" placeholder="Нова Пошта, Укрпошта, самовивіз">
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="form-section type-specific type-game_item" data-type="game_item" style="display:none;">
-                        <h4 class="section-title">🎮 Параметри ігрового товару</h4>
-                        <div class="form-grid">
-                            <label>
-                                <span>Сервер / Платформа</span>
-                                <input type="text" name="platform_server" maxlength="200" placeholder="Steam, PS5, WoW: Голдринн">
-                            </label>
-                            <label>
-                                <span>Рідкісність (Rarity)</span>
-                                <input type="text" name="rarity" maxlength="120" placeholder="Common / Rare / Epic / Legendary">
-                            </label>
-                            <label class="full">
-                                <span>Час виконання / передачі</span>
-                                <input type="text" name="execution_time" maxlength="200" placeholder="Напр. 10-15 хв після оплати">
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="form-section">
-                        <h4 class="section-title">⚙️ Додаткові характеристики</h4>
-                        <label class="full">
-                            <span>Специфічні атрибути у форматі «ключ: значення» або JSON</span>
-                            <textarea name="attributes_raw" rows="4" placeholder="Колір: Чорний&#10;Матеріал: Бавовна&#10;Гарантія: 12 місяців&#10;&#10;Або JSON: {\"Колір\":\"Чорний\"}"></textarea>
-                            <small class="form-help">Кожен атрибут з нового рядка. Не дублюйте поля, що вже заповнені вище.</small>
-                        </label>
-                    </div>
-
-                    <div class="form-section physical-only">
-                        <h4 class="section-title">📸 Медіа (фото / відео)</h4>
-                        <label class="full">
-                            <span>Фото або відео (до 1 ГБ кожне)</span>
-                            <input type="file" name="files" multiple accept="image/*,video/*">
-                        </label>
-                    </div>
+                    <label>
+                        <span>Опис</span>
+                        <textarea name="description" rows="4" required></textarea>
+                    </label>
+                    <label id="add-product-digital-field" style="display:none;">
+                        <span>Вміст цифрового товару / доступ</span>
+                        <textarea name="digital_content" rows="4" placeholder="Введіть посилання, інструкції або опис доступу для покупця"></textarea>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:10px; margin-top:12px;">
+                        <input type="checkbox" name="is_draft" value="on">
+                        <span>Зберегти як чернетку</span>
+                    </label>
+                    <label>
+                        <span>Фото або відео (до 1 ГБ)</span>
+                        <input type="file" name="files" multiple accept="image/*,video/*" id="add-product-files-input">
+                    </label>
+                    <div id="add-product-files-preview" class="media-preview-grid" style="margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px;"></div>
                 </form>
             </div>
             <div class="app-modal-footer">
@@ -274,58 +543,333 @@
         </div>
     </div>
 
-    <style>
-        .wide-modal .app-modal-dialog { max-width: 720px; }
-        .form-section { margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
-        .form-section:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .section-title { margin: 0 0 12px; font-size: 0.95rem; color: var(--text); font-weight: 700; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
-        .form-grid .full { grid-column: 1 / -1; }
-        .form-grid label { display: flex; flex-direction: column; gap: 4px; }
-        .form-grid label > span { font-size: 13px; font-weight: 600; color: var(--text); }
-        .form-grid input[type="text"],
-        .form-grid input[type="number"],
-        .form-grid select,
-        .form-grid textarea {
-            width: 100%;
-            padding: 9px 11px;
-            background: var(--surface-soft);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text);
-            font-size: 13px;
-            font-family: inherit;
-            box-sizing: border-box;
-        }
-        .form-grid textarea { resize: vertical; min-height: 80px; }
-        .form-grid input:focus, .form-grid select:focus, .form-grid textarea:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
-        }
-        .checkbox-row { flex-direction: row !important; align-items: center; gap: 8px !important; }
-        .checkbox-row input { width: auto; }
-        .checkbox-row span { margin: 0; font-weight: 500 !important; }
-        .form-help { color: var(--muted); font-size: 12px; margin-top: 4px; }
-        @media (max-width: 560px) { .form-grid { grid-template-columns: 1fr; } }
-    </style>
+    <div id="reportModal" class="report-modal hidden" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="report-modal-panel" role="document">
+            <div class="report-modal-header">
+                <h3>Подати скаргу</h3>
+                <button type="button" class="report-modal-close" data-report-close aria-label="Закрити">×</button>
+            </div>
+            <form id="reportForm" class="report-modal-form" novalidate>
+                <input type="hidden" id="report_target_type" name="report_target_type">
+                <input type="hidden" id="report_product_id" name="report_product_id">
+                <input type="hidden" id="report_user_id" name="report_user_id">
+                <input type="hidden" id="report_comment_id" name="report_comment_id">
+
+                <label class="report-field">
+                    <span>Причина</span>
+                    <select id="reportReason" name="reason" required>
+                        <option value="Шахрайство">Шахрайство</option>
+                        <option value="Спам / Спам-акаунт">Спам / Спам-акаунт</option>
+                        <option value="Невідповідність товару / опису">Невідповідність товару / опису</option>
+                        <option value="Образлива поведінка">Образлива поведінка</option>
+                        <option value="Інше">Інше</option>
+                    </select>
+                </label>
+
+                <label class="report-field">
+                    <span>Опис проблеми</span>
+                    <textarea id="reportDetails" name="details" required placeholder="Опишіть проблему..."></textarea>
+                </label>
+
+                <div id="reportError" class="report-error" role="alert" hidden></div>
+
+                <div class="report-actions">
+                    <button type="button" class="btn btn-secondary" data-report-close>Скасувати</button>
+                    <button type="submit" class="btn btn-danger" style="background:#dc2626; border-color:#dc2626;">Надіслати скаргу</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script>
-        const appUserAuthenticated = {{ 'true' if current_user else 'false' }};
+        function getCsrfTokenFromCookie() {
+            const match = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
+            return match ? decodeURIComponent(match[1]) : '';
+        }
 
-        async function updateCartCount() {
-            if (!appUserAuthenticated) {
-                const cartCount = document.getElementById('cart-count');
-                if (cartCount) cartCount.style.display = 'none';
+        function openReportModal(targetType, targetId, extraData = {}) {
+            const modal = document.getElementById('reportModal');
+            const form = document.getElementById('reportForm');
+            const targetTypeInput = document.getElementById('report_target_type');
+            const productInput = document.getElementById('report_product_id');
+            const userInput = document.getElementById('report_user_id');
+            const commentInput = document.getElementById('report_comment_id');
+            const reasonInput = document.getElementById('reportReason');
+            const detailsInput = document.getElementById('reportDetails');
+            const errorBox = document.getElementById('reportError');
+
+            if (!modal || !form || !targetTypeInput || !productInput || !userInput || !commentInput) {
                 return;
             }
+
+            form.reset();
+            if (reasonInput) reasonInput.value = 'Шахрайство';
+            if (detailsInput) detailsInput.value = '';
+            if (errorBox) {
+                errorBox.hidden = true;
+                errorBox.textContent = '';
+            }
+
+            productInput.value = '';
+            userInput.value = '';
+            commentInput.value = '';
+            targetTypeInput.value = targetType || 'product';
+
+            if (targetType === 'product') {
+                productInput.value = targetId ? String(targetId) : '';
+            }
+            if (targetType === 'user') {
+                userInput.value = targetId ? String(targetId) : '';
+            }
+            if (targetType === 'comment') {
+                commentInput.value = targetId ? String(targetId) : '';
+            }
+
+            if (extraData.reported_user_id) {
+                userInput.value = String(extraData.reported_user_id);
+            }
+            if (extraData.product_id) {
+                productInput.value = String(extraData.product_id);
+            }
+            if (extraData.comment_id) {
+                commentInput.value = String(extraData.comment_id);
+            }
+
+            modal.classList.remove('hidden');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeReportModal() {
+            const modal = document.getElementById('reportModal');
+            const form = document.getElementById('reportForm');
+            const errorBox = document.getElementById('reportError');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.setAttribute('aria-hidden', 'true');
+            }
+            if (form) form.reset();
+            if (errorBox) {
+                errorBox.hidden = true;
+                errorBox.textContent = '';
+            }
+            document.body.style.overflow = '';
+        }
+
+        async function submitReport(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const form = e.currentTarget;
+            const reason = document.getElementById('reportReason')?.value?.trim();
+            const details = document.getElementById('reportDetails')?.value?.trim();
+            const errorBox = document.getElementById('reportError');
+            const productId = document.getElementById('report_product_id')?.value;
+            const userId = document.getElementById('report_user_id')?.value;
+            const commentId = document.getElementById('report_comment_id')?.value;
+
+            if (!reason || !details) {
+                if (errorBox) {
+                    errorBox.textContent = 'Заповніть причину та опис проблеми.';
+                    errorBox.hidden = false;
+                }
+                return;
+            }
+
+            const payload = {
+                reason,
+                details,
+            };
+
+            if (productId) payload.product_id = Number(productId);
+            if (userId) payload.reported_user_id = Number(userId);
+            if (commentId) payload.comment_id = Number(commentId);
+
             try {
-                const response = await fetch('/api/v1/cart', { credentials: 'include' });
-                if (response.status === 401 || response.status === 403) {
-                    const cartCount = document.getElementById('cart-count');
-                    if (cartCount) cartCount.style.display = 'none';
+                const response = await fetch('/api/v1/reports', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(payload),
+                });
+
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    const detail = data?.detail || 'Не вдалося надіслати скаргу.';
+                    throw new Error(
+                        Array.isArray(detail)
+                            ? detail.map((item) => item.msg || item).join(', ')
+                            : String(detail)
+                    );
+                }
+
+                alert('Дякуємо! Вашу скаргу відправлено модераторам.');
+                closeReportModal();
+                if (form) form.reset();
+            } catch (error) {
+                if (errorBox) {
+                    errorBox.textContent = error.message || 'Не вдалося надіслати скаргу.';
+                    errorBox.hidden = false;
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const reportForm = document.getElementById('reportForm');
+            const closeButtons = document.querySelectorAll('[data-report-close]');
+            const reportModal = document.getElementById('reportModal');
+
+            if (reportForm) {
+                reportForm.addEventListener('submit', submitReport);
+            }
+
+            closeButtons.forEach((button) => {
+                button.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    closeReportModal();
+                });
+            });
+
+            if (reportModal) {
+                reportModal.addEventListener('click', function (event) {
+                    if (event.target === reportModal) {
+                        closeReportModal();
+                    }
+                });
+            }
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && reportModal && !reportModal.classList.contains('hidden')) {
+                    closeReportModal();
+                }
+            });
+
+            document.querySelectorAll('[data-report-trigger]').forEach((button) => {
+                button.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const targetType = button.dataset.reportTarget || 'product';
+                    const targetId = button.dataset.reportId || button.dataset.targetId || '';
+                    const extraData = {};
+                    if (button.dataset.reportUserId) extraData.reported_user_id = button.dataset.reportUserId;
+                    if (button.dataset.reportProductId) extraData.product_id = button.dataset.reportProductId;
+                    if (button.dataset.reportCommentId) extraData.comment_id = button.dataset.reportCommentId;
+                    openReportModal(targetType, targetId, extraData);
+                });
+            });
+        });
+
+        window.openReportModal = openReportModal;
+        window.closeReportModal = closeReportModal;
+        window.submitReport = submitReport;
+
+        function getCsrfTokenFromCookie() {
+            const match = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
+            return match ? decodeURIComponent(match[1]) : '';
+        }
+
+        function ensureCsrfHiddenField(form) {
+            if (!form || form.dataset.csrfBound === 'true') return;
+            const existing = form.querySelector('input[name="csrf_token"]');
+            if (!existing) {
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'csrf_token';
+                hidden.value = getCsrfTokenFromCookie();
+                form.appendChild(hidden);
+            } else {
+                existing.value = getCsrfTokenFromCookie();
+            }
+            form.dataset.csrfBound = 'true';
+        }
+
+        async function ensureCsrfCookie() {
+            if (getCsrfTokenFromCookie()) return;
+            try {
+                const response = await fetch('/api/v1/auth/csrf', { credentials: 'include' });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && data.csrf_token) {
+                        document.cookie = `csrf_token=${encodeURIComponent(data.csrf_token)}; path=/; samesite=lax`;
+                    }
+                }
+            } catch (error) {
+                // silent fail; page still works without token if cookie is already present
+            }
+        }
+
+        function applyCsrfProtectionToFetch() {
+            const originalFetch = window.fetch.bind(window);
+            window.fetch = async function (input, init = {}) {
+                const method = (init.method || 'GET').toUpperCase();
+                const url = typeof input === 'string' ? input : input.url;
+                const isUnsafeMethod = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
+                const isSameOrigin = !url.startsWith('http') || url.startsWith(window.location.origin);
+                const csrfToken = getCsrfTokenFromCookie();
+
+                if (isUnsafeMethod && isSameOrigin && csrfToken) {
+                    const headers = new Headers(init.headers || {});
+                    headers.set('X-CSRF-Token', csrfToken);
+                    init = { ...init, headers, credentials: 'include' };
+                }
+
+                return originalFetch(input, init);
+            };
+        }
+
+        function bindCsrfToForms() {
+            document.querySelectorAll('form').forEach((form) => {
+                if (form.method && form.method.toUpperCase() !== 'GET') {
+                    ensureCsrfHiddenField(form);
+                    form.addEventListener('submit', function () {
+                        ensureCsrfHiddenField(form);
+                    }, { passive: true });
+                }
+            });
+        }
+
+        document.getElementById('birthDateForm')?.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const birthDate = document.getElementById('birthDateInput')?.value;
+            if (!birthDate) {
+                alert('Вкажіть дату народження');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v1/users/me/birth-date', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': getCsrfTokenFromCookie(),
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ birth_date: birthDate }),
+                });
+
+                const data = await response.json().catch(() => ({}));
+                if (response.ok) {
+                    document.getElementById('birthDateModal')?.remove();
                     return;
                 }
+
+                alert(data.detail || 'Помилка збереження дати народження');
+            } catch (error) {
+                console.error(error);
+                alert('Помилка збереження дати народження');
+            }
+        });
+
+        document.getElementById('closeBirthDateBanner')?.addEventListener('click', function () {
+            document.getElementById('birthDateModal')?.remove();
+        });
+
+        async function updateCartCount() {
+            try {
+                const response = await fetch('/api/v1/cart', { credentials: 'include' });
                 if (response.ok) {
                     const items = await response.json();
                     const cartCount = document.getElementById('cart-count');
@@ -340,18 +884,8 @@
         }
 
         async function updateFavoritesCount() {
-            if (!appUserAuthenticated) {
-                const favCount = document.getElementById('fav-count');
-                if (favCount) favCount.style.display = 'none';
-                return;
-            }
             try {
                 const response = await fetch('/api/v1/favorites', { credentials: 'include' });
-                if (response.status === 401 || response.status === 403) {
-                    const favCount = document.getElementById('fav-count');
-                    if (favCount) favCount.style.display = 'none';
-                    return;
-                }
                 if (response.ok) {
                     const items = await response.json();
                     const favCount = document.getElementById('fav-count');
@@ -375,246 +909,99 @@
             }, durationMs || 2000);
         }
 
+        function showToast(message, options = {}) {
+            const container = document.getElementById('toast-container');
+            if (!container) {
+                alert(message);
+                return null;
+            }
+
+            const type = options.type || 'info';
+            const title = options.title || '';
+            const duration = options.duration ?? 3500;
+
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+
+            const icon = document.createElement('div');
+            icon.className = 'toast-icon';
+            icon.textContent = icons[type] || icons.info;
+
+            const body = document.createElement('div');
+            body.className = 'toast-body';
+            if (title) {
+                const titleEl = document.createElement('p');
+                titleEl.className = 'toast-title';
+                titleEl.textContent = title;
+                body.appendChild(titleEl);
+            }
+            const textEl = document.createElement('p');
+            textEl.className = 'toast-text';
+            textEl.textContent = message;
+            body.appendChild(textEl);
+
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'toast-close';
+            closeBtn.setAttribute('aria-label', 'Закрити сповіщення');
+            closeBtn.innerHTML = '&times;';
+            closeBtn.addEventListener('click', () => removeToast(toast));
+
+            toast.appendChild(icon);
+            toast.appendChild(body);
+            toast.appendChild(closeBtn);
+
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    toast.classList.add('toast-visible');
+                });
+            });
+
+            let timeoutId = null;
+            if (duration > 0) {
+                timeoutId = setTimeout(() => removeToast(toast), duration);
+            }
+
+            toast._timeoutId = timeoutId;
+            return toast;
+        }
+
+        function removeToast(toast) {
+            if (!toast || !toast.parentNode) return;
+            if (toast._timeoutId) {
+                clearTimeout(toast._timeoutId);
+                toast._timeoutId = null;
+            }
+            toast.classList.remove('toast-visible');
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 260);
+        }
+
         function handleAuthRedirect(response) {
             if (response && response.status === 401) {
-                window.location.href = '/login';
+                showToast('Будь ласка, увійдіть для продовження.', {
+                    type: 'warning',
+                    title: 'Потрібна авторизація',
+                    duration: 4000
+                });
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 900);
                 return true;
             }
             return false;
-        }
-
-        function normalizeReportReason(reason) {
-            const normalized = String(reason || '').trim();
-            return normalized || 'Інше';
-        }
-
-        function showReportToast(message) {
-            const toast = document.getElementById('reportToast');
-            if (!toast) {
-                window.alert(message);
-                return;
-            }
-
-            toast.textContent = message;
-            toast.classList.add('show');
-            clearTimeout(showReportToast.timeoutId);
-            showReportToast.timeoutId = setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        }
-
-        async function submitReport(event) {
-            if (event) {
-                event.preventDefault();
-            }
-
-            const form = document.getElementById('report-form') || document.getElementById('global-complaint-form');
-            const message = document.getElementById('report-message') || document.getElementById('global-complaint-message');
-            const hiddenProductId = document.getElementById('report-product-id') || document.getElementById('complaint-product-id');
-            const hiddenUserId = document.getElementById('report-user-id') || document.getElementById('complaint-user-id');
-            const hiddenCommentId = document.getElementById('report-comment-id') || document.getElementById('complaint-comment-id');
-
-            if (!form || !message || !hiddenProductId || !hiddenUserId || !hiddenCommentId) {
-                return;
-            }
-
-            const formData = new FormData(form);
-            const reason = normalizeReportReason(formData.get('reason'));
-            const details = String(formData.get('details') || formData.get('description') || '').trim();
-            const payload = {
-                reason,
-                details: details || null,
-                reported_user_id: hiddenUserId.value ? Number(hiddenUserId.value) : null,
-                product_id: hiddenProductId.value ? Number(hiddenProductId.value) : null,
-                comment_id: hiddenCommentId.value ? Number(hiddenCommentId.value) : null,
-            };
-
-            if (!payload.reported_user_id && !payload.product_id && !payload.comment_id) {
-                message.textContent = 'Виберіть об’єкт скарги.';
-                message.style.display = 'block';
-                message.className = 'form-success';
-                message.style.background = 'rgba(239,68,68,0.12)';
-                message.style.borderColor = 'rgba(239,68,68,0.35)';
-                message.style.color = '#fca5a5';
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/v1/reports', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify(payload)
-                });
-
-                const responseData = await response.json().catch(() => ({}));
-                if (!response.ok) {
-                    const detail = responseData.detail || 'Не вдалося надіслати скаргу.';
-                    throw new Error(Array.isArray(detail) ? detail.map(item => item.msg || item).join(', ') : detail);
-                }
-
-                showReportToast('Дякуємо! Вашу скаргу відправлено модераторам.');
-                closeReportModal();
-            } catch (error) {
-                message.textContent = error.message || 'Не вдалося надіслати скаргу.';
-                message.style.display = 'block';
-                message.className = 'form-success';
-                message.style.background = 'rgba(239,68,68,0.12)';
-                message.style.borderColor = 'rgba(239,68,68,0.35)';
-                message.style.color = '#fca5a5';
-            }
-        }
-
-        function openReportModal({ productId = '', userId = '', commentId = '' } = {}) {
-            const modal = document.getElementById('reportModal') || document.getElementById('global-complaint-modal');
-            const form = document.getElementById('report-form') || document.getElementById('global-complaint-form');
-            const message = document.getElementById('report-message') || document.getElementById('global-complaint-message');
-            const hiddenProductId = document.getElementById('report-product-id') || document.getElementById('complaint-product-id');
-            const hiddenUserId = document.getElementById('report-user-id') || document.getElementById('complaint-user-id');
-            const hiddenCommentId = document.getElementById('report-comment-id') || document.getElementById('complaint-comment-id');
-            if (!modal || !form || !hiddenProductId || !hiddenUserId || !hiddenCommentId) return;
-
-            hiddenProductId.value = productId ? String(productId) : '';
-            hiddenUserId.value = userId ? String(userId) : '';
-            hiddenCommentId.value = commentId ? String(commentId) : '';
-
-            if (message) {
-                message.style.display = 'none';
-                message.textContent = '';
-                message.className = 'form-success';
-                message.style.background = '';
-                message.style.borderColor = '';
-                message.style.color = '';
-            }
-
-            form.reset();
-            modal.classList.add('open');
-            modal.setAttribute('aria-hidden', 'false');
-            modal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeReportModal() {
-            const modal = document.getElementById('reportModal') || document.getElementById('global-complaint-modal');
-            const form = document.getElementById('report-form') || document.getElementById('global-complaint-form');
-            const message = document.getElementById('report-message') || document.getElementById('global-complaint-message');
-            if (!modal) return;
-            modal.classList.remove('open');
-            modal.setAttribute('aria-hidden', 'true');
-            modal.style.display = 'none';
-            document.body.style.overflow = '';
-            if (form) form.reset();
-            if (message) {
-                message.style.display = 'none';
-                message.textContent = '';
-                message.className = 'form-success';
-                message.style.background = '';
-                message.style.borderColor = '';
-                message.style.color = '';
-            }
-        }
-
-        function bindReportModalEvents() {
-            const modal = document.getElementById('reportModal') || document.getElementById('global-complaint-modal');
-            const form = document.getElementById('report-form') || document.getElementById('global-complaint-form');
-            if (!modal || !form) return;
-
-            document.querySelectorAll('[data-close-report], [data-close-complaint]').forEach((el) => {
-                el.addEventListener('click', closeReportModal);
-            });
-
-            form.addEventListener('submit', submitReport);
-        }
-
-        document.addEventListener('click', function (event) {
-            const trigger = event.target.closest('[data-report-target]');
-            if (!trigger) return;
-
-            const productId = trigger.dataset.productId || trigger.dataset.product || '';
-            const userId = trigger.dataset.userId || trigger.dataset.user || '';
-            const commentId = trigger.dataset.commentId || trigger.dataset.comment || '';
-            openReportModal({ productId, userId, commentId });
-        });
-
-        function openComplaintModal(productId) {
-            openReportModal({ productId: productId || '' });
-        }
-
-        function closeComplaintModal() {
-            closeReportModal();
-        }
-
-        function openGlobalComplaintModal(productId, userId, commentId) {
-            openReportModal({ productId: productId || '', userId: userId || '', commentId: commentId || '' });
-        }
-
-        function updateDiscountPreview() {
-            const priceInput = document.getElementById('add-product-price');
-            const saleInput = document.getElementById('add-product-sale-price');
-            const preview = document.getElementById('add-product-discount-preview');
-            const previewSection = document.getElementById('add-sale-preview-section');
-            if (!priceInput || !saleInput || !preview || !previewSection) return;
-
-            const basePrice = Number(priceInput.value || 0);
-            const salePrice = Number(saleInput.value || 0);
-            const hasValidSale = Number.isFinite(salePrice) && salePrice > 0 && salePrice < basePrice && basePrice > 0;
-
-            if (hasValidSale) {
-                const percent = Math.round(100 - (salePrice / basePrice) * 100);
-                preview.textContent = `${percent}% знижки`;
-                preview.style.display = 'inline-block';
-                previewSection.style.display = 'block';
-            } else {
-                preview.textContent = '0% знижки';
-                preview.style.display = 'none';
-                previewSection.style.display = 'none';
-            }
-        }
-
-        function toggleProductTypeFields(type, scope) {
-            const root = scope || document;
-            const isDigital = type === 'digital';
-            const isGame = type === 'game_item';
-            const isPhysical = type === 'physical';
-            const showDigitalBlock = isDigital || isGame;
-
-            const digitalSection = root.querySelector('#add-digital-section') || root.querySelector('#digital-section');
-            if (digitalSection) {
-                digitalSection.style.display = showDigitalBlock ? 'block' : 'none';
-            }
-
-            const allTypeSections = root.querySelectorAll('.type-specific');
-            allTypeSections.forEach(section => {
-                const sectionType = section.getAttribute('data-type') || '';
-                if (sectionType === type) {
-                    section.style.display = 'block';
-                } else {
-                    section.style.display = 'none';
-                }
-            });
-
-            const physicalOnly = root.querySelectorAll('.physical-only');
-            physicalOnly.forEach(el => {
-                if (isPhysical) {
-                    el.style.opacity = '1';
-                    el.style.pointerEvents = '';
-                } else {
-                    el.style.opacity = '0.55';
-                    el.style.pointerEvents = 'none';
-                }
-            });
-
-            const stockQuantityWrap = root.querySelectorAll('[data-stock-field]');
-            stockQuantityWrap.forEach(el => {
-                if (isPhysical) {
-                    el.style.display = '';
-                } else {
-                    el.style.display = 'none';
-                }
-            });
         }
 
         function openAddProductModal(defaultPhone) {
@@ -622,7 +1009,6 @@
             const form = document.getElementById('add-product-form');
             const errEl = document.getElementById('add-product-form-error');
             const phoneInput = document.getElementById('add-product-phone');
-            const typeSelect = document.getElementById('add-product-type');
             if (!modal || !form) return;
             if (form) form.reset();
             if (errEl) {
@@ -631,10 +1017,6 @@
             }
             if (phoneInput && defaultPhone) {
                 phoneInput.value = defaultPhone;
-            }
-            if (typeSelect) {
-                typeSelect.value = 'physical';
-                toggleProductTypeFields('physical', modal);
             }
             modal.classList.add('open');
             modal.setAttribute('aria-hidden', 'false');
@@ -656,25 +1038,384 @@
             }
         }
 
+        function rebuildInputFiles(input, files) {
+            const dataTransfer = new DataTransfer();
+            files.forEach((file) => dataTransfer.items.add(file));
+            input.files = dataTransfer.files;
+        }
+
+        function renderAddedFilesPreview(input, previewContainer) {
+            previewContainer.innerHTML = '';
+            const files = Array.from(input.files || []);
+            if (!files.length) {
+                return;
+            }
+
+            files.forEach((file, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.style.position = 'relative';
+                wrapper.style.border = '1px solid rgba(148, 163, 184, 0.35)';
+                wrapper.style.borderRadius = '10px';
+                wrapper.style.overflow = 'hidden';
+                wrapper.style.background = '#0f172a';
+
+                const fileUrl = URL.createObjectURL(file);
+                const preview = document.createElement(file.type.startsWith('video/') ? 'video' : 'img');
+                preview.src = fileUrl;
+                preview.style.width = '100%';
+                preview.style.height = '110px';
+                preview.style.objectFit = 'cover';
+                preview.style.display = 'block';
+                if (preview.tagName === 'VIDEO') {
+                    preview.muted = true;
+                    preview.controls = false;
+                    preview.playsInline = true;
+                }
+
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.textContent = '×';
+                removeBtn.style.position = 'absolute';
+                removeBtn.style.top = '8px';
+                removeBtn.style.right = '8px';
+                removeBtn.style.border = 'none';
+                removeBtn.style.borderRadius = '50%';
+                removeBtn.style.width = '24px';
+                removeBtn.style.height = '24px';
+                removeBtn.style.cursor = 'pointer';
+                removeBtn.style.background = 'rgba(15, 23, 42, 0.85)';
+                removeBtn.style.color = '#fff';
+                removeBtn.title = 'Видалити файл';
+                removeBtn.addEventListener('click', function () {
+                    const remaining = Array.from(input.files || []).filter((_, i) => i !== index);
+                    rebuildInputFiles(input, remaining);
+                    renderAddedFilesPreview(input, previewContainer);
+                });
+
+                wrapper.appendChild(preview);
+                wrapper.appendChild(removeBtn);
+                previewContainer.appendChild(wrapper);
+            });
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[char]));
+        }
+
+        function bindComplaintModalEvents() {
+            const complaintModal = document.getElementById('complaint-modal');
+            const complaintForm = document.getElementById('complaint-form');
+            const closeComplaintBtn = document.getElementById('close-complaint-modal');
+            const closeTriggers = document.querySelectorAll('[data-close-complaint-modal="1"]');
+
+            const hideComplaintModal = () => {
+                if (!complaintModal) return;
+                complaintModal.style.display = 'none';
+                complaintModal.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+            };
+
+            closeTriggers.forEach((node) => node.addEventListener('click', hideComplaintModal));
+            if (complaintModal) {
+                complaintModal.addEventListener('click', function (event) {
+                    if (event.target === complaintModal) hideComplaintModal();
+                });
+            }
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && complaintModal && complaintModal.style.display !== 'none') {
+                    hideComplaintModal();
+                }
+            });
+
+            if (complaintForm) {
+                complaintForm.addEventListener('submit', async function (event) {
+                    event.preventDefault();
+                    const formData = new FormData(complaintForm);
+                    const payload = {
+                        target_type: formData.get('target_type') || 'user',
+                        target_id: formData.get('target_id') || null,
+                        target_user_id: formData.get('target_user_id') || null,
+                        reason: formData.get('reason') || 'other',
+                        description: formData.get('description') || ''
+                    };
+
+                    const messageEl = document.getElementById('complaint-message');
+                    if (messageEl) {
+                        messageEl.hidden = true;
+                        messageEl.textContent = '';
+                    }
+
+                    try {
+                        const response = await fetch('/api/v1/complaints', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfTokenFromCookie() },
+                            credentials: 'include',
+                            body: JSON.stringify(payload)
+                        });
+                        const data = await response.json().catch(() => ({}));
+                        if (!response.ok) {
+                            throw new Error(data.detail || 'Не вдалося надіслати скаргу');
+                        }
+                        hideComplaintModal();
+                        complaintForm.reset();
+                        alert('Скаргу успішно надіслано.');
+                    } catch (error) {
+                        if (messageEl) {
+                            messageEl.textContent = error.message || 'Не вдалося надіслати скаргу';
+                            messageEl.hidden = false;
+                        }
+                    }
+                });
+            }
+        }
+
+        function bindUserProfileModalEvents() {
+            const modal = document.getElementById('user-profile-modal');
+            const closeButtons = document.querySelectorAll('[data-close-user-profile-modal="1"]');
+            closeButtons.forEach((button) => button.addEventListener('click', () => {
+                if (!modal) return;
+                modal.style.display = 'none';
+                modal.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+            }));
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && modal && modal.style.display !== 'none') {
+                    modal.style.display = 'none';
+                    modal.setAttribute('aria-hidden', 'true');
+                    document.body.style.overflow = '';
+                }
+            });
+        }
+
+        async function openUserProfileModal(userId) {
+            const modal = document.getElementById('user-profile-modal');
+            const loading = document.getElementById('user-profile-loading');
+            const content = document.getElementById('user-profile-content');
+            const title = document.getElementById('user-profile-modal-title');
+            const nameEl = document.getElementById('user-profile-name');
+            const productsEl = document.getElementById('user-profile-products');
+            const searchInput = document.getElementById('user-profile-search');
+            const reportBtn = document.getElementById('user-profile-report-btn');
+            if (!modal || !userId) return;
+
+            modal.style.display = 'flex';
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+
+            if (title) title.textContent = 'Профіль користувача';
+            if (loading) loading.style.display = 'block';
+            if (content) content.style.display = 'none';
+            if (searchInput) searchInput.value = '';
+            if (productsEl) productsEl.innerHTML = '';
+            if (reportBtn) {
+                reportBtn.dataset.targetUserId = String(userId);
+                reportBtn.disabled = false;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/users/${userId}/public-profile?q=`, { credentials: 'include' });
+                const data = response.ok ? await response.json() : null;
+                if (!data) throw new Error('Не вдалося завантажити профіль');
+
+                const displayName = data.display_name || data.username || 'Користувач';
+                if (nameEl) nameEl.textContent = displayName;
+                if (title) title.textContent = `Профіль: ${displayName}`;
+                if (reportBtn) {
+                    reportBtn.onclick = () => {
+                        const complaintModal = document.getElementById('complaint-modal');
+                        if (!complaintModal) return;
+                        const targetType = document.getElementById('complaint-target-type');
+                        const targetId = document.getElementById('complaint-target-id');
+                        const targetUserId = document.getElementById('complaint-target-user-id');
+                        if (targetType) targetType.value = 'user';
+                        if (targetId) targetId.value = String(userId);
+                        if (targetUserId) targetUserId.value = String(userId);
+                        complaintModal.style.display = 'flex';
+                        complaintModal.setAttribute('aria-hidden', 'false');
+                        document.body.style.overflow = 'hidden';
+                    };
+                }
+
+                const renderProducts = (items) => {
+                    if (!productsEl) return;
+                    productsEl.innerHTML = '';
+                    if (!items.length) {
+                        productsEl.innerHTML = '<div style="grid-column: 1 / -1; padding: 18px; border: 1px solid var(--border); border-radius: 12px; color: var(--muted); text-align:center;">Товарів не знайдено</div>';
+                        return;
+                    }
+
+                    items.forEach((product) => {
+                        const card = document.createElement('div');
+                        card.style.border = '1px solid var(--border)';
+                        card.style.borderRadius = '14px';
+                        card.style.overflow = 'hidden';
+                        card.style.background = 'rgba(15,23,42,0.18)';
+                        card.innerHTML = `
+                            <a href="/catalog?product_id=${product.id}" style="display:block; text-decoration:none; color:inherit;">
+                                <img src="${product.image_url || '/static/images/default-product.png'}" alt="${escapeHtml(product.title)}" style="width:100%; height:150px; object-fit:cover; display:block; background:#0f172a;">
+                                <div style="padding: 12px;">
+                                    <div style="font-weight:700; margin-bottom: 8px; color: var(--text);">${escapeHtml(product.title)}</div>
+                                    <div style="color: var(--success); font-weight:700;">${Number(product.price || 0).toLocaleString('uk-UA')} ₴</div>
+                                </div>
+                            </a>
+                        `;
+                        productsEl.appendChild(card);
+                    });
+                };
+
+                let productList = Array.isArray(data.products) ? data.products : [];
+                renderProducts(productList);
+
+                if (searchInput) {
+                    searchInput.oninput = () => {
+                        const query = searchInput.value.trim().toLowerCase();
+                        const filtered = productList.filter((product) => {
+                            const text = `${product.title || ''} ${product.description || ''}`.toLowerCase();
+                            return !query || text.includes(query);
+                        });
+                        renderProducts(filtered);
+                    };
+                }
+
+                if (loading) loading.style.display = 'none';
+                if (content) content.style.display = 'block';
+            } catch (error) {
+                if (loading) loading.textContent = 'Не вдалося завантажити профіль';
+                if (content) content.style.display = 'none';
+            }
+        }
+
+        function bindProfileUsernameClicks() {
+            document.querySelectorAll('[data-user-id]').forEach((element) => {
+                const userId = element.getAttribute('data-user-id');
+                if (!userId || element.dataset.boundProfileClick === 'true') return;
+                element.dataset.boundProfileClick = 'true';
+                element.style.cursor = 'pointer';
+                element.addEventListener('click', function () {
+                    openUserProfileModal(userId);
+                });
+            });
+
+            document.querySelectorAll('.user-badge, .review-username, .seller-name, .profile-user-link, [data-user-name]').forEach((element) => {
+                const userId = element.getAttribute('data-user-id');
+                if (!userId || element.dataset.boundProfileClick === 'true') return;
+                element.dataset.boundProfileClick = 'true';
+                element.style.cursor = 'pointer';
+                element.addEventListener('click', function () {
+                    openUserProfileModal(userId);
+                });
+            });
+        }
+
         function bindAddProductModalEvents() {
             const modal = document.getElementById('add-product-modal');
             const form = document.getElementById('add-product-form');
+            const fileInput = document.getElementById('add-product-files-input');
+            const previewContainer = document.getElementById('add-product-files-preview');
+            const productTypeSelect = document.getElementById('add-product-type');
+            const categorySelect = document.getElementById('add-product-category');
+            const digitalField = document.getElementById('add-product-digital-field');
             if (!modal || !form) return;
 
-            const typeSelect = document.getElementById('add-product-type');
-            const priceInput = document.getElementById('add-product-price');
-            const saleInput = document.getElementById('add-product-sale-price');
+            let userOverriddenType = false;
 
-            if (typeSelect) {
-                typeSelect.addEventListener('change', function (e) {
-                    toggleProductTypeFields(e.target.value, modal);
+            function updateProductTypeFields() {
+                const selected = productTypeSelect ? productTypeSelect.value : 'physical';
+                if (digitalField) {
+                    const isDigital = selected === 'digital' || selected === 'game_item' || selected === 'game';
+                    digitalField.style.display = isDigital ? 'block' : 'none';
+                    const field = digitalField.querySelector('textarea');
+                    if (field && !isDigital) {
+                        field.value = '';
+                    }
+                }
+            }
+
+            function triggerSelectChange(el) {
+                try {
+                    const ev = new Event('change', { bubbles: true });
+                    el.dispatchEvent(ev);
+                } catch (e) {}
+            }
+
+            function autoSuggestProductTypeFromCategory() {
+                if (!categorySelect || !productTypeSelect) return;
+                if (userOverriddenType) return;
+                const option = categorySelect.options[categorySelect.selectedIndex];
+                if (!option) return;
+                let suggested = (option.getAttribute('data-product-type') || '').trim().toLowerCase();
+                if (!suggested) {
+                    const optVal = (option.value || '').toLowerCase();
+                    if (optVal === 'games' || optVal === 'accounts' || optVal === 'igry' || optVal === 'rahunky') {
+                        suggested = 'game_item';
+                    } else if (optVal === 'software' || optVal === 'courses' || optVal === 'digital_goods' || optVal === 'soft' || optVal === 'kursy' || optVal === 'tsyfrovi-tovary') {
+                        suggested = 'digital';
+                    }
+                }
+
+                const allowed = ['physical', 'digital', 'game_item', 'game'];
+                if (suggested && allowed.indexOf(suggested) !== -1) {
+                    let targetVal = suggested;
+                    let hasDirectOption = false;
+                    for (let i = 0; i < productTypeSelect.options.length; i++) {
+                        if (productTypeSelect.options[i].value === targetVal) {
+                            hasDirectOption = true;
+                            break;
+                        }
+                    }
+                    if (!hasDirectOption && targetVal === 'game_item') {
+                        for (let i = 0; i < productTypeSelect.options.length; i++) {
+                            if (productTypeSelect.options[i].value === 'game') {
+                                targetVal = 'game';
+                                break;
+                            }
+                        }
+                    }
+
+                    if (productTypeSelect.value !== targetVal) {
+                        productTypeSelect.value = targetVal;
+                        triggerSelectChange(productTypeSelect);
+                    }
+                }
+                updateProductTypeFields();
+            }
+
+            if (categorySelect) {
+                categorySelect.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                });
+                categorySelect.addEventListener('change', function (e) {
+                    e.stopPropagation();
+                    autoSuggestProductTypeFromCategory();
                 });
             }
-            if (priceInput) {
-                priceInput.addEventListener('input', updateDiscountPreview);
+
+            if (productTypeSelect) {
+                productTypeSelect.addEventListener('change', function () {
+                    userOverriddenType = true;
+                    updateProductTypeFields();
+                });
+                productTypeSelect.addEventListener('click', function () {
+                    userOverriddenType = true;
+                });
+                updateProductTypeFields();
+                autoSuggestProductTypeFromCategory();
             }
-            if (saleInput) {
-                saleInput.addEventListener('input', updateDiscountPreview);
+
+            if (fileInput && previewContainer) {
+                fileInput.addEventListener('change', function () {
+                    renderAddedFilesPreview(fileInput, previewContainer);
+                });
+                form.addEventListener('reset', function () {
+                    previewContainer.innerHTML = '';
+                });
             }
 
             document.querySelectorAll('[data-close-add-product]').forEach(function (el) {
@@ -697,8 +1438,17 @@
 
                 const formData = new FormData(form);
                 formData.set('seller_phone', formData.get('seller_phone') || '');
-                if (!formData.get('is_draft')) {
-                    formData.delete('is_draft');
+
+                const csrfToken = getCsrfTokenFromCookie();
+                if (csrfToken) {
+                    formData.set('csrf_token', csrfToken);
+                }
+
+                if (fileInput && previewContainer) {
+                    const remainingFiles = Array.from(fileInput.files || []);
+                    const dataTransfer = new DataTransfer();
+                    remainingFiles.forEach((file) => dataTransfer.items.add(file));
+                    fileInput.files = dataTransfer.files;
                 }
 
                 const submitBtn = modal.querySelector('button[type="submit"][form="add-product-form"]');
@@ -708,14 +1458,19 @@
                     submitBtn.textContent = 'Збереження...';
                 }
 
+                const requestHeaders = {
+                    'X-Requested-With': 'XMLHttpRequest'
+                };
+                if (csrfToken) {
+                    requestHeaders['X-CSRF-Token'] = csrfToken;
+                }
+
                 try {
                     const response = await fetch('/api/v1/products', {
                         method: 'POST',
                         body: formData,
                         credentials: 'include',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
+                        headers: requestHeaders
                     });
 
                     if (response.ok) {
@@ -724,11 +1479,13 @@
                         return;
                     }
 
-                    let errorMessage = 'Помилка: виберіть правильне фото або відео';
+                    let errorMessage = 'Помилка: перевірте введені дані.';
                     try {
                         const payload = await response.json();
                         if (payload && payload.detail) {
-                            errorMessage = payload.detail;
+                            errorMessage = typeof payload.detail === 'string'
+                                ? payload.detail
+                                : (Array.isArray(payload.detail) ? payload.detail.map(d => d.msg || d).join(', ') : JSON.stringify(payload.detail));
                         }
                     } catch (_) {
                         errorMessage = 'Помилка: перевірте введені дані.';
@@ -740,7 +1497,7 @@
                     }
                 } catch (error) {
                     if (errEl) {
-                        errEl.textContent = 'Помилка: виберіть правильне фото або відео';
+                        errEl.textContent = error.message || 'Помилка збереження товару.';
                         errEl.style.display = 'block';
                     }
                 } finally {
@@ -752,27 +1509,105 @@
             });
         }
 
-        document.addEventListener('DOMContentLoaded', function () {
+        function bindGlobalSearchAutocomplete() {
+            const input = document.getElementById('global-search-input');
+            const resultsBox = document.getElementById('global-search-results');
+            if (!input || !resultsBox) return;
+
+            function renderResults(items) {
+                const products = items.products || [];
+                const categories = items.categories || [];
+                if (!products.length && !categories.length) {
+                    resultsBox.innerHTML = '<div style="padding:10px; color: var(--muted);">Нічого не знайдено</div>';
+                    resultsBox.style.display = 'block';
+                    return;
+                }
+
+                let html = '';
+                if (products.length) {
+                    html += '<div style="padding:8px 10px 6px; font-size:12px; text-transform:uppercase; letter-spacing:0.06em; color: var(--muted);">Товари</div>';
+                    html += products.map((item) => {
+                        const stockVal = Number(item.stock != null ? item.stock : (item.quantity != null ? item.quantity : 0));
+                        const isInStock = stockVal > 0;
+                        const priceVal = Number(item.price || 0);
+                        const dotColor = isInStock ? '#22c55e' : '#ef4444';
+                        const badge = isInStock
+                            ? `<span style="display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border-radius:999px; background: rgba(34,197,94,0.14); color:#86efac; font-size:11px; font-weight:600; border:1px solid rgba(34,197,94,0.4);"><span style="width:6px; height:6px; border-radius:999px; background:${dotColor}; box-shadow: 0 0 4px ${dotColor};"></span>Є</span>`
+                            : `<span style="display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border-radius:999px; background: rgba(239,68,68,0.14); color:#fca5a5; font-size:11px; font-weight:600; border:1px solid rgba(239,68,68,0.4);"><span style="width:6px; height:6px; border-radius:999px; background:${dotColor}; box-shadow: 0 0 4px ${dotColor};"></span>Немає</span>`;
+                        return `
+                            <a href="/products/${item.id}" style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-radius:8px; color: var(--text); text-decoration:none;" onmouseover="this.style.background='rgba(30, 41, 59, 0.6)'" onmouseout="this.style.background='transparent'">
+                                <div style="flex:1; min-width:0;">
+                                    <div style="font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(item.title)}</div>
+                                    <div style="font-size:12px; color: var(--muted); margin-top:2px;">${priceVal} ₴</div>
+                                </div>
+                                <div style="flex-shrink:0;">${badge}</div>
+                            </a>
+                        `;
+                    }).join('');
+                }
+                if (categories.length) {
+                    html += '<div style="padding:8px 10px 6px; font-size:12px; text-transform:uppercase; letter-spacing:0.06em; color: var(--muted);">Категорії</div>';
+                    html += categories.map((item) => `
+                        <a href="/catalog?category=${encodeURIComponent(item.slug)}" style="display:block; padding:10px 12px; border-radius:8px; color: var(--text); text-decoration:none;" onmouseover="this.style.background='rgba(30, 41, 59, 0.6)'" onmouseout="this.style.background='transparent'">
+                            <div style="font-weight:500;">${escapeHtml(item.name)}</div>
+                            <div style="font-size:11px; color: var(--muted); margin-top:2px; text-transform:uppercase; letter-spacing:0.06em;">Категорія</div>
+                        </a>
+                    `).join('');
+                }
+                resultsBox.innerHTML = html;
+                resultsBox.style.display = 'block';
+            }
+
+            let timer = null;
+            input.addEventListener('input', async function () {
+                const value = input.value.trim();
+                if (!value) {
+                    resultsBox.style.display = 'none';
+                    return;
+                }
+                clearTimeout(timer);
+                timer = setTimeout(async () => {
+                    try {
+                        const response = await fetch(`/api/v1/search/autocomplete?q=${encodeURIComponent(value)}`, { credentials: 'include' });
+                        if (!response.ok) return;
+                        const data = await response.json();
+                        renderResults(data || { products: [], categories: [] });
+                    } catch (error) {
+                        resultsBox.style.display = 'none';
+                    }
+                }, 180);
+            });
+
+            document.addEventListener('click', function (event) {
+                if (!event.target.closest('#global-search-input') && !event.target.closest('#global-search-results')) {
+                    resultsBox.style.display = 'none';
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            applyCsrfProtectionToFetch();
+            await ensureCsrfCookie();
+            bindCsrfToForms();
             updateCartCount();
             updateFavoritesCount();
             bindAddProductModalEvents();
-            bindReportModalEvents();
+            bindComplaintModalEvents();
+            bindUserProfileModalEvents();
+            bindProfileUsernameClicks();
+            bindGlobalSearchAutocomplete();
+            const observer = new MutationObserver(() => bindProfileUsernameClicks());
+            observer.observe(document.body, { childList: true, subtree: true });
         });
 
         window.updateCartCount = updateCartCount;
         window.updateFavoritesCount = updateFavoritesCount;
         window.flashButtonText = flashButtonText;
         window.handleAuthRedirect = handleAuthRedirect;
+        window.showToast = showToast;
+        window.removeToast = removeToast;
         window.openAddProductModal = openAddProductModal;
         window.closeAddProductModal = closeAddProductModal;
-        window.toggleProductTypeFields = toggleProductTypeFields;
-        window.openComplaintModal = openComplaintModal;
-        window.closeComplaintModal = closeComplaintModal;
-        window.openReportModal = openReportModal;
-        window.closeReportModal = closeReportModal;
-        window.openGlobalComplaintModal = openGlobalComplaintModal;
-        window.submitReport = submitReport;
-        window.showReportToast = showReportToast;
     </script>
 </body>
 </html>

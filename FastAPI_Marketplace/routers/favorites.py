@@ -7,8 +7,9 @@ from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from auth_utils import decode_access_token
 from database import get_db
-from dependencies import get_current_user, get_current_user_or_redirect
+from dependencies import get_current_user
 from models import Favorite, Product, User
 from schemas import FavoriteOut, MessageResponse, ProductListOut
 
@@ -17,13 +18,20 @@ templates = Jinja2Templates(directory="Templates")
 
 
 @router.get("/favorites", response_class=HTMLResponse)
-async def favorites_page(
-    request: Request,
-    result: User | RedirectResponse = Depends(get_current_user_or_redirect),
-):
-    if isinstance(result, RedirectResponse):
-        return result
-    current_user = result
+async def favorites_page(request: Request, db: AsyncSession = Depends(get_db)):
+    current_user = None
+    token_value = request.cookies.get("access_token")
+    if token_value:
+        try:
+            payload = decode_access_token(token_value.replace("Bearer ", "").strip())
+            user_id = payload.get("sub")
+            if user_id is not None:
+                current_user = await db.get(User, int(user_id))
+        except Exception:
+            current_user = None
+
+    if current_user is None:
+        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
 
     return templates.TemplateResponse(
         request,
@@ -59,6 +67,9 @@ async def get_favorites(current_user: User = Depends(get_current_user), db: Asyn
                     description=product.description,
                     price=product.price,
                     quantity=product.quantity,
+                    stock=product.quantity,
+                    in_stock=product.quantity > 0,
+                    is_available=product.quantity > 0,
                     seller_phone=product.seller_phone,
                     user_id=product.user_id,
                     sales_count=product.sales_count,
@@ -85,11 +96,13 @@ async def toggle_favorite(product_id: int, current_user: User = Depends(get_curr
     if favorite:
         await db.delete(favorite)
         await db.commit()
-        return MessageResponse(message="Товар видалено з обраного")
+        return {"message": "Товар видалено з обраного", "action": "removed"}
 
-    db.add(Favorite(user_id=current_user.id, product_id=product_id))
+    fav = Favorite(user_id=current_user.id, product_id=product_id)
+    db.add(fav)
     await db.commit()
-    return MessageResponse(message="Товар додано до обраного")
+    await db.refresh(fav)
+    return {"message": "Товар додано до обраного", "action": "added", "id": fav.id}
 
 
 @router.delete("/api/v1/favorites/{product_id}", response_model=MessageResponse)

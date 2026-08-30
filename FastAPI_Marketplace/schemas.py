@@ -1,19 +1,17 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
-from typing import Any, Literal, Optional
+from typing import Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class ProductType(str, Enum):
     PHYSICAL = "physical"
     DIGITAL = "digital"
+    GAME = "game"
     GAME_ITEM = "game_item"
-
-
-ProductTypeLiteral = Literal["physical", "digital", "game_item"]
 
 
 class Token(BaseModel):
@@ -25,11 +23,41 @@ class UserCreate(BaseModel):
     username: str = Field(..., min_length=3, max_length=80)
     email: str = Field(..., min_length=3, max_length=255)
     password: str = Field(..., min_length=6, max_length=128)
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    birth_date: Optional[date] = None
 
     @field_validator("email")
     @classmethod
     def normalize_email(cls, value: str) -> str:
         return value.strip().lower()
+
+    @field_validator("first_name", "last_name", mode="before")
+    @classmethod
+    def normalize_names(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+        stripped = str(value).strip()
+        return stripped or None
+
+    @field_validator("birth_date", mode="before")
+    @classmethod
+    def parse_birth_date(cls, value):
+        if value in (None, ""):
+            return None
+        if isinstance(value, date):
+            return value
+        if isinstance(value, str):
+            cleaned = value.strip()
+            if not cleaned:
+                return None
+            for fmt in ("%Y-%m-%d", "%d.%m.%Y"):
+                try:
+                    return datetime.strptime(cleaned, fmt).date()
+                except ValueError:
+                    continue
+            return date.fromisoformat(cleaned)
+        return value
 
 
 class UserLogin(BaseModel):
@@ -43,12 +71,22 @@ class UserPublic(BaseModel):
     id: int
     username: str
     email: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    birth_date: Optional[date] = None
+    is_age_locked: bool = False
     is_active: bool = True
     is_admin: bool = False
     is_superuser: bool = False
+    is_banned: bool = False
+    banned_until: Optional[datetime] = None
+    tg_link_code: Optional[str] = None
+    telegram_chat_id: Optional[str] = None
     display_name: Optional[str] = None
     phone: Optional[str] = None
+    avatar_url: Optional[str] = None
     created_at: Optional[datetime] = None
+    has_sales: bool = False
 
 
 class UserPublicResponse(BaseModel):
@@ -56,8 +94,15 @@ class UserPublicResponse(BaseModel):
 
     id: int
     username: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    birth_date: Optional[date] = None
+    is_age_locked: bool = False
+    tg_link_code: Optional[str] = None
+    telegram_chat_id: Optional[str] = None
     display_name: Optional[str] = None
     phone: Optional[str] = None
+    avatar_url: Optional[str] = None
     viber: Optional[str] = None
     telegram: Optional[str] = None
     instagram: Optional[str] = None
@@ -67,6 +112,7 @@ class UserPublicResponse(BaseModel):
     specialty: Optional[str] = None
     experience: Optional[str] = None
     skills: Optional[str] = None
+    has_sales: bool = False
 
 
 class ResumeCreate(BaseModel):
@@ -123,31 +169,12 @@ class ResumeOut(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    display_name: Optional[str] = None
-    phone: Optional[str] = None
-    viber: Optional[str] = None
-    telegram: Optional[str] = None
-    instagram: Optional[str] = None
-    whatsapp: Optional[str] = None
-    public_email: Optional[str] = None
-    bio: Optional[str] = None
-    specialty: Optional[str] = None
-    experience: Optional[str] = None
-    skills: Optional[str] = None
+    model_config = ConfigDict(extra="ignore")
 
-    @field_validator(
-        "display_name",
-        "phone",
-        "viber",
-        "telegram",
-        "instagram",
-        "whatsapp",
-        "public_email",
-        "bio",
-        "specialty",
-        "experience",
-        "skills",
-    )
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+
+    @field_validator("first_name", "last_name")
     @classmethod
     def normalize_optional_strings(cls, value: Optional[str]) -> Optional[str]:
         if value is None:
@@ -157,6 +184,12 @@ class UserUpdate(BaseModel):
 
 
 UserProfileUpdate = UserUpdate
+
+
+class UserRoleUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    is_admin: bool = False
 
 
 class ProductMediaOut(BaseModel):
@@ -177,31 +210,52 @@ class ProductMediaResponse(BaseModel):
     media_type: Literal["photo", "video"]
 
 
-class TagResponse(BaseModel):
+MAX_SQLITE_INT = 2_147_483_647
+
+
+class CategoryBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+    name: str = Field(..., min_length=2, max_length=100)
+    slug: str = Field(..., min_length=2, max_length=100)
+    icon: Optional[str] = None
+    parent_id: Optional[int] = None
+
+
+class CategoryOut(CategoryBase):
     id: int
-    name: str
-    slug: str
+    children: list["CategoryOut"] = Field(default_factory=list)
+
+
+class CategoryCreate(CategoryBase):
+    pass
+
+
+class CategoryUpdate(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    name: Optional[str] = Field(default=None, min_length=2, max_length=100)
+    slug: Optional[str] = Field(default=None, min_length=2, max_length=100)
+    icon: Optional[str] = None
+    parent_id: Optional[int] = None
 
 
 class ProductCreate(BaseModel):
     title: str = Field(..., min_length=2, max_length=250)
     description: str = Field(..., min_length=5)
-    price: int = Field(..., ge=0)
-    sale_price: Optional[float] = Field(default=None, ge=0)
-    quantity: int = Field(..., ge=0)
-    sku: Optional[str] = Field(default=None, max_length=120)
-    product_type: ProductType = ProductType.PHYSICAL
-    is_draft: bool = False
-    attributes: Optional[dict[str, Any]] = None
-    digital_content: Optional[str] = None
-    weight_dimensions: Optional[str] = None
-    shipping_options: Optional[str] = None
-    platform_server: Optional[str] = None
-    rarity: Optional[str] = None
-    execution_time: Optional[str] = None
+    price: int = Field(..., ge=0, le=MAX_SQLITE_INT)
+    quantity: int = Field(..., ge=0, le=MAX_SQLITE_INT)
     seller_phone: Optional[str] = None
+    category: Optional[str] = None
+    category_id: Optional[int] = None
+    category_slug: Optional[str] = None
+    product_type: ProductType = ProductType.PHYSICAL
+    sku: Optional[str] = Field(default=None, max_length=80)
+    sale_price: Optional[int] = Field(default=None, ge=0, le=MAX_SQLITE_INT)
+    is_draft: bool = False
+    tags: Optional[str] = None
+    attributes: Optional[str] = None
+    digital_content: Optional[str] = None
 
 
 class ProductResponse(BaseModel):
@@ -210,29 +264,24 @@ class ProductResponse(BaseModel):
     id: int
     title: str
     description: str
-    price: int
-    sale_price: Optional[float] = None
-    quantity: int
-    stock: int = 0
-    sku: Optional[str] = None
-    product_type: ProductType = ProductType.PHYSICAL
-    is_draft: bool = False
-    attributes: Optional[dict[str, Any]] = None
-    digital_content: Optional[str] = None
-    weight_dimensions: Optional[str] = None
-    shipping_options: Optional[str] = None
-    platform_server: Optional[str] = None
-    rarity: Optional[str] = None
-    execution_time: Optional[str] = None
+    price: int = Field(..., ge=0, le=MAX_SQLITE_INT)
+    quantity: int = Field(..., ge=0, le=MAX_SQLITE_INT)
+    stock: int = Field(..., ge=0, le=MAX_SQLITE_INT)
+    in_stock: bool = False
+    is_available: bool = False
     seller_phone: Optional[str] = None
     user_id: int
+    category_id: Optional[int] = None
     sales_count: int = 0
-    in_stock: bool = True
-    stock_status_label: str = "В наявності"
+    product_type: ProductType = ProductType.PHYSICAL
+    sku: Optional[str] = None
+    sale_price: Optional[int] = None
+    is_draft: bool = False
+    tags: list[str] = Field(default_factory=list)
+    attributes: dict[str, str] = Field(default_factory=dict)
+    digital_content: Optional[str] = None
     created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
     media: list[ProductMediaResponse] = Field(default_factory=list)
-    tags: list[TagResponse] = Field(default_factory=list)
 
 
 class ProductListOut(ProductResponse):
@@ -346,43 +395,49 @@ class OrderOut(BaseModel):
     items: list[OrderItemOut] = Field(default_factory=list)
 
 
+class SellerSalesItemOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    order_id: int
+    product_id: int
+    title: str
+    image_url: Optional[str] = None
+    quantity: int
+    price_per_item: float
+    total_amount: float
+    sold_at: Optional[datetime] = None
+
+
+class SellerSalesAnalyticsOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    total_profit: float
+    sold_count: int
+    items: list[SellerSalesItemOut] = Field(default_factory=list)
+
+
 class OrderStatusUpdate(BaseModel):
-    status: Literal["created", "completed", "cancelled"]
+    status: Literal["created", "new", "paid", "shipped", "completed", "cancelled"]
 
 
 class ReportCreate(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
     reported_user_id: Optional[int] = None
     product_id: Optional[int] = None
     comment_id: Optional[int] = None
-    reason: str = Field(..., min_length=1, max_length=100)
-    details: Optional[str] = Field(default=None, max_length=5000)
-    description: Optional[str] = Field(default=None, max_length=5000)
-    status: Optional[Literal["pending", "resolved", "rejected"]] = None
+    reason: Literal[
+        "Шахрайство",
+        "Спам / Спам-акаунт",
+        "Невідповідність товару",
+        "Нецензурна лексика",
+        "Інше",
+    ] = Field(...)
+    details: Optional[str] = Field(default=None, max_length=2000)
 
-    @field_validator("details", "description", mode="before")
-    @classmethod
-    def normalize_details(cls, value: Any, info: Any) -> Optional[str]:
-        if value is None:
-            return None
-        text = str(value).strip()
-        if not text:
-            return None
-        return text
-
-    @field_validator("reason")
-    @classmethod
-    def normalize_reason(cls, value: str) -> str:
-        return str(value).strip()
-
-    @property
-    def normalized_details(self) -> Optional[str]:
-        return self.details or self.description
-
-
-class ReportStatusUpdate(BaseModel):
-    status: Literal["pending", "resolved", "rejected"]
+    @model_validator(mode="after")
+    def validate_target(self):
+        if not any([self.reported_user_id is not None, self.product_id is not None, self.comment_id is not None]):
+            raise ValueError("Хоча б одне з полів reported_user_id, product_id або comment_id має бути заповнене.")
+        return self
 
 
 class ReportResponse(BaseModel):
@@ -397,55 +452,46 @@ class ReportResponse(BaseModel):
     details: Optional[str] = None
     status: str = "pending"
     created_at: Optional[datetime] = None
+    reporter_username: Optional[str] = None
+    reported_username: Optional[str] = None
+    product_title: Optional[str] = None
+    comment_preview: Optional[str] = None
 
 
-class AdminReportResponse(BaseModel):
+class ComplaintCreate(BaseModel):
+    target_type: str = Field(default="product")
+    target_id: Optional[int] = None
+    product_id: Optional[int] = None
+    target_user_id: Optional[int] = None
+    reason: str = Field(..., min_length=1, max_length=50)
+    description: Optional[str] = Field(default=None, max_length=2000)
+
+
+class ComplaintResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     reporter_id: int
-    reporter_name: Optional[str] = None
-    reporter_email: Optional[str] = None
-    reported_user_id: Optional[int] = None
-    reported_user_name: Optional[str] = None
-    reported_user_email: Optional[str] = None
-    product_id: Optional[int] = None
-    product_title: Optional[str] = None
-    comment_id: Optional[int] = None
-    comment_body: Optional[str] = None
+    target_type: str
+    target_id: int
+    target_user_id: Optional[int] = None
+    target_user_role: Optional[str] = None
+    target_user_is_superuser: bool = False
     reason: str
-    details: Optional[str] = None
-    status: str = "pending"
-    created_at: Optional[datetime] = None
-    target_type: Optional[str] = None
-    target_label: Optional[str] = None
-
-
-class ReportOut(ReportResponse):
-    pass
-
-
-class ComplaintCreate(ReportCreate):
-    pass
-
-
-class ComplaintStatusUpdate(BaseModel):
-    status: Literal["pending", "resolved", "rejected", "opened", "in_progress"]
-
-
-class ComplaintResponse(ReportResponse):
-    model_config = ConfigDict(from_attributes=True)
-
-    target_type: Optional[str] = None
-    target_id: Optional[int] = None
     subject: Optional[str] = None
     object_label: Optional[str] = None
     comment: Optional[str] = None
+    created_at: Optional[datetime] = None
+    status: str = "opened"
     user_id: Optional[int] = None
+    product_id: Optional[int] = None
     username: Optional[str] = None
     user_email: Optional[str] = None
+    user_role: Optional[str] = None
+    user_is_superuser: bool = False
     title: Optional[str] = None
     text: Optional[str] = None
+    target_text: Optional[str] = None
 
 
 class ComplaintOut(ComplaintResponse):

@@ -149,14 +149,158 @@
 <script>
     document.addEventListener('DOMContentLoaded', async function () {
         const list = document.getElementById('favorites-list');
+
+        function setFavBtnState(button, isFav) {
+            if (!button) return;
+            button.textContent = isFav ? 'Видалити з обраного' : 'Додати в обране';
+            button.classList.toggle('favorite-active', isFav);
+            button.setAttribute('aria-pressed', String(isFav));
+        }
+
+        function bindFavoritesActions() {
+            list.querySelectorAll('[data-fav-product-id]').forEach((btn) => {
+                if (btn.dataset.bound === '1') return;
+                btn.dataset.bound = '1';
+
+                btn.addEventListener('click', async function () {
+                    const productId = Number(this.dataset.favProductId);
+                    const originalText = this.textContent;
+                    try {
+                        const response = await fetch(`/api/v1/favorites/${productId}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'same-origin',
+                            body: JSON.stringify({})
+                        });
+
+                        if (window.handleAuthRedirect && window.handleAuthRedirect(response)) {
+                            return;
+                        }
+
+                        const payload = await response.json().catch(() => ({}));
+                        if (!response.ok) {
+                            const msg = payload.detail || 'Не вдалося оновити обране';
+                            throw new Error(Array.isArray(msg) ? msg.map(x => x.msg || x).join(', ') : String(msg));
+                        }
+
+                        const removed = /видалено/i.test(payload.message || '');
+                        const card = this.closest('.favorite-item');
+                        if (card) {
+                            card.style.transition = 'opacity 0.25s, transform 0.25s';
+                            card.style.opacity = '0';
+                            card.style.transform = 'scale(0.95)';
+                            setTimeout(() => {
+                                card.remove();
+                                if (!list.querySelectorAll('.favorite-item').length) {
+                                    list.innerHTML = '<div class="empty-state">У вас поки що немає обраних товарів.</div>';
+                                }
+                            }, 250);
+                        }
+
+                        if (typeof updateFavoritesCount === 'function') {
+                            updateFavoritesCount();
+                        }
+                        if (window.showToast) {
+                            window.showToast(payload.message || (removed ? 'Товар видалено з обраного' : 'Товар додано до обраного'), {
+                                type: 'success',
+                                title: removed ? 'Видалено з обраного' : 'Додано в обране',
+                                duration: 2500
+                            });
+                        }
+                    } catch (error) {
+                        console.error('[Favorites] error:', error);
+                        if (window.showToast) {
+                            window.showToast(error.message || 'Не вдалося оновити обране', {
+                                type: 'error',
+                                title: 'Помилка',
+                                duration: 4200
+                            });
+                        }
+                    }
+                });
+            });
+
+            list.querySelectorAll('[data-cart-product-id]').forEach((btn) => {
+                if (btn.dataset.boundCart === '1') return;
+                btn.dataset.boundCart = '1';
+
+                btn.addEventListener('click', async function () {
+                    const productId = Number(this.dataset.cartProductId);
+                    const stockLeft = Number(this.dataset.stockLeft || 0);
+                    if (!productId || Number.isNaN(productId)) return;
+
+                    const originalText = this.textContent;
+                    this.disabled = true;
+                    this.textContent = 'Додається...';
+
+                    try {
+                        if (stockLeft <= 0) {
+                            throw new Error('Товар закінчився на складі');
+                        }
+
+                        const response = await fetch('/api/v1/cart/add', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'same-origin',
+                            body: JSON.stringify({ product_id: productId, quantity: 1 })
+                        });
+
+                        if (window.handleAuthRedirect && window.handleAuthRedirect(response)) {
+                            this.disabled = false;
+                            this.textContent = originalText;
+                            return;
+                        }
+
+                        const payload = await response.json().catch(() => ({}));
+                        if (!response.ok) {
+                            const msg = payload.detail || 'Не вдалося додати товар до кошика';
+                            throw new Error(Array.isArray(msg) ? msg.map(x => x.msg || x).join(', ') : String(msg));
+                        }
+
+                        if (typeof updateCartCount === 'function') {
+                            updateCartCount();
+                        }
+                        if (window.showToast) {
+                            window.showToast(payload.message || 'Товар додано в кошик', {
+                                type: 'success',
+                                title: 'Кошик оновлено',
+                                duration: 2800
+                            });
+                        }
+                    } catch (error) {
+                        console.error('[Cart Add] error:', error);
+                        if (window.showToast) {
+                            window.showToast(error.message || 'Не вдалося додати товар до кошика', {
+                                type: 'error',
+                                title: 'Помилка додавання',
+                                duration: 4200
+                            });
+                        }
+                    } finally {
+                        this.disabled = false;
+                        this.textContent = originalText;
+                    }
+                });
+            });
+        }
+
         try {
-            const response = await fetch('/api/v1/favorites', { credentials: 'include' });
+            const response = await fetch('/api/v1/favorites', {
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json' }
+            });
 
             if (window.handleAuthRedirect && window.handleAuthRedirect(response)) {
                 return;
             }
 
-            if (!response.ok) throw new Error('Не вдалося завантажити обране');
+            if (!response.ok) {
+                const errText = response.status === 401
+                    ? 'Потрібно увійти для перегляду обраного'
+                    : 'Не вдалося завантажити обране';
+                throw new Error(errText);
+            }
+
             const items = await response.json();
 
             if (!items.length) {
@@ -166,17 +310,25 @@
 
             list.innerHTML = items.map(item => {
                 const product = item.product || {};
-                const title = product.title ? product.title.replace(/"/g, '&quot;') : '';
-                const desc = product.description ? (product.description.slice(0, 80) + (product.description.length > 80 ? '...' : '')).replace(/"/g, '&quot;') : 'Без опису';
-                const price = product.price != null ? product.price : 0;
-                const quantity = product.quantity != null ? product.quantity : 0;
-                const image = product.image_url
-                    ? `<a href="/products/${item.product_id}"><img src="${product.image_url.replace(/"/g, '&quot;')}" alt="${title}" /></a>`
+                const title = product.title ? String(product.title).replace(/"/g, '&quot;') : '';
+                const desc = product.description
+                    ? String(product.description.slice(0, 80) + (product.description.length > 80 ? '...' : '')).replace(/"/g, '&quot;')
+                    : 'Без опису';
+                const price = product.price != null ? Number(product.price) : 0;
+                const quantity = product.quantity != null ? Number(product.quantity) : 0;
+                const imageHtml = product.image_url
+                    ? `<a href="/products/${item.product_id}"><img src="${String(product.image_url).replace(/"/g, '&quot;')}" alt="${title}" /></a>`
                     : `<a href="/products/${item.product_id}" class="product-placeholder">Без фото</a>`;
+
+                const cartBtnDisabled = quantity <= 0;
+                const cartBtn = cartBtnDisabled
+                    ? `<button type="button" class="btn w-full text-center py-2 px-3" style="background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(248,113,113,0.35); cursor: not-allowed;" disabled>Немає в наявності</button>`
+                    : `<button type="button" class="btn btn-primary w-full text-center py-2 px-3" data-cart-product-id="${item.product_id}" data-stock-left="${quantity}">В кошик</button>`;
+
                 return `
                 <article class="favorite-item">
                     <div class="favorite-image">
-                        ${image}
+                        ${imageHtml}
                     </div>
                     <div class="favorite-content">
                         <h3><a href="/products/${item.product_id}">${title}</a></h3>
@@ -186,14 +338,32 @@
                             <span class="favorite-stock">В наявності: ${quantity}</span>
                         </div>
                     </div>
-                    <div class="favorite-actions">
-                        <a href="/products/${item.product_id}" class="btn btn-primary">Переглянути</a>
+                    <div class="flex flex-col gap-2 w-full mt-auto" style="padding: 0 16px 16px;">
+                        <a href="/products/${item.product_id}" class="btn btn-primary w-full text-center py-2 px-3">Переглянути</a>
+                        ${cartBtn}
+                        <button type="button" class="btn btn-outline favorite-active w-full text-center py-2 px-3" data-fav-product-id="${item.product_id}" aria-pressed="true">Видалити з обраного</button>
                     </div>
                 </article>
                 `;
             }).join('');
+
+            bindFavoritesActions();
         } catch (error) {
-            list.innerHTML = '<div class="empty-state">Не вдалося завантажити обране.</div>';
+            console.error('[Favorites page] load error:', error);
+            if (window.showToast) {
+                window.showToast(error.message || 'Не вдалося завантажити обране', {
+                    type: 'error',
+                    title: 'Помилка завантаження',
+                    duration: 5000
+                });
+            }
+            list.innerHTML = `<div class="empty-state">${escapeHtml(error.message || 'Не вдалося завантажити обране.')}</div>`;
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[char]));
         }
     });
 </script>

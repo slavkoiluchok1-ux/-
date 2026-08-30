@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Fast Money | Вікове обмеження{% endblock %}
+
+{% block content %}
+<div class="container" style="display:flex; justify-content:center; align-items:center; min-height:70vh;">
+    <div class="resume-card" style="max-width: 760px; width: 100%; border: 2px solid rgba(239,68,68,0.7); background: rgba(127, 29, 29, 0.08); box-shadow: 0 20px 50px rgba(127,29,29,0.18);">
+        <div style="padding: 36px 28px; text-align: center;">
+            <div style="display:inline-block; padding: 10px 16px; border-radius: 999px; background: rgba(239,68,68,0.12); color: #fca5a5; font-weight:700; letter-spacing: 0.04em; margin-bottom: 18px; border: 1px solid rgba(239,68,68,0.5);">
+                Вікова перевірка
+            </div>
+
+            <h1 style="margin: 0 0 18px; font-size: clamp(2rem, 4vw, 2.8rem); color: #f8fafc;">Функції цього сайту відкриються по досягненні вами повноліття</h1>
+
+            <div style="display:inline-block; background: rgba(239,68,68,0.12); border: 2px solid rgba(239,68,68,0.6); border-radius: 18px; padding: 22px 30px; font-size: clamp(1.1rem, 2vw, 1.5rem); color: #fee2e2; font-weight: 700; line-height: 1.5;">
+                {% if lock_date %}
+                    {{ lock_date.strftime('%d.%m.%Y') }}
+                {% else %}
+                    Після заповнення дати народження
+                {% endif %}
+            </div>
+
+            <p style="margin-top: 22px; color: #cbd5e1; font-size: 1.05rem;">
+                Для отримання доступу до функцій платформи необхідно досягти 18 років.
+            </p>
+
+            <div style="margin-top: 28px; display: flex; justify-content: center; flex-wrap: wrap; gap: 14px;">
+                <a href="https://t.me/FastMoneyMarketBot" target="_blank" rel="noreferrer" class="btn btn-primary">
+                    Telegram-бот для сповіщень
+                </a>
+                <a href="/logout" class="btn btn-secondary">Вийти</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

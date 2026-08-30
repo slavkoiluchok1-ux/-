@@ -15,10 +15,15 @@
         <button class="tab-btn" data-tab="ordersTab">Замовлення</button>
         <button class="tab-btn" data-tab="statsTab">Статистика</button>
         <button class="tab-btn" data-tab="complaintsTab">Скарги</button>
+        <button class="tab-btn" data-tab="bannedUsersTab">Забановані</button>
     </div>
 
     <div id="usersTab" class="panel active">
         <h2>Користувачі</h2>
+        <div style="margin-bottom: 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <input id="userSearchInput" type="text" placeholder="Пошук за username / email" style="padding: 10px 12px; border-radius: 10px; border: 1px solid #2a3245; background: #0f172a; color: #e2e8f0; min-width: 240px;">
+            <button type="button" class="btn btn-primary" id="userSearchBtn">Пошук</button>
+        </div>
         <div id="usersList" class="loading">Завантаження...</div>
     </div>
 
@@ -34,8 +39,12 @@
 
     <div id="complaintsTab" class="panel">
         <h2>Скарги</h2>
-        <div class="info-box" style="margin-bottom: 12px;">Telegram-сповіщення для адміністраторів автоматично надсилаються при новій скарзі.</div>
         <div id="complaintsList" class="loading">Завантаження...</div>
+    </div>
+
+    <div id="bannedUsersTab" class="panel">
+        <h2>Забановані користувачі</h2>
+        <div id="bannedUsersList" class="loading">Завантаження...</div>
     </div>
 </div>
 
@@ -44,6 +53,26 @@
         <span onclick="closeComplaintModal()" style="position: absolute; right: 16px; top: 12px; cursor: pointer; font-size: 20px;">&times;</span>
         <h3 style="margin-top: 0;" id="modalTitle">Деталі скарги</h3>
         <div id="modalBody" style="display: flex; flex-direction: column; gap: 10px; font-size: 14px;"></div>
+    </div>
+</div>
+
+<div id="banUserModal" class="modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1100; align-items: center; justify-content: center;">
+    <div style="background: #181d28; color: #fff; padding: 24px; border-radius: 12px; width: 420px; border: 1px solid #2a3245; position: relative;">
+        <span onclick="closeBanUserModal()" style="position: absolute; right: 16px; top: 12px; cursor: pointer; font-size: 20px;">&times;</span>
+        <h3 style="margin-top: 0;">Забанити автора</h3>
+        <p id="banUserModalText" style="color: #cbd5e1; margin: 10px 0 20px;">Підтвердіть бан користувача.</p>
+        <label for="banUserDuration" style="display: block; margin-bottom: 8px; color: #cbd5e1;">Термін бану</label>
+        <select id="banUserDuration" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #2a3245; background: #0f172a; color: #e2e8f0; margin-bottom: 18px;">
+            <option value="1d">1 день</option>
+            <option value="7d" selected>7 днів</option>
+            <option value="30d">30 днів</option>
+            <option value="365d">1 рік</option>
+            <option value="permanent">Назавжди</option>
+        </select>
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button type="button" class="btn btn-secondary" onclick="closeBanUserModal()">Скасувати</button>
+            <button type="button" class="btn btn-danger" id="confirmBanUserBtn">Забанити</button>
+        </div>
     </div>
 </div>
 
@@ -86,9 +115,10 @@
         }
     }
 
-    async function loadUsers() {
+    async function loadUsers(search = '') {
         try {
-            const users = await apiFetch('/api/v1/admin/users');
+            const query = search.trim();
+            const users = await apiFetch(`/api/v1/admin/users${query ? `?q=${encodeURIComponent(query)}` : ''}`);
             const list = document.getElementById('usersList');
 
             if (!users.length) {
@@ -105,6 +135,7 @@
                             <th>Email</th>
                             <th>Роль</th>
                             <th>Активність</th>
+                            <th>Статус</th>
                             <th>Дія</th>
                         </tr>
                     </thead>
@@ -116,13 +147,15 @@
                                 <td>${user.email}</td>
                                 <td>${user.is_superuser ? 'Superadmin' : user.is_admin ? 'Admin' : 'User'}</td>
                                 <td>${user.is_active ? 'Так' : 'Ні'}</td>
+                                <td>${user.is_banned ? 'Забанений' : 'Активний'}</td>
                                 <td>
-                                    ${user.is_superuser ? '<span class="badge">Superadmin</span>' : `
+                                    ${user.is_superuser ? '<span class="text-xs text-gray-500 italic">Захищено (Superadmin)</span>' : `
                                         <select class="status-select" data-user-id="${user.id}">
                                             <option value="false" ${!user.is_admin ? 'selected' : ''}>User</option>
                                             <option value="true" ${user.is_admin ? 'selected' : ''}>Admin</option>
                                         </select>
                                         <button class="tiny-btn" data-role-user="${user.id}">Зберегти</button>
+                                        <button class="tiny-btn" style="background:#ef4444;" data-ban-user-id="${user.id}" data-ban-username="${user.username}">Бан</button>
                                     `}
                                 </td>
                             </tr>
@@ -154,9 +187,40 @@
                     }
                 });
             });
+
+            document.querySelectorAll('select[data-user-id]').forEach(function (roleSelect) {
+                roleSelect.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                });
+                roleSelect.addEventListener('change', function (e) {
+                    e.stopPropagation();
+                });
+            });
+
+            document.querySelectorAll('[data-ban-user-id]').forEach(button => {
+                button.addEventListener('click', function () {
+                    const userId = Number(this.dataset.banUserId);
+                    const username = this.dataset.banUsername || 'Користувач';
+                    openBanUserModal(userId, username);
+                });
+            });
         } catch (error) {
             document.getElementById('usersList').innerHTML = `<div class="error">${error.message}</div>`;
         }
+    }
+
+    const ORDER_STATUS_LABELS = {
+        created: 'Нове',
+        new: 'Нове',
+        paid: 'Оплачено',
+        shipped: 'Відправлено',
+        completed: 'Виконано',
+        cancelled: 'Скасовано'
+    };
+
+    function getOrderStatusLabel(status) {
+        const normalized = (status || '').toString().trim().toLowerCase();
+        return ORDER_STATUS_LABELS[normalized] || 'Невідомо';
     }
 
     async function loadOrders() {
@@ -181,24 +245,27 @@
                         </tr>
                     </thead>
                     <tbody>
-                        ${orders.map(order => `
-                            <tr>
-                                <td>${order.id}</td>
-                                <td>${order.user_id}</td>
-                                <td>${order.total_price}</td>
-                                <td>${order.status}</td>
-                                <td>
-                                    <select class="status-select" data-order-status="${order.id}">
-                                        <option value="new" ${order.status === 'new' ? 'selected' : ''}>new</option>
-                                        <option value="paid" ${order.status === 'paid' ? 'selected' : ''}>paid</option>
-                                        <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>shipped</option>
-                                        <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>completed</option>
-                                        <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>cancelled</option>
-                                    </select>
-                                    <button class="tiny-btn" data-order-id="${order.id}">Оновити</button>
-                                </td>
-                            </tr>
-                        `).join('')}
+                        ${orders.map(order => {
+                            const currentStatus = order.status === 'created' ? 'new' : (order.status || 'new');
+                            return `
+                                <tr>
+                                    <td>${order.id}</td>
+                                    <td>${order.user_id}</td>
+                                    <td>${order.total_price}</td>
+                                    <td>${getOrderStatusLabel(order.status)}</td>
+                                    <td>
+                                        <select class="status-select" data-order-status="${order.id}">
+                                            <option value="new" ${currentStatus === 'new' ? 'selected' : ''}>Нове</option>
+                                            <option value="paid" ${currentStatus === 'paid' ? 'selected' : ''}>Оплачено</option>
+                                            <option value="shipped" ${currentStatus === 'shipped' ? 'selected' : ''}>Відправлено</option>
+                                            <option value="completed" ${currentStatus === 'completed' ? 'selected' : ''}>Виконано</option>
+                                            <option value="cancelled" ${currentStatus === 'cancelled' ? 'selected' : ''}>Скасовано</option>
+                                        </select>
+                                        <button class="tiny-btn" data-order-id="${order.id}">Оновити</button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
                     </tbody>
                 </table>
             `;
@@ -224,6 +291,15 @@
                             window.flashButtonText(this, 'Помилка ✗', originalText, 2000);
                         }
                     }
+                });
+            });
+
+            document.querySelectorAll('select[data-order-status]').forEach(function (orderStatusSelect) {
+                orderStatusSelect.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                });
+                orderStatusSelect.addEventListener('change', function (e) {
+                    e.stopPropagation();
                 });
             });
         } catch (error) {
@@ -252,46 +328,58 @@
         }
     }
 
-    const REPORT_STATUS_META = {
-        pending: { label: 'Нова', color: '#fef3c7', text: '#92400e' },
-        resolved: { label: 'Розглянуто', color: '#dcfce7', text: '#166534' },
-        rejected: { label: 'Відхилено', color: '#e5e7eb', text: '#374151' }
+    const REASON_LABELS = {
+        profanity: 'Нецензурна лексика',
+        threats: 'Погрози',
+        sexual: 'Контент сексуального характеру',
+        fraud: 'Шахрайство',
+        spam: 'Спам / Реклама',
+        other: 'Інше'
     };
 
-    function formatReportDate(dateValue) {
-        if (!dateValue) return '—';
-        const date = new Date(dateValue);
-        if (Number.isNaN(date.getTime())) return dateValue;
-        return date.toLocaleString('uk-UA', { dateStyle: 'medium', timeStyle: 'short' });
+    function getComplaintReasonLabel(reason) {
+        if (!reason) return 'Інше';
+        return REASON_LABELS[reason] || reason;
     }
 
-    function truncateText(text, maxLength = 110) {
-        if (!text) return '—';
-        const value = String(text).trim();
-        if (value.length <= maxLength) return value;
-        return `${value.slice(0, maxLength).trim()}…`;
-    }
+    function showComplaintDetails(complaintData) {
+        const complaint = complaintData && complaintData.dataset
+            ? complaintData.dataset
+            : complaintData || {};
 
-    function renderStatusBadge(status) {
-        const meta = REPORT_STATUS_META[status] || REPORT_STATUS_META.pending;
-        return `<span style="display:inline-block;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:700;background:${meta.color};color:${meta.text};">${meta.label}</span>`;
-    }
+        const status = complaint.status || 'opened';
+        const statusLabels = {
+            opened: 'Нова',
+            in_progress: 'В обробці',
+            resolved: 'Вирішено',
+            rejected: 'Відхилено'
+        };
 
-    function showComplaintDetails(report) {
+        const objectType = complaint.targetType || complaint.target_type || '';
+        const objectId = complaint.targetId || complaint.target_id || complaint.product_id || '';
+        const objectLabel = complaint.objectLabel || complaint.object_label || (() => {
+            if (objectType === 'product') {
+                return `Товар "${complaint.productTitle || complaint.product_title || 'Товар'}" (ID: ${objectId})`;
+            }
+            if (objectType === 'user') {
+                return `Користувач "${complaint.user || complaint.username || 'Невідомий'}" (ID: ${complaint.userId || complaint.user_id || objectId})`;
+            }
+            return `Об'єкт (ID: ${objectId || '—'})`;
+        })();
+        const reasonValue = complaint.subject || complaint.theme || complaint.title || complaint.reason || 'other';
+        const descriptionText = complaint.text || complaint.description || complaint.comment || 'Без опису';
+        const targetText = complaint.targetText || complaint.target_text || '';
+
         const body = document.getElementById('modalBody');
-        const targetLabel = report.target_label || '—';
-        const reviewer = report.reporter_name || report.reporter_email || `ID ${report.reporter_id}`;
-        const reason = report.reason || 'Інше';
-        const details = report.details || report.comment_body || 'Без опису';
-
         body.innerHTML = `
-            <div><strong>№ скарги:</strong> ${report.id}</div>
-            <div><strong>Дата:</strong> ${formatReportDate(report.created_at)}</div>
-            <div><strong>Скаргник:</strong> ${reviewer}</div>
-            <div><strong>Тип / об'єкт:</strong> ${targetLabel}</div>
-            <div><strong>Причина:</strong> ${reason}</div>
-            <div><strong>Деталі:</strong><br>${details}</div>
-            <div><strong>Статус:</strong> ${renderStatusBadge(report.status)}</div>
+            <div><strong>Статус:</strong> <span style="display:inline-block; padding:4px 10px; border-radius:999px; background:${status === 'resolved' ? '#d1fae5' : status === 'rejected' ? '#fee2e2' : status === 'in_progress' ? '#dbeafe' : '#fef3c7'}; color:${status === 'resolved' ? '#065f46' : status === 'rejected' ? '#991b1b' : status === 'in_progress' ? '#1e40af' : '#92400e'};">${statusLabels[status] || status}</span></div>
+            <div><strong>Дата створення:</strong> ${complaint.date || complaint.created_at || '-'}</div>
+            <div><strong>Об'єкт скарги:</strong> ${objectLabel || '—'}</div>
+            <div><strong>Причина скарги:</strong> ${getComplaintReasonLabel(reasonValue)}</div>
+            ${targetText ? `<div><strong>Текст коментаря:</strong><br><div style="margin-top: 6px; background: #0f172a; border: 1px solid #2a3245; border-radius: 8px; padding: 10px; white-space: pre-wrap;">${targetText}</div></div>` : ''}
+            <div><strong>Опис скарги:</strong> ${descriptionText || 'Без опису'}</div>
+            <div><strong>Автор скарги:</strong> ${complaint.user || complaint.username || '—'}</div>
+            <div><strong>ID автора скарги:</strong> ${complaint.reporterId || complaint.reporter_id || complaint.user_id || '—'}</div>
         `;
 
         document.getElementById('complaintModal').style.display = 'flex';
@@ -301,27 +389,50 @@
         document.getElementById('complaintModal').style.display = 'none';
     }
 
-    async function updateReportStatus(reportId, status) {
-        try {
-            const updated = await apiFetch(`/api/v1/admin/reports/${reportId}/status`, {
-                method: 'PATCH',
-                body: JSON.stringify({ status })
-            });
-            await loadComplaints();
-            return updated;
-        } catch (error) {
-            alert(error.message || 'Не вдалося оновити статус скарги');
-            return null;
+    let pendingBanUserId = null;
+
+    function openBanUserModal(userId, username) {
+        pendingBanUserId = userId;
+        const el = document.getElementById('banUserModalText');
+        const durationSelect = document.getElementById('banUserDuration');
+        if (durationSelect) {
+            durationSelect.value = '7d';
         }
+        if (el) {
+            el.textContent = `Ви збираєтесь забанити користувача "${username || 'Користувач'}" (ID: ${userId}). Це виключить його з доступу до платформи на обраний термін.`;
+        }
+        document.getElementById('banUserModal').style.display = 'flex';
     }
 
-    async function loadComplaints() {
-        try {
-            const reports = await apiFetch('/api/v1/admin/reports?status=all');
-            const list = document.getElementById('complaintsList');
+    function closeBanUserModal() {
+        pendingBanUserId = null;
+        document.getElementById('banUserModal').style.display = 'none';
+    }
 
-            if (!reports.length) {
-                list.innerHTML = '<p>Скарг немає.</p>';
+    document.getElementById('confirmBanUserBtn').addEventListener('click', async function () {
+        if (!pendingBanUserId) return;
+        const durationSelect = document.getElementById('banUserDuration');
+        const duration = durationSelect ? durationSelect.value : '7d';
+        try {
+            await apiFetch(`/api/v1/admin/users/${pendingBanUserId}/ban`, {
+                method: 'POST',
+                body: JSON.stringify({ duration })
+            });
+            closeBanUserModal();
+            loadUsers(document.getElementById('userSearchInput')?.value || '');
+            loadBannedUsers();
+        } catch (error) {
+            alert(error.message || 'Не вдалося забанити користувача');
+        }
+    });
+
+    async function loadBannedUsers() {
+        try {
+            const users = await apiFetch('/api/v1/admin/banned-users');
+            const list = document.getElementById('bannedUsersList');
+
+            if (!users.length) {
+                list.innerHTML = '<p>Немає забанованих користувачів.</p>';
                 return;
             }
 
@@ -329,110 +440,203 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>ID / Дата</th>
-                            <th>Скаргник</th>
-                            <th>Тип / Об'єкт</th>
-                            <th>Причина / Деталі</th>
-                            <th>Статус</th>
-                            <th>Дії</th>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Роль</th>
+                            <th>Бан до</th>
+                            <th>Дія</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${reports.map(report => {
-                            const reporterName = report.reporter_name || report.reporter_email || `ID ${report.reporter_id}`;
-                            const objectLabel = report.target_label || (
-                                report.product_title
-                                    ? `Товар #${report.product_id} — ${report.product_title}`
-                                    : report.reported_user_name
-                                        ? `Продавець #${report.reported_user_id} — ${report.reported_user_name}`
-                                        : report.comment_id
-                                            ? `Коментар #${report.comment_id}`
-                                            : 'Об’єкт не вказано'
-                            );
-                            const detailsText = report.details || report.comment_body || 'Без опису';
-                            const reasonText = report.reason || 'Інше';
-
-                            return `
-                                <tr>
-                                    <td>
-                                        <strong>#${report.id}</strong><br>
-                                        <small>${formatReportDate(report.created_at)}</small>
-                                    </td>
-                                    <td>${reporterName}</td>
-                                    <td>${objectLabel}</td>
-                                    <td>
-                                        <div><strong>${reasonText}</strong></div>
-                                        <div>${truncateText(detailsText)}</div>
-                                        <button type="button" class="tiny-btn" data-open-details="${report.id}">Деталі</button>
-                                    </td>
-                                    <td>${renderStatusBadge(report.status)}</td>
-                                    <td>
-                                        <div style="display:flex;flex-direction:column;gap:8px;">
-                                                                            <button type="button" class="tiny-btn success" data-status-action="resolved" data-report-id="${report.id}">Прийняти / Заблокувати</button>
-                                            <button type="button" class="tiny-btn secondary" data-status-action="rejected" data-report-id="${report.id}">Відхилити</button>
-                                            <button type="button" class="tiny-btn" data-open-target="${report.id}">Переглянути об'єкт</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            `;
-                        }).join('')}
+                        ${users.map(user => `
+                            <tr>
+                                <td>${user.id}</td>
+                                <td>${user.username}</td>
+                                <td>${user.email}</td>
+                                <td>${user.is_superuser ? 'Superadmin' : user.is_admin ? 'Admin' : 'User'}</td>
+                                <td>${user.banned_until ? new Date(user.banned_until).toLocaleString('uk-UA') : 'Назавжди'}</td>
+                                <td><button class="tiny-btn" data-unban-user-id="${user.id}">Розбанити</button></td>
+                            </tr>
+                        `).join('')}
                     </tbody>
                 </table>
             `;
 
-            document.querySelectorAll('[data-open-details]').forEach(button => {
+            document.querySelectorAll('[data-unban-user-id]').forEach(button => {
                 button.addEventListener('click', async function () {
-                    const reportId = Number(this.dataset.openDetails);
-                    const report = reports.find(item => item.id === reportId);
-                    if (report) {
-                        showComplaintDetails(report);
+                    const userId = Number(this.dataset.unbanUserId);
+                    try {
+                        await apiFetch(`/api/v1/admin/users/${userId}/unban`, { method: 'POST' });
+                        await loadBannedUsers();
+                        await loadUsers(document.getElementById('userSearchInput')?.value || '');
+                    } catch (error) {
+                        alert(error.message || 'Не вдалося розбанити користувача');
                     }
                 });
             });
+        } catch (error) {
+            document.getElementById('bannedUsersList').innerHTML = `<div class="error">${error.message}</div>`;
+        }
+    }
 
-            document.querySelectorAll('[data-status-action]').forEach(button => {
+    async function loadComplaints() {
+        try {
+            const reports = await apiFetch('/api/v1/admin/reports?status=pending');
+            const list = document.getElementById('complaintsList');
+
+            if (!reports.length) {
+                list.innerHTML = '<p>Скарг немає.</p>';
+                return;
+            }
+
+            const statusColors = {
+                pending: 'background: #fef3c7; color: #92400e;',
+                resolved: 'background: #d1fae5; color: #065f46;',
+                rejected: 'background: #e5e7eb; color: #374151;'
+            };
+
+            list.innerHTML = `
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID / Дата</th>
+                                <th>Автор</th>
+                                <th>Об'єкт скарги</th>
+                                <th>Причина / Деталі</th>
+                                <th>Статус</th>
+                                <th>Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${reports.map(report => {
+                                const status = report.status || 'pending';
+                                const objectText = report.target_type === 'product'
+                                    ? (report.product_title ? `<a href="/products/${report.product_id}" target="_blank" rel="noopener">${report.product_title}</a>` : `Товар #${report.product_id || '—'}`)
+                                    : report.target_type === 'user'
+                                        ? (report.reported_username ? `<a href="/users/${report.reported_user_id}" target="_blank" rel="noopener">${report.reported_username}</a>` : `Користувач #${report.reported_user_id || '—'}`)
+                                        : (report.comment_preview ? `Коментар #${report.comment_id}` : `Коментар #${report.comment_id || '—'}`);
+
+                                const objectLabel = report.target_type === 'product'
+                                    ? `Товар${report.product_title ? `: ${report.product_title}` : ''}`
+                                    : report.target_type === 'user'
+                                        ? `Користувач${report.reported_username ? `: ${report.reported_username}` : ''}`
+                                        : 'Коментар';
+
+                                const detailText = report.details || 'Без опису';
+
+                                return `
+                                    <tr data-report-id="${report.id}">
+                                        <td>
+                                            <strong>#${report.id}</strong><br>
+                                            <small>${report.created_at ? new Date(report.created_at).toLocaleString('uk-UA') : '—'}</small>
+                                        </td>
+                                        <td>
+                                            ${report.reporter_username || '—'}<br>
+                                            <small>ID: ${report.reporter_id}</small>
+                                        </td>
+                                        <td>
+                                            ${objectText}<br>
+                                            <small>${objectLabel}</small>
+                                        </td>
+                                        <td>
+                                            <div><strong>${report.reason}</strong></div>
+                                            <button class="tiny-btn" type="button" data-report-details='${JSON.stringify({
+                                                id: report.id,
+                                                created_at: report.created_at,
+                                                reporter_username: report.reporter_username,
+                                                reporter_id: report.reporter_id,
+                                                target_type: report.target_type,
+                                                object_label: objectLabel,
+                                                reason: report.reason,
+                                                details: detailText,
+                                                product_id: report.product_id,
+                                                product_title: report.product_title,
+                                                reported_username: report.reported_username,
+                                                reported_user_id: report.reported_user_id,
+                                                comment_id: report.comment_id,
+                                                comment_preview: report.comment_preview,
+                                            }).replace(/'/g, "&apos;")}' data-action="details">Деталі скарги</button>
+                                        </td>
+                                        <td>
+                                            <span class="badge" style="${statusColors[status] || statusColors.pending}">${status}</span>
+                                        </td>
+                                        <td>
+                                            <div style="display:flex; flex-direction:column; gap:8px; min-width:120px;">
+                                                <select data-report-action-select="${report.id}" style="padding:8px 10px; border-radius:8px; border:1px solid #2a3245; background:#0f172a; color:#e2e8f0;">
+                                                    <option value="none">Нічого</option>
+                                                    <option value="ban_user">Забанити користувача</option>
+                                                    <option value="delete_product">Видалити товар</option>
+                                                    <option value="delete_comment">Видалити коментар</option>
+                                                </select>
+                                                <div style="display:flex; gap:8px;">
+                                                    <button type="button" class="tiny-btn" data-report-status="resolved" data-report-id="${report.id}">Прийняти</button>
+                                                    <button type="button" class="tiny-btn" style="background:#6b7280;" data-report-status="rejected" data-report-id="${report.id}">Відхилити</button>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            document.querySelectorAll('[data-report-details]').forEach(button => {
+                button.addEventListener('click', function (event) {
+                    event.stopPropagation();
+                    const payload = JSON.parse(this.dataset.reportDetails.replace(/&apos;/g, "'"));
+                    const modalBody = document.getElementById('modalBody');
+                    const objectLink = payload.target_type === 'product'
+                        ? (payload.product_id ? `<a href="/products/${payload.product_id}" target="_blank" rel="noopener">Перейти до товару</a>` : 'Товар')
+                        : payload.target_type === 'user'
+                            ? (payload.reported_user_id ? `<a href="/users/${payload.reported_user_id}" target="_blank" rel="noopener">Перейти до профілю</a>` : 'Користувач')
+                            : (payload.comment_id ? `Коментар #${payload.comment_id}` : 'Коментар');
+                    modalBody.innerHTML = `
+                        <div><strong>ID:</strong> ${payload.id}</div>
+                        <div><strong>Дата:</strong> ${payload.created_at ? new Date(payload.created_at).toLocaleString('uk-UA') : '—'}</div>
+                        <div><strong>Автор:</strong> ${payload.reporter_username || '—'} (ID: ${payload.reporter_id || '—'})</div>
+                        <div><strong>Об'єкт:</strong> ${objectLink}</div>
+                        <div><strong>Причина:</strong> ${payload.reason}</div>
+                        <div><strong>Деталі:</strong><br><div style="margin-top:8px; white-space:pre-wrap; background:#0f172a; border:1px solid #2a3245; padding:10px; border-radius:8px;">${payload.details || '—'}</div></div>
+                    `;
+                    document.getElementById('complaintModal').style.display = 'flex';
+                });
+            });
+
+            document.querySelectorAll('[data-report-status]').forEach(button => {
                 button.addEventListener('click', async function () {
                     const reportId = Number(this.dataset.reportId);
-                    const status = this.dataset.statusAction;
+                    const status = this.dataset.reportStatus;
+                    const actionSelect = document.querySelector(`[data-report-action-select="${reportId}"]`);
+                    const action = actionSelect ? actionSelect.value : 'none';
+                    const originalText = this.textContent;
 
-                    if (status === 'resolved') {
-                        const response = await fetch(`/api/v1/admin/reports/${reportId}/resolve`, {
-                            method: 'POST',
-                            headers: { ...API_HEADERS }
+                    try {
+                        const result = await apiFetch(`/api/v1/admin/reports/${reportId}/status`, {
+                            method: 'PATCH',
+                            body: JSON.stringify({ status, action })
                         });
-                        const payload = await response.json().catch(() => ({}));
-                        if (!response.ok) {
-                            alert(payload.detail || 'Не вдалося виконати дію');
-                            return;
+                        if (window.flashButtonText) {
+                            window.flashButtonText(this, result.status === 'updated' ? 'Оновлено ✓' : 'Готово', originalText, 1500);
                         }
-                        await loadComplaints();
-                        return;
+                        setTimeout(loadComplaints, 350);
+                    } catch (error) {
+                        if (window.flashButtonText) {
+                            window.flashButtonText(this, 'Помилка ✗', originalText, 2000);
+                        }
                     }
-
-                    await updateReportStatus(reportId, status);
                 });
             });
 
-            document.querySelectorAll('[data-open-target]').forEach(button => {
-                button.addEventListener('click', async function () {
-                    const reportId = Number(this.dataset.openTarget);
-                    try {
-                        const response = await fetch(`/api/v1/admin/reports/${reportId}/target`, {
-                            headers: { ...API_HEADERS }
-                        });
-                        const payload = await response.json().catch(() => ({}));
-                        if (!response.ok) {
-                            alert(payload.detail || 'Не вдалося отримати об’єкт');
-                            return;
-                        }
-                        if (payload.url) {
-                            window.open(payload.url, '_blank');
-                        } else {
-                            alert('Об’єкт не знайдено або вже видалений');
-                        }
-                    } catch (error) {
-                        alert('Не вдалося відкрити об’єкт');
-                    }
+            document.querySelectorAll('select[data-report-action-select]').forEach(function (actionSelect) {
+                actionSelect.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                });
+                actionSelect.addEventListener('change', function (e) {
+                    e.stopPropagation();
                 });
             });
         } catch (error) {
@@ -449,10 +653,23 @@
         });
     });
 
+    document.getElementById('userSearchBtn')?.addEventListener('click', function () {
+        const search = document.getElementById('userSearchInput')?.value || '';
+        loadUsers(search);
+    });
+
+    document.getElementById('userSearchInput')?.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            loadUsers(this.value);
+        }
+    });
+
     loadCurrentUser();
     loadUsers();
     loadOrders();
     loadStats();
     loadComplaints();
+    loadBannedUsers();
 </script>
 {% endblock %}

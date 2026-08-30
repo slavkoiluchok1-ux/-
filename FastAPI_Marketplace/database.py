@@ -1,19 +1,14 @@
 import os
-from pathlib import Path
 from typing import AsyncGenerator
 
 from dotenv import load_dotenv
-from sqlalchemy import text
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 load_dotenv()
 
-BASE_DIR = Path(__file__).resolve().parent
-DEFAULT_DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    f"sqlite+aiosqlite:///{(BASE_DIR / 'fastmoney.db').resolve()}"
-)
+DEFAULT_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./fastmoney.db")
 DATABASE_URL = DEFAULT_DATABASE_URL
 
 if "localhost" in DATABASE_URL:
@@ -120,97 +115,6 @@ async def ensure_order_table_columns() -> None:
             pass
 
 
-async def ensure_product_table_columns() -> None:
-    async with engine.begin() as connection:
-        if not DATABASE_URL.startswith("sqlite"):
-            return
-
-        try:
-            table_check = await connection.execute(
-                text("SELECT name FROM sqlite_master WHERE type='table' AND name='products'")
-            )
-            if table_check.fetchone() is None:
-                return
-
-            columns = await connection.execute(text("PRAGMA table_info(products)"))
-            existing = {row[1] for row in columns.fetchall()}
-
-            required_columns = {
-                "sale_price": "FLOAT",
-                "sku": "VARCHAR(120)",
-                "product_type": "VARCHAR(20) DEFAULT 'physical' NOT NULL",
-                "is_draft": "BOOLEAN DEFAULT 0 NOT NULL",
-                "attributes": "JSON",
-                "digital_content": "TEXT",
-                "weight_dimensions": "VARCHAR(200)",
-                "shipping_options": "VARCHAR(250)",
-                "platform_server": "VARCHAR(200)",
-                "rarity": "VARCHAR(120)",
-                "execution_time": "VARCHAR(200)",
-                "seller_phone": "VARCHAR(80)",
-                "user_id": "INTEGER",
-                "sales_count": "INTEGER DEFAULT 0 NOT NULL",
-                "created_at": "DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL",
-                "updated_at": "DATETIME",
-            }
-
-            for column_name, column_def in required_columns.items():
-                if column_name not in existing:
-                    try:
-                        await connection.execute(text(f"ALTER TABLE products ADD COLUMN {column_name} {column_def}"))
-                    except Exception:
-                        if column_name == "updated_at":
-                            await connection.execute(text("ALTER TABLE products ADD COLUMN updated_at DATETIME"))
-                        else:
-                            raise
-        except Exception:
-            try:
-                await connection.execute(text("ALTER TABLE products ADD COLUMN updated_at DATETIME"))
-            except Exception:
-                pass
-
-
-async def ensure_tagging_tables() -> None:
-    async with engine.begin() as connection:
-        if not DATABASE_URL.startswith("sqlite"):
-            return
-
-        try:
-            tables = {
-                row[0]
-                for row in (
-                    await connection.execute(
-                        text("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('tags','product_tags')")
-                    )
-                ).fetchall()
-            }
-
-            if "tags" not in tables:
-                await connection.execute(
-                    text(
-                        "CREATE TABLE tags ("
-                        "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                        "name VARCHAR(80) NOT NULL UNIQUE, "
-                        "slug VARCHAR(100) NOT NULL UNIQUE, "
-                        "created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL"
-                        ")"
-                    )
-                )
-
-            if "product_tags" not in tables:
-                await connection.execute(
-                    text(
-                        "CREATE TABLE product_tags ("
-                        "product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE, "
-                        "tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE, "
-                        "PRIMARY KEY (product_id, tag_id)"
-                        ")"
-                    )
-                )
-        except Exception:
-            pass
-
-
 async def ensure_schema() -> None:
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
@@ -221,42 +125,217 @@ async def ensure_schema() -> None:
             user_existing = {row[1] for row in users_columns.fetchall()}
             if "is_banned" not in user_existing:
                 await connection.execute(text("ALTER TABLE users ADD COLUMN is_banned BOOLEAN DEFAULT 0 NOT NULL"))
+            if "banned_until" not in user_existing:
+                await connection.execute(text("ALTER TABLE users ADD COLUMN banned_until DATETIME NULL"))
+            if "tg_link_code" not in user_existing:
+                await connection.execute(text("ALTER TABLE users ADD COLUMN tg_link_code VARCHAR(30) NULL"))
+            if "telegram_chat_id" not in user_existing:
+                await connection.execute(text("ALTER TABLE users ADD COLUMN telegram_chat_id VARCHAR(80) NULL"))
+            if "first_name" not in user_existing:
+                await connection.execute(text("ALTER TABLE users ADD COLUMN first_name VARCHAR(80) NULL"))
+            if "last_name" not in user_existing:
+                await connection.execute(text("ALTER TABLE users ADD COLUMN last_name VARCHAR(80) NULL"))
+            if "birth_date" not in user_existing:
+                await connection.execute(text("ALTER TABLE users ADD COLUMN birth_date DATE NULL"))
+            if "is_age_locked" not in user_existing:
+                await connection.execute(text("ALTER TABLE users ADD COLUMN is_age_locked BOOLEAN DEFAULT 0 NOT NULL"))
+            if "avatar_url" not in user_existing:
+                await connection.execute(text("ALTER TABLE users ADD COLUMN avatar_url VARCHAR(500) NULL"))
+            if "last_login_ip" not in user_existing:
+                await connection.execute(text("ALTER TABLE users ADD COLUMN last_login_ip VARCHAR(64) NULL"))
+            if "last_login_at" not in user_existing:
+                await connection.execute(text("ALTER TABLE users ADD COLUMN last_login_at DATETIME NULL"))
+
+            products_columns = await connection.execute(text("PRAGMA table_info(products)"))
+            product_existing = {row[1] for row in products_columns.fetchall()}
+            if "category_id" not in product_existing:
+                await connection.execute(text("ALTER TABLE products ADD COLUMN category_id INTEGER NULL"))
+            if "seller_phone" not in product_existing:
+                await connection.execute(text("ALTER TABLE products ADD COLUMN seller_phone VARCHAR(80) NULL"))
+            if "sales_count" not in product_existing:
+                await connection.execute(text("ALTER TABLE products ADD COLUMN sales_count INTEGER NOT NULL DEFAULT 0"))
+            if "product_type" not in product_existing:
+                await connection.execute(text("ALTER TABLE products ADD COLUMN product_type VARCHAR(30) NOT NULL DEFAULT 'physical'"))
+            if "sku" not in product_existing:
+                await connection.execute(text("ALTER TABLE products ADD COLUMN sku VARCHAR(80) NULL"))
+            if "sale_price" not in product_existing:
+                await connection.execute(text("ALTER TABLE products ADD COLUMN sale_price INTEGER NULL"))
+            if "is_draft" not in product_existing:
+                await connection.execute(text("ALTER TABLE products ADD COLUMN is_draft BOOLEAN NOT NULL DEFAULT 0"))
+            if "tags" not in product_existing:
+                await connection.execute(text("ALTER TABLE products ADD COLUMN tags TEXT NULL"))
+            if "attributes" not in product_existing:
+                await connection.execute(text("ALTER TABLE products ADD COLUMN attributes TEXT NULL"))
+            if "digital_content" not in product_existing:
+                await connection.execute(text("ALTER TABLE products ADD COLUMN digital_content TEXT NULL"))
+
+            try:
+                await connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS idx_products_sku ON products(sku) WHERE sku IS NOT NULL"))
+            except Exception:
+                pass
+
+            try:
+                await connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_cart_user_product ON cart_items(user_id, product_id)"))
+            except Exception:
+                pass
+
+            try:
+                await connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_favorite_user_product ON favorites(user_id, product_id)"))
+            except Exception:
+                pass
+
+            await connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_tg_link_code ON users(tg_link_code) WHERE tg_link_code IS NOT NULL"))
+            await connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_telegram_chat_id ON users(telegram_chat_id) WHERE telegram_chat_id IS NOT NULL"))
+
+            complaints_columns = await connection.execute(text("PRAGMA table_info(complaints)"))
+            complaint_existing = {row[1] for row in complaints_columns.fetchall()}
+            if "target_user_id" not in complaint_existing:
+                await connection.execute(text("ALTER TABLE complaints ADD COLUMN target_user_id INTEGER NULL"))
 
     await ensure_resume_table_columns()
     await ensure_order_table_columns()
-    await ensure_product_table_columns()
-    await ensure_tagging_tables()
+    await seed_default_categories()
+
+
+async def seed_default_categories() -> None:
+    from models import Category
+
+    async with async_session() as db:
+        existing_count = await db.scalar(select(func.count()).select_from(Category))
+        if existing_count and existing_count > 0:
+            return
+
+        seed_data = [
+            {
+                "name": "Електроніка",
+                "slug": "elektronika",
+                "icon": "📱",
+                "children": [
+                    {"name": "Смартфони", "slug": "smartfony"},
+                    {"name": "Ноутбуки", "slug": "noutbuki"},
+                    {"name": "Комплектуючі", "slug": "komplektuyuchi"},
+                    {"name": "Аксесуари", "slug": "aksesuary"},
+                ],
+            },
+            {
+                "name": "Одяг та взуття",
+                "slug": "odyag-ta-vzuttya",
+                "icon": "👕",
+                "children": [
+                    {"name": "Чоловічий", "slug": "cholovichiy"},
+                    {"name": "Жіночий", "slug": "zhinochiy"},
+                    {"name": "Дитячий", "slug": "dityachiy"},
+                    {"name": "Взуття", "slug": "vzuttia"},
+                ],
+            },
+            {
+                "name": "Дім та сад",
+                "slug": "dim-ta-sad",
+                "icon": "🏡",
+                "children": [
+                    {"name": "Меблі", "slug": "mebli"},
+                    {"name": "Декор", "slug": "dekor"},
+                    {"name": "Інструменти", "slug": "instrumenty"},
+                    {"name": "Посуд", "slug": "posud"},
+                ],
+            },
+            {
+                "name": "Цифрові товари",
+                "slug": "tsyfrovi-tovary",
+                "icon": "🎮",
+                "children": [
+                    {"name": "Ігри", "slug": "igry"},
+                    {"name": "Софт", "slug": "soft"},
+                    {"name": "Акаунти", "slug": "rahunky"},
+                    {"name": "Курси", "slug": "kursy"},
+                ],
+            },
+            {
+                "name": "Автотовари",
+                "slug": "avtotovary",
+                "icon": "🚗",
+                "children": [
+                    {"name": "Запчастини", "slug": "zapchastyny"},
+                    {"name": "Автохімія", "slug": "avtokhimiya"},
+                    {"name": "Салон", "slug": "salon"},
+                ],
+            },
+            {
+                "name": "Спорт та відпочинок",
+                "slug": "sport-ta-vidpochynok",
+                "icon": "⚽️",
+                "children": [
+                    {"name": "Тренажери", "slug": "trenazhery"},
+                    {"name": "Туризм", "slug": "turystychni-tovary"},
+                    {"name": "Велосипеди", "slug": "velosyped"},
+                ],
+            },
+            {
+                "name": "Краса та здоров'я",
+                "slug": "krasa-ta-zdorovya",
+                "icon": "💄",
+                "children": [
+                    {"name": "Косметика", "slug": "kosmetyka"},
+                    {"name": "Парфумерія", "slug": "parfumeriya"},
+                    {"name": "Догляд", "slug": "dohlyad"},
+                ],
+            },
+            {
+                "name": "Крафт та Хендмейд",
+                "slug": "kraft-ta-hendmeyd",
+                "icon": "🎨",
+                "children": [
+                    {"name": "Прикраси", "slug": "prykrasy"},
+                    {"name": "Декор ручної роботи", "slug": "dekor-ruchnoyi-roboty"},
+                ],
+            },
+        ]
+
+        for parent_data in seed_data:
+            parent = Category(name=parent_data["name"], slug=parent_data["slug"], icon=parent_data["icon"])
+            db.add(parent)
+            await db.flush()
+            for child_data in parent_data.get("children", []):
+                db.add(Category(name=child_data["name"], slug=child_data["slug"], parent_id=parent.id))
+
+        await db.commit()
 
 
 async def cleanup_html_redirect_product() -> None:
+    redirect_pattern = "%HTML redirect product%"
     async with async_session() as db:
         await db.execute(
             text(
                 "DELETE FROM cart_items WHERE product_id IN ("
-                "SELECT id FROM products WHERE title LIKE '%HTML redirect product%'"
+                "SELECT id FROM products WHERE title LIKE :pattern"
                 ")"
-            )
+            ),
+            {"pattern": redirect_pattern},
         )
         await db.execute(
             text(
                 "DELETE FROM order_items WHERE product_id IN ("
-                "SELECT id FROM products WHERE title LIKE '%HTML redirect product%'"
+                "SELECT id FROM products WHERE title LIKE :pattern"
                 ")"
-            )
+            ),
+            {"pattern": redirect_pattern},
         )
         await db.execute(
             text(
                 "DELETE FROM favorites WHERE product_id IN ("
-                "SELECT id FROM products WHERE title LIKE '%HTML redirect product%'"
+                "SELECT id FROM products WHERE title LIKE :pattern"
                 ")"
-            )
+            ),
+            {"pattern": redirect_pattern},
         )
         await db.execute(
-            text("DELETE FROM products WHERE title LIKE '%HTML redirect product%'")
+            text("DELETE FROM products WHERE title LIKE :pattern"),
+            {"pattern": redirect_pattern},
         )
         await db.commit()
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    await ensure_schema()
     async with async_session() as session:
         yield session

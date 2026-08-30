@@ -129,8 +129,11 @@
     .detail-row {
         display: flex;
         justify-content: space-between;
-        padding: 8px 0;
-        border-bottom: 1px solid var(--border);
+        align-items: center;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+        padding: 0.7rem 0;
+        width: 100%;
+        gap: 1rem;
     }
 
     .detail-row:last-child {
@@ -138,11 +141,19 @@
     }
 
     .detail-label {
-        color: var(--muted);
+        color: #cbd5e1;
+        font-weight: 500;
+        flex: 1 1 auto;
+        min-width: 0;
     }
 
     .detail-value {
-        font-weight: 600;
+        color: #f8fafc;
+        font-weight: 700;
+        text-align: right;
+        flex: 1 1 auto;
+        min-width: 0;
+        word-break: break-word;
     }
 
     .detail-items {
@@ -175,6 +186,20 @@
 </style>
 
 <script>
+    const ORDER_STATUS_LABELS = {
+        created: 'Нове',
+        new: 'Нове',
+        paid: 'Оплачено',
+        shipped: 'Відправлено',
+        completed: 'Виконано',
+        cancelled: 'Скасовано'
+    };
+
+    function getOrderStatusLabel(status) {
+        const normalized = (status || '').toString().trim().toLowerCase();
+        return ORDER_STATUS_LABELS[normalized] || 'Невідомо';
+    }
+
     document.addEventListener('DOMContentLoaded', async function () {
         const list = document.getElementById('orders-list');
         const modal = document.getElementById('order-modal');
@@ -211,7 +236,7 @@
                                 <h3>Замовлення #${order.id}</h3>
                                 <p>${order.created_at ? new Date(order.created_at).toLocaleString('uk-UA') : 'Дата не вказана'}</p>
                             </div>
-                            <span class="status-pill status-${order.status || 'created'}">${order.status || 'created'}</span>
+                            <span class="status-pill status-${(order.status || 'created').toLowerCase()}">${getOrderStatusLabel(order.status)}</span>
                         </div>
                         ${itemsHtml}
                         <div class="order-total">
@@ -243,12 +268,6 @@
         }
 
         function showOrderDetails(order) {
-            const statusLabels = {
-                'created': 'Створено',
-                'completed': 'Виконано',
-                'cancelled': 'Скасовано'
-            };
-
             const itemsHtml = (order.items || []).map(item => `
                 <div class="detail-item">
                     ${item.product_image ? `<img src="${item.product_image}" alt="${item.product_title}" />` : '<div class="product-placeholder">Фото</div>'}
@@ -268,33 +287,33 @@
                     <h3>Деталі замовлення #${order.id}</h3>
                     <button type="button" id="close-modal" class="close-btn">×</button>
                 </div>
-                <div class="detail-row">
-                    <span class="detail-label">Статус:</span>
-                    <span class="detail-value">${statusLabels[order.status] || order.status}</span>
+                <div class="detail-row flex justify-between items-center border-b border-gray-700 py-2 w-full">
+                    <span class="detail-label text-gray-400">Статус:</span>
+                    <span class="detail-value text-white font-semibold">${getOrderStatusLabel(order.status)}</span>
                 </div>
-                <div class="detail-row">
-                    <span class="detail-label">Дата:</span>
-                    <span class="detail-value">${order.created_at ? new Date(order.created_at).toLocaleString('uk-UA') : '-'}</span>
+                <div class="detail-row flex justify-between items-center border-b border-gray-700 py-2 w-full">
+                    <span class="detail-label text-gray-400">Дата:</span>
+                    <span class="detail-value text-white font-semibold">${order.created_at ? new Date(order.created_at).toLocaleString('uk-UA') : '-'}</span>
                 </div>
-                <div class="detail-row">
-                    <span class="detail-label">Адреса доставки:</span>
-                    <span class="detail-value">${order.delivery_address || '-'}</span>
+                <div class="detail-row flex justify-between items-center border-b border-gray-700 py-2 w-full">
+                    <span class="detail-label text-gray-400">Адреса доставки:</span>
+                    <span class="detail-value text-white font-semibold">${order.delivery_address || '-'}</span>
                 </div>
-                <div class="detail-row">
-                    <span class="detail-label">Телефон:</span>
-                    <span class="detail-value">${order.phone || '-'}</span>
+                <div class="detail-row flex justify-between items-center border-b border-gray-700 py-2 w-full">
+                    <span class="detail-label text-gray-400">Телефон:</span>
+                    <span class="detail-value text-white font-semibold">${order.phone || '-'}</span>
                 </div>
-                <div class="detail-row">
-                    <span class="detail-label">Спосіб оплати:</span>
-                    <span class="detail-value">${order.payment_method || '-'}</span>
+                <div class="detail-row flex justify-between items-center border-b border-gray-700 py-2 w-full">
+                    <span class="detail-label text-gray-400">Спосіб оплати:</span>
+                    <span class="detail-value text-white font-semibold">${order.payment_method || '-'}</span>
                 </div>
                 <div class="detail-items">
                     <h4>Товари:</h4>
                     ${itemsHtml}
                 </div>
-                <div class="detail-row" style="font-size: 1.3rem; font-weight: 700; margin-top: 16px; padding-top: 16px; border-top: 2px solid var(--border);">
-                    <span class="detail-label">Загальна сума:</span>
-                    <span class="detail-value">${Number(order.total_price || 0)} ₴</span>
+                <div class="detail-row flex justify-between items-center border-b border-gray-700 py-2 w-full" style="font-size: 1.3rem; font-weight: 700; margin-top: 16px; padding-top: 16px; border-top: 2px solid var(--border); border-bottom: 0;">
+                    <span class="detail-label text-gray-400">Загальна сума:</span>
+                    <span class="detail-value text-white font-semibold">${Number(order.total_price || 0)} ₴</span>
                 </div>
             `;
 

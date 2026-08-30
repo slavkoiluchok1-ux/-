@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -10,116 +11,45 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from auth_utils import decode_access_token
 from database import get_db
-from dependencies import get_current_admin_user, get_current_superuser, get_current_superuser_or_redirect
-from models import Comment, Product, Report, Resume, User
+from dependencies import get_current_superuser, get_current_user
+from models import Portfolio, Product, Report, Resume, Review, User
+from schemas import UserPublic, UserRoleUpdate
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 router = APIRouter(tags=["admin"])
 templates = Jinja2Templates(directory=str(BASE_DIR / "Templates"))
 
 
-def build_report_admin_link(report_id: int) -> str:
-    return f"/admin?tab=complaints&report_id={report_id}"
+def is_protected_superadmin_user(user: User | None) -> bool:
+    if user is None:
+        return False
+    return bool(user.is_superuser or getattr(user, "role", None) == "superadmin" or user.id == 1)
 
 
-@router.patch("/api/v1/admin/reports/{report_id}/status")
-async def admin_update_report_status(
-    report_id: int,
-    status_value: str = Form(...),
-    current_user: User = Depends(get_current_admin_user),
+async def get_current_superadmin_or_redirect(
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    report = await db.get(Report, report_id)
-    if report is None:
-        raise HTTPException(status_code=404, detail="Скаргу не знайдено")
+    current_user = None
+    token_value = request.cookies.get("access_token")
+    if token_value:
+        try:
+            payload = decode_access_token(token_value.replace("Bearer ", "").strip())
+            user_id = payload.get("sub")
+            if user_id is not None:
+                current_user = await db.get(User, int(user_id))
+        except Exception:
+            current_user = None
 
-    normalized = (status_value or "").strip().lower()
-    if normalized not in {"pending", "resolved", "rejected"}:
-        raise HTTPException(status_code=400, detail="Некоректний статус скарги")
+    if current_user is None or not current_user.is_active:
+        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
 
-    report.status = normalized
-    await db.commit()
-    await db.refresh(report)
-    return {"id": report.id, "status": report.status, "message": "Статус скарги оновлено"}
+    if not current_user.is_superuser:
+        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
 
-
-@router.post("/api/v1/admin/reports/{report_id}/resolve")
-async def admin_resolve_report(
-    report_id: int,
-    current_user: User = Depends(get_current_admin_user),
-    db: AsyncSession = Depends(get_db),
-):
-    report = await db.get(Report, report_id)
-    if report is None:
-        raise HTTPException(status_code=404, detail="Скаргу не знайдено")
-
-    if report.reported_user_id is not None:
-        target_user = await db.get(User, report.reported_user_id)
-        if target_user is not None:
-            target_user.is_banned = True
-            target_user.is_active = False
-    elif report.product_id is not None:
-        product = await db.get(Product, report.product_id)
-        if product is not None:
-            await db.delete(product)
-    elif report.comment_id is not None:
-        comment = await db.get(Comment, report.comment_id)
-        if comment is not None:
-            await db.delete(comment)
-
-    report.status = "resolved"
-    await db.commit()
-    return {"id": report.id, "status": report.status, "message": "Об'єкт заблоковано / скаргу прийнято"}
-
-
-@router.post("/api/v1/admin/reports/{report_id}/reject")
-async def admin_reject_report(
-    report_id: int,
-    current_user: User = Depends(get_current_admin_user),
-    db: AsyncSession = Depends(get_db),
-):
-    report = await db.get(Report, report_id)
-    if report is None:
-        raise HTTPException(status_code=404, detail="Скаргу не знайдено")
-
-    report.status = "rejected"
-    await db.commit()
-    await db.refresh(report)
-    return {"id": report.id, "status": report.status, "message": "Скаргу відхилено"}
-
-
-@router.get("/api/v1/admin/reports/{report_id}/target")
-async def admin_open_report_target(
-    report_id: int,
-    current_user: User = Depends(get_current_admin_user),
-    db: AsyncSession = Depends(get_db),
-):
-    report = await db.get(Report, report_id)
-    if report is None:
-        raise HTTPException(status_code=404, detail="Скаргу не знайдено")
-
-    if report.product_id is not None:
-        product = await db.get(Product, report.product_id)
-        if product is not None:
-            return {"type": "product", "url": f"/products/{product.id}"}
-        return {"type": "product", "url": None}
-
-    if report.reported_user_id is not None:
-        target_user = await db.get(User, report.reported_user_id)
-        if target_user is not None:
-            return {"type": "user", "url": f"/profile?user_id={target_user.id}"}
-        return {"type": "user", "url": None}
-
-    if report.comment_id is not None:
-        comment = await db.get(Comment, report.comment_id)
-        if comment is not None:
-            product = await db.get(Product, comment.product_id)
-            if product is not None:
-                return {"type": "comment", "url": f"/products/{product.id}#comment-{comment.id}"}
-        return {"type": "comment", "url": None}
-
-    return {"type": "unknown", "url": None}
+    return current_user
 
 
 @router.get("/admin/manage-admins", response_class=HTMLResponse)
@@ -128,11 +58,10 @@ async def manage_admins_page(
     q: str | None = Query(default=None),
     role: str | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
-    result = Depends(get_current_superuser_or_redirect),
+    _current_user = Depends(get_current_superadmin_or_redirect),
 ):
-    if isinstance(result, RedirectResponse):
-        return result
-    _current_user = result
+    if isinstance(_current_user, RedirectResponse):
+        return _current_user
 
     stmt = select(User).order_by(User.is_superuser.desc(), User.is_admin.desc(), User.id.asc())
 
@@ -202,11 +131,10 @@ async def manage_admins_page(
 async def promote_to_admin(
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    result = Depends(get_current_superuser_or_redirect),
+    _current_user = Depends(get_current_superadmin_or_redirect),
 ):
-    if isinstance(result, RedirectResponse):
-        return result
-    _current_user = result
+    if isinstance(_current_user, RedirectResponse):
+        return _current_user
 
     target = await db.get(User, user_id)
     if target is None:
@@ -227,7 +155,9 @@ async def promote_to_admin(
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
+    original_username = target.username
     target.is_admin = True
+    target.username = original_username
     await db.commit()
     return RedirectResponse(
         url=f"/admin/manage-admins?message=Користувача+{target.username}+призначено+адміном",
@@ -239,11 +169,10 @@ async def promote_to_admin(
 async def demote_from_admin(
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    result = Depends(get_current_superuser_or_redirect),
+    _current_user = Depends(get_current_superadmin_or_redirect),
 ):
-    if isinstance(result, RedirectResponse):
-        return result
-    _current_user = result
+    if isinstance(_current_user, RedirectResponse):
+        return _current_user
 
     target = await db.get(User, user_id)
     if target is None:
@@ -264,7 +193,9 @@ async def demote_from_admin(
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
+    original_username = target.username
     target.is_admin = False
+    target.username = original_username
     await db.commit()
     return RedirectResponse(
         url=f"/admin/manage-admins?message=З+користувача+{target.username}+знято+права+адміна",
@@ -276,11 +207,10 @@ async def demote_from_admin(
 async def delete_user(
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    result = Depends(get_current_superuser_or_redirect),
+    _current_user = Depends(get_current_superadmin_or_redirect),
 ):
-    if isinstance(result, RedirectResponse):
-        return result
-    _current_user = result
+    if isinstance(_current_user, RedirectResponse):
+        return _current_user
 
     target = await db.get(User, user_id)
     if target is None:
@@ -289,7 +219,7 @@ async def delete_user(
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
-    if target.is_superuser:
+    if is_protected_superadmin_user(target):
         return RedirectResponse(
             url="/admin/manage-admins?error=Неможливо+видалити+супер+адміна",
             status_code=status.HTTP_303_SEE_OTHER,
@@ -307,6 +237,225 @@ async def delete_user(
         url="/admin/manage-admins?message=Користувач+видалений",
         status_code=status.HTTP_303_SEE_OTHER,
     )
+
+
+@router.patch("/api/v1/admin/reports/{report_id}/status")
+async def update_report_status(
+    report_id: int,
+    payload: dict | None = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not (current_user.is_admin or current_user.is_superuser):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+
+    report = await db.get(Report, report_id)
+    if report is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Скаргу не знайдено")
+
+    body = payload or {}
+    new_status = str(body.get("status", "")).strip().lower()
+    action = str(body.get("action", "none")).strip().lower()
+    allowed_actions = {"ban_user", "delete_product", "delete_comment", "none"}
+
+    if new_status not in {"resolved", "rejected"}:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Недійсний статус скарги")
+    if action not in allowed_actions:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Недійсний тип дії")
+
+    report.status = new_status
+
+    if new_status == "resolved":
+        if action == "ban_user":
+            target_user = None
+            if report.reported_user_id is not None:
+                target_user = await db.get(User, report.reported_user_id)
+            elif report.product_id is not None:
+                product = await db.get(Product, report.product_id)
+                if product is not None:
+                    target_user = await db.get(User, product.user_id)
+            elif report.comment_id is not None:
+                comment = await db.get(Review, report.comment_id)
+                if comment is not None:
+                    target_user = await db.get(User, comment.user_id)
+
+            if target_user is not None and target_user.id != current_user.id:
+                target_user.is_active = False
+                target_user.is_banned = True
+                target_user.banned_until = None
+
+        if action == "delete_product" and report.product_id is not None:
+            product = await db.get(Product, report.product_id)
+            if product is not None:
+                await db.delete(product)
+
+        if action == "delete_comment" and report.comment_id is not None:
+            comment = await db.get(Review, report.comment_id)
+            if comment is not None:
+                await db.delete(comment)
+
+    await db.commit()
+    return {
+        "status": "updated",
+        "report_id": report.id,
+        "report_status": report.status,
+        "action": action,
+    }
+
+
+@router.get("/api/v1/admin/reports")
+async def get_reports_for_admin(
+    status: str = "pending",
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not (current_user.is_admin or current_user.is_superuser):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+
+    normalized_status = status.lower()
+    allowed_statuses = {"pending", "resolved", "rejected"}
+    if normalized_status not in allowed_statuses:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Недійсний статус")
+
+    stmt = select(Report).where(Report.status == normalized_status).order_by(Report.created_at.desc())
+    reports = (await db.execute(stmt)).scalars().all()
+
+    result = []
+    for report in reports:
+        reporter = await db.get(User, report.reporter_id)
+        reported_user = await db.get(User, report.reported_user_id) if report.reported_user_id is not None else None
+        product = await db.get(Product, report.product_id) if report.product_id is not None else None
+        comment = await db.get(Review, report.comment_id) if report.comment_id is not None else None
+
+        payload = {
+            "id": report.id,
+            "reporter_id": report.reporter_id,
+            "reporter_username": reporter.username if reporter else None,
+            "reported_user_id": report.reported_user_id,
+            "reported_username": reported_user.username if reported_user else None,
+            "product_id": report.product_id,
+            "product_title": product.title if product else None,
+            "product_url": f"/products/{product.id}" if product else None,
+            "comment_id": report.comment_id,
+            "comment_preview": (comment.comment[:120] if comment and comment.comment else None),
+            "comment_url": None,
+            "reason": report.reason,
+            "details": report.details,
+            "status": report.status,
+            "created_at": report.created_at.isoformat() if report.created_at else None,
+            "target_type": "user" if report.reported_user_id is not None else "product" if report.product_id is not None else "comment" if report.comment_id is not None else "unknown",
+        }
+
+        if comment is not None:
+            payload["comment_url"] = f"/products/{comment.product_id}#review-{comment.id}"
+
+        result.append(payload)
+
+    return result
+
+
+@router.get("/api/v1/admin/banned-users")
+async def get_banned_users(
+    db: AsyncSession = Depends(get_db),
+    _current_user = Depends(get_current_superadmin_or_redirect),
+):
+    if isinstance(_current_user, RedirectResponse):
+        return _current_user
+
+    users = (await db.execute(
+        select(User).where(User.is_banned.is_(True)).order_by(User.id.desc())
+    )).scalars().all()
+    result = []
+    for user in users:
+        result.append({
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "display_name": user.display_name,
+            "is_admin": user.is_admin,
+            "is_superuser": user.is_superuser,
+            "is_banned": user.is_banned,
+            "banned_until": user.banned_until,
+            "banned_until_text": user.banned_until.isoformat() if user.banned_until else "Постійно",
+        })
+    return result
+
+
+@router.post("/api/v1/admin/users/{user_id}/unban")
+async def unban_user_by_admin(
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+    _current_user = Depends(get_current_superadmin_or_redirect),
+):
+    if isinstance(_current_user, RedirectResponse):
+        return _current_user
+
+    target = await db.get(User, user_id)
+    if target is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    if is_protected_superadmin_user(target):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Заборонено банити головного адміністратора (Superadmin)")
+    if target.is_admin and not _current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="Only superadmin can unban admins")
+
+    target.is_banned = False
+    target.banned_until = None
+    target.is_active = True
+    await db.commit()
+    await db.refresh(target)
+    return {"status": "unbanned", "user_id": target.id}
+
+
+@router.get("/api/v1/admin/portfolio")
+async def admin_get_portfolios(
+    db: AsyncSession = Depends(get_db),
+    _current_user = Depends(get_current_superadmin_or_redirect),
+):
+    if isinstance(_current_user, RedirectResponse):
+        return _current_user
+
+    portfolios = (await db.execute(select(Portfolio).options(joinedload(Portfolio.user)).order_by(Portfolio.created_at.desc()))).scalars().unique().all()
+    result = []
+    for item in portfolios:
+        user = item.user
+        result.append({
+            "id": item.id,
+            "user_id": item.user_id,
+            "username": user.username if user else None,
+            "display_name": user.display_name if user else None,
+            "email": user.email if user else None,
+            "title": item.title,
+            "specialty": item.specialty,
+            "experience_years": item.experience_years,
+            "skills": item.skills,
+            "summary": item.summary,
+            "bio": item.bio,
+            "public_contacts": item.public_contacts,
+            "phone": item.phone,
+            "telegram": item.telegram,
+            "public_email": item.public_email,
+            "status": item.status,
+            "created_at": item.created_at,
+        })
+    return result
+
+
+@router.delete("/api/v1/admin/portfolio/{portfolio_id}")
+async def delete_portfolio_by_admin(
+    portfolio_id: int,
+    db: AsyncSession = Depends(get_db),
+    _current_user = Depends(get_current_superadmin_or_redirect),
+):
+    if isinstance(_current_user, RedirectResponse):
+        return _current_user
+
+    portfolio = await db.get(Portfolio, portfolio_id)
+    if portfolio is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portfolio not found")
+
+    await db.delete(portfolio)
+    await db.commit()
+    return {"status": "deleted"}
 
 
 ALLOWED_RESUME_STATUSES = {"pending", "reviewing", "accepted", "rejected"}
@@ -328,11 +477,10 @@ async def manage_resumes_page(
     q: Optional[str] = Query(default=None),
     filter_status: Optional[str] = Query(default=None),
     db: AsyncSession = Depends(get_db),
-    result = Depends(get_current_superuser_or_redirect),
+    _current_user = Depends(get_current_superadmin_or_redirect),
 ):
-    if isinstance(result, RedirectResponse):
-        return result
-    _current_user = result
+    if isinstance(_current_user, RedirectResponse):
+        return _current_user
 
     stmt = select(Resume).options(joinedload(Resume.user)).order_by(Resume.updated_at.desc(), Resume.created_at.desc())
 
@@ -432,11 +580,10 @@ async def update_resume_status(
     resume_id: int,
     new_status: str = Form(...),
     db: AsyncSession = Depends(get_db),
-    result = Depends(get_current_superuser_or_redirect),
+    _current_user = Depends(get_current_superadmin_or_redirect),
 ):
-    if isinstance(result, RedirectResponse):
-        return result
-    _current_user = result
+    if isinstance(_current_user, RedirectResponse):
+        return _current_user
 
     resume = await db.get(Resume, resume_id)
     if resume is None:
@@ -465,11 +612,10 @@ async def update_resume_status(
 async def delete_resume(
     resume_id: int,
     db: AsyncSession = Depends(get_db),
-    result = Depends(get_current_superuser_or_redirect),
+    _current_user = Depends(get_current_superadmin_or_redirect),
 ):
-    if isinstance(result, RedirectResponse):
-        return result
-    _current_user = result
+    if isinstance(_current_user, RedirectResponse):
+        return _current_user
 
     resume = await db.get(Resume, resume_id)
     if resume is None:

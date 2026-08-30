@@ -8,7 +8,7 @@
         max-width: 100%;
     }
     .edit-wrap {
-        max-width: 860px;
+        max-width: 780px;
         margin: 0 auto;
     }
     .page-head {
@@ -23,50 +23,12 @@
     }
     .page-head a.back:hover { color: #93c5fd; }
 
-    .badge-type {
-        display: inline-block;
-        padding: 3px 10px;
-        border-radius: 999px;
-        font-size: 12px;
-        font-weight: 600;
-        margin-left: 8px;
-    }
-    .badge-type.physical { background: rgba(59,130,246,0.12); color: #60a5fa; }
-    .badge-type.digital { background: rgba(16,185,129,0.12); color: #34d399; }
-    .badge-type.game_item { background: rgba(244,114,182,0.15); color: #f472b6; }
-    .badge-draft {
-        display: inline-block;
-        padding: 3px 10px;
-        border-radius: 999px;
-        font-size: 12px;
-        font-weight: 600;
-        background: rgba(245,158,11,0.15);
-        color: #fbbf24;
-        margin-left: 6px;
-    }
-
     .form-card {
         background: var(--bg-card);
         border: 1px solid var(--border);
         border-radius: 16px;
         padding: 24px;
         width: 100%;
-    }
-
-    .form-section {
-        margin-bottom: 22px;
-        padding-bottom: 22px;
-        border-bottom: 1px solid var(--border);
-    }
-    .form-section:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-    .section-title {
-        margin: 0 0 14px;
-        font-size: 1.05rem;
-        font-weight: 700;
-        color: var(--text);
-        display: flex;
-        align-items: center;
-        gap: 8px;
     }
 
     .form-grid {
@@ -83,7 +45,6 @@
         font-size: 14px;
     }
     .form-group input,
-    .form-group select,
     .form-group textarea {
         width: 100%;
         padding: 11px 13px;
@@ -97,10 +58,9 @@
     }
     .form-group textarea {
         resize: vertical;
-        min-height: 110px;
+        min-height: 140px;
     }
     .form-group input:focus,
-    .form-group select:focus,
     .form-group textarea:focus {
         outline: none;
         border-color: #3b82f6;
@@ -112,20 +72,14 @@
         margin-top: 4px;
     }
 
-    .checkbox-group {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 11px 13px;
-        background: var(--surface-soft);
-        border: 1px solid var(--border);
-        border-radius: 9px;
-    }
-    .checkbox-group input { width: auto; margin: 0; }
-    .checkbox-group span { font-weight: 500; font-size: 14px; }
-
     .media-section {
-        margin-top: 8px;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border);
+    }
+    .media-section h2 {
+        margin: 0 0 12px;
+        font-size: 1.1rem;
     }
     .media-grid {
         display: grid;
@@ -152,6 +106,65 @@
         border-radius: 999px;
         font-size: 11px;
     }
+    .media-remove-btn {
+        position: absolute;
+        right: 8px;
+        top: 8px;
+        border: none;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: rgba(15, 23, 42, 0.8);
+        color: #fff;
+        font-size: 18px;
+        line-height: 1;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+    }
+    .media-remove-btn:hover {
+        background: rgba(239, 68, 68, 0.9);
+    }
+    .new-media-preview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 10px;
+        margin-top: 12px;
+    }
+    .new-media-preview-card {
+        position: relative;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        background: var(--surface-soft);
+        aspect-ratio: 1;
+    }
+    .new-media-preview-card img, .new-media-preview-card video {
+        width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .media-remove-btn {
+        position: absolute;
+        right: 8px;
+        top: 8px;
+        border: none;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: rgba(15, 23, 42, 0.8);
+        color: #fff;
+        font-size: 18px;
+        line-height: 1;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+    }
+    .media-remove-btn:hover {
+        background: rgba(239, 68, 68, 0.9);
+    }
 
     .form-actions {
         margin-top: 24px;
@@ -174,16 +187,6 @@
         border: 1px solid rgba(239,68,68,0.3);
     }
 
-    .attr-preview {
-        margin-top: 8px;
-        padding: 10px 12px;
-        background: var(--surface-soft);
-        border: 1px dashed var(--border);
-        border-radius: 8px;
-        font-size: 12px;
-        color: var(--muted);
-    }
-
     @media (max-width: 640px) {
         .form-grid { grid-template-columns: 1fr; }
         .form-card { padding: 18px; }
@@ -195,19 +198,7 @@
 <div class="edit-wrap">
 <div class="page-head">
     <a class="back" href="/my-products">← Назад до моїх товарів</a>
-    <h1>
-        Редагування товару
-        {% if product.product_type == 'digital' %}
-            <span class="badge-type digital">💾 Цифровий</span>
-        {% elif product.product_type == 'game_item' %}
-            <span class="badge-type game_item">🎮 Ігровий</span>
-        {% else %}
-            <span class="badge-type physical">📦 Фізичний</span>
-        {% endif %}
-        {% if product.is_draft %}
-            <span class="badge-draft">📝 Чернетка</span>
-        {% endif %}
-    </h1>
+    <h1>Редагування товару</h1>
     <p style="color: var(--muted); margin: 0;">
         #{{ product.id }} — <a href="/products/{{ product.id }}" target="_blank" rel="noopener">Переглянути на сайті</a>
     </p>
@@ -218,159 +209,165 @@
 {% endif %}
 
 <div class="form-card">
-    <form id="edit-product-form" action="/products/{{ product.id }}/edit" method="post" enctype="multipart/form-data">
-        <div class="form-section">
-            <div class="section-title">📋 Основна інформація</div>
-            <div class="form-grid">
-                <div class="form-group full">
-                    <label for="title">Назва товару *</label>
-                    <input id="title" name="title" type="text" maxlength="250" required value="{{ product.title|e }}" />
-                </div>
+    <form action="/products/{{ product.id }}/edit" method="post" enctype="multipart/form-data">
+        <div class="form-grid">
+            <div class="form-group full">
+                <label for="title">Назва товару *</label>
+                <input id="title" name="title" type="text" maxlength="250" required value="{{ product.title|e }}" />
+            </div>
 
-                <div class="form-group">
-                    <label for="product_type">Тип товару *</label>
-                    <select id="product_type" name="product_type" required>
-                        <option value="physical" {% if product.product_type == 'physical' %}selected{% endif %}>📦 Фізичний товар</option>
-                        <option value="digital" {% if product.product_type == 'digital' %}selected{% endif %}>💾 Цифровий товар / файл</option>
-                        <option value="game_item" {% if product.product_type == 'game_item' %}selected{% endif %}>🎮 Ігровий предмет / послуга</option>
-                    </select>
-                </div>
+            <div class="form-group full">
+                <label for="description">Опис *</label>
+                <textarea id="description" name="description" required>{{ product.description|e }}</textarea>
+            </div>
 
-                <div class="form-group">
-                    <label for="sku">Артикул (SKU)</label>
-                    <input id="sku" name="sku" type="text" maxlength="120" value="{{ (product.sku or '')|e }}" placeholder="Напр. SKU-001" />
-                </div>
+            <div class="form-group full">
+                <label for="category_slug">Категорія / Підкатегорія</label>
+                <select id="category_slug" name="category"
+                        data-product-type-auto="1">
+                    <option value="" {% if not product.category_slug %}selected{% endif %}>Оберіть категорію / підкатегорію</option>
+                    <optgroup label="Автотовари">
+                        <option value="auto" data-product-type="physical" {% if product.category_slug in ["auto", "avtotovary", "21"] %}selected{% endif %}>Автотовари (Вся категорія)</option>
+                        <option value="auto_parts" data-product-type="physical" {% if product.category_slug in ["auto_parts", "zapchastyny", "22"] %}selected{% endif %}>Запчастини</option>
+                        <option value="auto_chem" data-product-type="physical" {% if product.category_slug in ["auto_chem", "avtokhimiya", "23"] %}selected{% endif %}>Автохімія</option>
+                        <option value="auto_interior" data-product-type="physical" {% if product.category_slug in ["auto_interior", "salon", "24"] %}selected{% endif %}>Салон</option>
+                    </optgroup>
+                    <optgroup label="Дім та сад">
+                        <option value="home_garden" data-product-type="physical" {% if product.category_slug in ["home_garden", "dim-ta-sad", "11"] %}selected{% endif %}>Дім та сад (Вся категорія)</option>
+                        <option value="furniture" data-product-type="physical" {% if product.category_slug in ["furniture", "mebli", "12"] %}selected{% endif %}>Меблі</option>
+                        <option value="home_decor" data-product-type="physical" {% if product.category_slug in ["home_decor", "dekor", "13"] %}selected{% endif %}>Декор</option>
+                        <option value="tools" data-product-type="physical" {% if product.category_slug in ["tools", "instrumenty", "14"] %}selected{% endif %}>Інструменти</option>
+                        <option value="tableware" data-product-type="physical" {% if product.category_slug in ["tableware", "posud", "15"] %}selected{% endif %}>Посуд</option>
+                    </optgroup>
+                    <optgroup label="Електроніка">
+                        <option value="electronics" data-product-type="physical" {% if product.category_slug in ["electronics", "elektronika", "1"] %}selected{% endif %}>Електроніка (Вся категорія)</option>
+                        <option value="smartphones" data-product-type="physical" {% if product.category_slug in ["smartphones", "smartfony", "2"] %}selected{% endif %}>Смартфони</option>
+                        <option value="laptops" data-product-type="physical" {% if product.category_slug in ["laptops", "noutbuki", "3"] %}selected{% endif %}>Ноутбуки</option>
+                        <option value="components" data-product-type="physical" {% if product.category_slug in ["components", "komplektuyuchi", "4"] %}selected{% endif %}>Комплектуючі</option>
+                        <option value="accessories" data-product-type="physical" {% if product.category_slug in ["accessories", "aksesuary", "5"] %}selected{% endif %}>Аксесуари</option>
+                    </optgroup>
+                    <optgroup label="Краса та здоров'я">
+                        <option value="beauty_health" data-product-type="physical" {% if product.category_slug in ["beauty_health", "krasa-ta-zdorovya", "29"] %}selected{% endif %}>Краса та здоров'я (Вся категорія)</option>
+                        <option value="cosmetics" data-product-type="physical" {% if product.category_slug in ["cosmetics", "kosmetyka", "30"] %}selected{% endif %}>Косметика</option>
+                        <option value="perfumery" data-product-type="physical" {% if product.category_slug in ["perfumery", "parfumeriya", "31"] %}selected{% endif %}>Парфумерія</option>
+                        <option value="care" data-product-type="physical" {% if product.category_slug in ["care", "dohlyad", "32"] %}selected{% endif %}>Догляд</option>
+                    </optgroup>
+                    <optgroup label="Крафт та Хендмейд">
+                        <option value="craft" data-product-type="physical" {% if product.category_slug in ["craft", "kraft-ta-hendmeyd", "33"] %}selected{% endif %}>Крафт та Хендмейд (Вся категорія)</option>
+                        <option value="jewelry" data-product-type="physical" {% if product.category_slug in ["jewelry", "prykrasy", "34"] %}selected{% endif %}>Прикраси</option>
+                        <option value="handmade_decor" data-product-type="physical" {% if product.category_slug in ["handmade_decor", "dekor-ruchnoyi-roboty", "35"] %}selected{% endif %}>Декор ручної роботи</option>
+                    </optgroup>
+                    <optgroup label="Одяг та взуття">
+                        <option value="clothing" data-product-type="physical" {% if product.category_slug in ["clothing", "odyag-ta-vzuttya", "6"] %}selected{% endif %}>Одяг та взуття (Вся категорія)</option>
+                        <option value="mens" data-product-type="physical" {% if product.category_slug in ["mens", "cholovichiy", "7"] %}selected{% endif %}>Чоловічий</option>
+                        <option value="womens" data-product-type="physical" {% if product.category_slug in ["womens", "zhinochiy", "8"] %}selected{% endif %}>Жіночий</option>
+                        <option value="kids_clothes" data-product-type="physical" {% if product.category_slug in ["kids_clothes", "dityachiy", "9"] %}selected{% endif %}>Дитячий</option>
+                        <option value="shoes" data-product-type="physical" {% if product.category_slug in ["shoes", "vzuttia", "10"] %}selected{% endif %}>Взуття</option>
+                    </optgroup>
+                    <optgroup label="Спорт та відпочинок">
+                        <option value="sports" data-product-type="physical" {% if product.category_slug in ["sports", "sport-ta-vidpochynok", "25"] %}selected{% endif %}>Спорт та відпочинок (Вся категорія)</option>
+                        <option value="fitness" data-product-type="physical" {% if product.category_slug in ["fitness", "trenazhery", "26"] %}selected{% endif %}>Тренажери</option>
+                        <option value="tourism" data-product-type="physical" {% if product.category_slug in ["tourism", "turystychni-tovary", "27"] %}selected{% endif %}>Туризм</option>
+                        <option value="bicycles" data-product-type="physical" {% if product.category_slug in ["bicycles", "velosyped", "28"] %}selected{% endif %}>Велосипеди</option>
+                    </optgroup>
+                    <optgroup label="Цифрові товари">
+                        <option value="digital_goods" data-product-type="digital" {% if product.category_slug in ["digital_goods", "tsyfrovi-tovary", "16"] %}selected{% endif %}>Цифрові товари (Вся категорія)</option>
+                        <option value="games" data-product-type="game_item" {% if product.category_slug in ["games", "igry", "17"] %}selected{% endif %}>Ігри</option>
+                        <option value="software" data-product-type="digital" {% if product.category_slug in ["software", "soft", "18"] %}selected{% endif %}>Софт</option>
+                        <option value="accounts" data-product-type="game_item" {% if product.category_slug in ["accounts", "rahunky", "19"] %}selected{% endif %}>Акаунти</option>
+                        <option value="courses" data-product-type="digital" {% if product.category_slug in ["courses", "kursy", "20"] %}selected{% endif %}>Курси</option>
+                    </optgroup>
+                </select>
+                <div class="form-help">Після вибору категорії ми підкажемо бажаний тип товару. Ви завжди зможете змінити його вручну нижче.</div>
+            </div>
 
-                <div class="form-group">
-                    <label for="price">Ціна (₴) *</label>
-                    <input id="price" name="price" type="number" min="0" step="1" required value="{{ product.price }}" />
-                </div>
+            <div class="form-group">
+                <label for="product_type">Тип товару</label>
+                <select id="product_type" name="product_type">
+                    <option value="physical" {% if product.product_type == 'physical' %}selected{% endif %}>Фізичний товар</option>
+                    <option value="digital" {% if product.product_type == 'digital' %}selected{% endif %}>Цифровий товар</option>
+                    <option value="game_item" {% if product.product_type in ['game_item', 'game'] %}selected{% endif %}>Ігровий / аккаунт</option>
+                </select>
+            </div>
 
-                <div class="form-group">
-                    <label for="sale_price">Ціна зі знижкою (₴)</label>
-                    <input id="sale_price" name="sale_price" type="number" min="0" step="0.01" value="{{ product.sale_price if product.sale_price is not none else '' }}" placeholder="Необов'язково" />
-                    <div class="form-help">Якщо вказано — відображатиметься як акційна ціна</div>
-                </div>
+            <div class="form-group">
+                <label for="price">Ціна (₴) *</label>
+                <input id="price" name="price" type="number" min="0" step="1" required value="{{ product.price }}" />
+            </div>
 
-                <div class="form-group" data-stock-field>
-                    <label for="quantity">Кількість на складі (stock) *</label>
-                    <input id="quantity" name="quantity" type="number" min="0" step="1" required value="{{ product.quantity }}" />
-                    <div class="form-help">Встановіть 0, якщо товар тимчасово закінчився</div>
-                </div>
+            <div class="form-group">
+                <label for="sale_price">Знижена ціна</label>
+                <input id="sale_price" name="sale_price" type="number" min="0" step="1" value="{{ product.sale_price if product.sale_price is not none else '' }}" />
+            </div>
 
-                <div class="form-group">
-                    <label for="seller_phone">Телефон продавця</label>
-                    <input id="seller_phone" name="seller_phone" type="tel" value="{{ (product.seller_phone or '')|e }}" />
-                    <div class="form-help">Залиште порожнім, щоб використати телефон з профілю</div>
-                </div>
+            <div class="form-group">
+                <label for="quantity">Кількість на складі *</label>
+                <input id="quantity" name="quantity" type="number" min="0" step="1" required value="{{ product.quantity }}" />
+                <div class="form-help">Встановіть 0, якщо товар тимчасово закінчився</div>
+            </div>
 
-                <div class="form-group">
-                    <label>&nbsp;</label>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="is_draft" name="is_draft" {% if product.is_draft %}checked{% endif %} />
-                        <span for="is_draft">📝 Чернетка (не публікувати)</span>
-                    </div>
-                </div>
+            <div class="form-group">
+                <label for="sku">SKU / артикул</label>
+                <input id="sku" name="sku" type="text" maxlength="80" value="{{ product.sku or ''|e }}" />
+            </div>
+
+            <div class="form-group full">
+                <label for="seller_phone">Телефон продавця</label>
+                <input id="seller_phone" name="seller_phone" type="tel" value="{{ (product.seller_phone or '')|e }}" />
+                <div class="form-help">Залиште порожнім, щоб використати телефон з вашого профілю</div>
+            </div>
+
+            <div class="form-group full">
+                <label for="tags">Теги</label>
+                <input id="tags" name="tags" type="text" value="{{ (product.tags or '')|join(', ') if product.tags is defined and product.tags else '' }}" placeholder="Наприклад: новинка, попит, xbox" />
+            </div>
+
+            <div class="form-group full">
+                <label for="attributes">Характеристики</label>
+                <input id="attributes" name="attributes" type="text" value="{{ product.attributes|e if product.attributes else '' }}" placeholder="key:value; key2:value2" />
+            </div>
+
+            <div class="form-group full" id="digital_content_field" {% if product.product_type not in ['digital', 'game', 'game_item'] %}style="display:none;"{% endif %}>
+                <label for="digital_content">Вміст цифрового товару / доступ</label>
+                <textarea id="digital_content" name="digital_content" rows="4" placeholder="Посилання або інструкції для покупця">{{ product.digital_content or ''|e }}</textarea>
+            </div>
+
+            <div class="form-group full">
+                <label style="display:flex; align-items:center; gap:10px; margin-top:6px;">
+                    <input id="is_draft" name="is_draft" type="checkbox" {% if product.is_draft %}checked{% endif %}>
+                    <span>Зберегти як чернетку</span>
+                </label>
+            </div>
+
+            <div class="form-group full">
+                <label for="file">Додати нове фото/відео</label>
+                <input id="file" name="file" type="file" accept="image/*,video/*" multiple />
+                <div class="form-help">Необов'язково. Можна вибрати декілька файлів; перед відправкою ви можете прибрати зайві.</div>
+                <div id="new-media-preview" class="new-media-preview-grid"></div>
             </div>
         </div>
 
-        <div class="form-section">
-            <div class="section-title">📝 Опис</div>
-            <div class="form-grid">
-                <div class="form-group full">
-                    <label for="description">Опис товару *</label>
-                    <textarea id="description" name="description" required rows="5">{{ product.description|e }}</textarea>
+        {% if product.media %}
+            <div class="media-section">
+                <h2>Поточні медіа ({{ product.media|length }})</h2>
+                <div class="media-grid">
+                    {% for m in product.media %}
+                        <div class="media-item" data-media-id="{{ m.id }}">
+                            <button type="button" class="media-remove-btn" data-delete-media-id="{{ m.id }}" aria-label="Видалити медіа">×</button>
+                            {% if m.media_type == 'video' %}
+                                <span class="media-tag">▶ Відео</span>
+                                <video src="{{ m.file_path }}" preload="metadata"></video>
+                            {% else %}
+                                <img src="{{ m.file_path }}" alt="Медіа #{{ m.id }}" />
+                            {% endif %}
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
-        </div>
-
-        <div class="form-section" id="digital-section" style="{% if product.product_type not in ['digital','game_item'] %}display:none;{% endif %}">
-            <div class="section-title">💾 Цифровий / ігровий вміст</div>
-            <div class="form-grid">
-                <div class="form-group full">
-                    <label for="digital_content">Цифровий ключ / Посилання на файл / Текстовий вміст</label>
-                    <textarea id="digital_content" name="digital_content" rows="4" placeholder="URL для завантаження, ліцензійний ключ, код активації, логін:пароль тощо.&#10;Буде доступно покупцю після успішної оплати.">{{ (product.digital_content or '')|e }}</textarea>
-                    <div class="form-help">Поле видиме лише для типів «Цифровий» та «Ігровий»</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="form-section type-specific type-physical" data-type="physical" {% if product.product_type != 'physical' %}style="display:none;"{% endif %}>
-            <div class="section-title">📦 Параметри фізичного товару</div>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="weight_dimensions">Вага / Габарити</label>
-                    <input id="weight_dimensions" name="weight_dimensions" type="text" maxlength="200" value="{{ (product.weight_dimensions or '')|e }}" placeholder="Напр. 500г, 20×15×5 см" />
-                </div>
-                <div class="form-group">
-                    <label for="shipping_options">Варіанти доставки</label>
-                    <input id="shipping_options" name="shipping_options" type="text" maxlength="250" value="{{ (product.shipping_options or '')|e }}" placeholder="Нова Пошта, Укрпошта, самовивіз" />
-                </div>
-            </div>
-        </div>
-
-        <div class="form-section type-specific type-game_item" data-type="game_item" {% if product.product_type != 'game_item' %}style="display:none;"{% endif %}>
-            <div class="section-title">🎮 Параметри ігрового товару</div>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="platform_server">Сервер / Платформа</label>
-                    <input id="platform_server" name="platform_server" type="text" maxlength="200" value="{{ (product.platform_server or '')|e }}" placeholder="Steam, PS5, WoW: Голдринн" />
-                </div>
-                <div class="form-group">
-                    <label for="rarity">Рідкісність (Rarity)</label>
-                    <input id="rarity" name="rarity" type="text" maxlength="120" value="{{ (product.rarity or '')|e }}" placeholder="Common / Rare / Epic / Legendary" />
-                </div>
-                <div class="form-group full">
-                    <label for="execution_time">Час виконання / передачі</label>
-                    <input id="execution_time" name="execution_time" type="text" maxlength="200" value="{{ (product.execution_time or '')|e }}" placeholder="Напр. 10-15 хв після оплати" />
-                </div>
-            </div>
-        </div>
-
-        <div class="form-section">
-            <div class="section-title">⚙️ Додаткові характеристики</div>
-            <div class="form-grid">
-                <div class="form-group full">
-                    <label for="attributes_raw">Специфічні характеристики</label>
-                    <textarea id="attributes_raw" name="attributes_raw" rows="5" placeholder="Формат: ключ: значення (кожен з нового рядка)&#10;------------------------------------------------&#10;Колір: Чорний&#10;Розмір: M&#10;Матеріал: Бавовна&#10;&#10;Або коректний JSON:&#10;{&quot;Колір&quot;: &quot;Чорний&quot;, &quot;Розмір&quot;: &quot;M&quot;}">{{ (product.attributes_text or '')|e }}</textarea>
-                    <div class="form-help">
-                        Не дублюйте поля, що вже заповнені у типових секціях вище. Інші характеристики вводьте тут.
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="form-section physical-only">
-            <div class="section-title">📸 Медіа файли</div>
-            <div class="form-grid">
-                <div class="form-group full">
-                    <label for="file">Додати нове фото / відео</label>
-                    <input id="file" name="file" type="file" accept="image/*,video/*" />
-                    <div class="form-help">Необов'язково. Можна додати лише 1 файл за раз; вже завантажені медіа залишаються.</div>
-                </div>
-            </div>
-
-            {% if product.media %}
-                <div class="media-section">
-                    <h4 style="margin: 14px 0 10px; font-size: 0.95rem;">Поточні медіа ({{ product.media|length }})</h4>
-                    <div class="media-grid">
-                        {% for m in product.media %}
-                            <div class="media-item">
-                                {% if m.media_type == 'video' %}
-                                    <span class="media-tag">▶ Відео</span>
-                                    <video src="{{ m.file_path }}" preload="metadata"></video>
-                                {% else %}
-                                    <img src="{{ m.file_path }}" alt="Медіа #{{ m.id }}" />
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            {% endif %}
-        </div>
+        {% endif %}
 
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary">💾 Зберегти зміни</button>
+            <button type="submit" class="btn btn-primary">Зберегти зміни</button>
             <a href="/my-products" class="btn btn-outline">Скасувати</a>
         </div>
     </form>
@@ -378,20 +375,174 @@
 </div>
 
 <script>
-(function () {
-    const typeSelect = document.getElementById('product_type');
-    const form = document.getElementById('edit-product-form');
-
-    function syncProductType() {
-        if (!typeSelect || !window.toggleProductTypeFields) return;
-        window.toggleProductTypeFields(typeSelect.value, form);
+    function rebuildInputFiles(input, files) {
+        const dataTransfer = new DataTransfer();
+        files.forEach((file) => dataTransfer.items.add(file));
+        input.files = dataTransfer.files;
     }
 
-    if (typeSelect) {
-        typeSelect.addEventListener('change', syncProductType);
+    function renderNewMediaPreview(input, previewContainer) {
+        previewContainer.innerHTML = '';
+        const files = Array.from(input.files || []);
+        if (!files.length) {
+            return;
+        }
+
+        files.forEach((file, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'new-media-preview-card';
+            const src = URL.createObjectURL(file);
+            const preview = document.createElement(file.type.startsWith('video/') ? 'video' : 'img');
+            preview.src = src;
+            preview.style.width = '100%';
+            preview.style.height = '100%';
+            preview.style.objectFit = 'cover';
+            preview.style.display = 'block';
+            if (preview.tagName === 'VIDEO') {
+                preview.muted = true;
+                preview.playsInline = true;
+            }
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.textContent = '×';
+            removeBtn.className = 'media-remove-btn';
+            removeBtn.addEventListener('click', function () {
+                const remaining = Array.from(input.files || []).filter((_, i) => i !== index);
+                rebuildInputFiles(input, remaining);
+                renderNewMediaPreview(input, previewContainer);
+            });
+
+            wrapper.appendChild(preview);
+            wrapper.appendChild(removeBtn);
+            previewContainer.appendChild(wrapper);
+        });
     }
-    document.addEventListener('DOMContentLoaded', syncProductType);
-    syncProductType();
-})();
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const productTypeSelect = document.getElementById('product_type');
+        const categorySelect = document.getElementById('category_slug');
+        const digitalContentField = document.getElementById('digital_content_field');
+        let userOverriddenType = false;
+
+        function triggerSelectChange(el) {
+            try {
+                const ev = new Event('change', { bubbles: true });
+                el.dispatchEvent(ev);
+            } catch (e) {}
+        }
+
+        function updateProductTypeFields() {
+            const selected = productTypeSelect ? productTypeSelect.value : 'physical';
+            if (digitalContentField) {
+                const isVisible = selected === 'digital' || selected === 'game_item' || selected === 'game';
+                digitalContentField.style.display = isVisible ? 'block' : 'none';
+            }
+        }
+
+        function autoSuggestProductTypeFromCategory() {
+            if (!categorySelect || !productTypeSelect) return;
+            if (userOverriddenType) return;
+            const option = categorySelect.options[categorySelect.selectedIndex];
+            if (!option) return;
+            let suggested = (option.getAttribute('data-product-type') || '').trim().toLowerCase();
+            if (!suggested) {
+                const optVal = (option.value || '').toLowerCase();
+                if (optVal === 'games' || optVal === 'accounts' || optVal === 'igry' || optVal === 'rahunky') {
+                    suggested = 'game_item';
+                } else if (optVal === 'software' || optVal === 'courses' || optVal === 'digital_goods' || optVal === 'soft' || optVal === 'kursy' || optVal === 'tsyfrovi-tovary') {
+                    suggested = 'digital';
+                }
+            }
+
+            const allowed = ['physical', 'digital', 'game_item', 'game'];
+            if (suggested && allowed.indexOf(suggested) !== -1) {
+                let targetVal = suggested;
+                let hasDirectOption = false;
+                for (let i = 0; i < productTypeSelect.options.length; i++) {
+                    if (productTypeSelect.options[i].value === targetVal) {
+                        hasDirectOption = true;
+                        break;
+                    }
+                }
+                if (!hasDirectOption && targetVal === 'game_item') {
+                    for (let i = 0; i < productTypeSelect.options.length; i++) {
+                        if (productTypeSelect.options[i].value === 'game') {
+                            targetVal = 'game';
+                            break;
+                        }
+                    }
+                }
+
+                if (productTypeSelect.value !== targetVal) {
+                    productTypeSelect.value = targetVal;
+                    triggerSelectChange(productTypeSelect);
+                }
+            }
+            updateProductTypeFields();
+        }
+
+        if (categorySelect) {
+            categorySelect.addEventListener('click', function (e) {
+                e.stopPropagation();
+            });
+            categorySelect.addEventListener('change', function (e) {
+                e.stopPropagation();
+                autoSuggestProductTypeFromCategory();
+            });
+        }
+
+        if (productTypeSelect) {
+            productTypeSelect.addEventListener('change', function () {
+                userOverriddenType = true;
+                updateProductTypeFields();
+            });
+            productTypeSelect.addEventListener('click', function () {
+                userOverriddenType = true;
+            });
+            updateProductTypeFields();
+            autoSuggestProductTypeFromCategory();
+        }
+
+        const newMediaInput = document.getElementById('file');
+        const newMediaPreview = document.getElementById('new-media-preview');
+        if (newMediaInput && newMediaPreview) {
+            newMediaInput.addEventListener('change', function () {
+                renderNewMediaPreview(newMediaInput, newMediaPreview);
+            });
+        }
+
+        document.querySelectorAll('[data-delete-media-id]').forEach(function (button) {
+            button.addEventListener('click', async function () {
+                const mediaId = this.dataset.deleteMediaId;
+                if (!mediaId) return;
+
+                const confirmed = window.confirm('Видалити це фото/відео?');
+                if (!confirmed) return;
+
+                try {
+                    const response = await fetch(`/api/v1/products/media/${mediaId}`, {
+                        method: 'DELETE',
+                        credentials: 'include',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        throw new Error(payload.detail || 'Не вдалося видалити медіа.');
+                    }
+
+                    const mediaItem = this.closest('.media-item');
+                    if (mediaItem) {
+                        mediaItem.remove();
+                    }
+                } catch (error) {
+                    alert(error.message || 'Не вдалося видалити медіа.');
+                }
+            });
+        });
+    });
 </script>
 {% endblock %}

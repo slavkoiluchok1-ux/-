@@ -65,31 +65,6 @@
         color: var(--muted);
     }
 
-    .product-type-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 10px;
-        border-radius: 999px;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.02em;
-        color: white;
-        margin-top: 8px;
-    }
-
-    .product-type-physical { background: #2563eb; }
-    .product-type-digital { background: #16a34a; }
-    .product-type-game_item { background: #7c3aed; }
-
-    .stock-warning {
-        color: #fbbf24;
-        font-size: 12px;
-        margin-top: 4px;
-        min-height: 18px;
-        display: block;
-    }
-
     .quantity-field {
         display: flex;
         flex-direction: column;
@@ -183,70 +158,51 @@
         const reviewForm = document.getElementById('review-form');
         const reviewError = document.getElementById('review-error');
         const productId = Number('{{ product.id }}');
-        const maxStock = Number('{{ product.stock }}') || 0;
+        const maxStock = Number('{{ product.stock|default(product.quantity) }}') || 0;
+        const isMyProduct = {{ 'true' if current_user and current_user.id == product.user_id else 'false' }};
         const quantityInput = document.getElementById('cart-quantity');
+        const quantityWarning = document.getElementById('cart-quantity-warning');
         const addToCartBtn = document.querySelector('.add-to-cart');
-        const stockWarning = document.getElementById('stock-warning');
 
-        function syncCartQuantityState() {
+        function updateQuantityValidation() {
             if (!quantityInput) return;
-            const parsed = Number(quantityInput.value || 1);
-            const safeValue = Number.isFinite(parsed) ? Math.max(1, Math.min(parsed, maxStock || 1)) : 1;
-            quantityInput.value = String(safeValue);
-            quantityInput.setAttribute('max', String(maxStock));
+            quantityInput.max = String(maxStock);
 
-            const isBlocked = maxStock <= 0 || safeValue > maxStock;
-            if (addToCartBtn) {
-                addToCartBtn.disabled = isBlocked;
-            }
-            if (stockWarning) {
-                if (maxStock <= 0) {
-                    stockWarning.textContent = 'Немає в наявності';
-                } else if (safeValue > maxStock) {
-                    stockWarning.textContent = `Максимально доступна кількість: ${maxStock}`;
-                } else {
-                    stockWarning.textContent = '';
+            if (isMyProduct || maxStock <= 0) {
+                quantityInput.value = '0';
+                if (quantityWarning) {
+                    quantityWarning.textContent = isMyProduct ? 'Це ваш товар' : 'Товар наразі відсутній на складі';
+                    quantityWarning.style.display = 'block';
                 }
+                if (addToCartBtn) addToCartBtn.disabled = true;
+                return;
             }
+
+            let value = Number(quantityInput.value || 1);
+            if (!Number.isFinite(value) || value < 1) {
+                value = 1;
+            }
+            if (value > maxStock) {
+                value = maxStock;
+                quantityInput.value = String(value);
+                if (quantityWarning) {
+                    quantityWarning.textContent = `Максимально доступна кількість: ${maxStock}`;
+                    quantityWarning.style.display = 'block';
+                }
+            } else if (quantityWarning) {
+                quantityWarning.style.display = 'none';
+                quantityWarning.textContent = '';
+            }
+
+            if (addToCartBtn) addToCartBtn.disabled = value > maxStock || maxStock <= 0;
         }
 
-        quantityInput?.addEventListener('input', function () {
-            const current = Number(this.value || 0);
-            if (Number.isFinite(current) && current > maxStock && maxStock > 0) {
-                this.value = String(maxStock);
-            }
-            if (maxStock <= 0) {
-                this.value = '0';
-            }
-            syncCartQuantityState();
-        });
-
-        quantityInput?.addEventListener('change', function () {
-            const current = Number(this.value || 0);
-            if (maxStock <= 0) {
-                this.value = '0';
-            } else if (Number.isFinite(current) && current > maxStock) {
-                this.value = String(maxStock);
-            }
-            syncCartQuantityState();
-        });
-
-        syncCartQuantityState();
-
-        document.querySelectorAll('[data-report-target]').forEach((btn) => {
-            btn.addEventListener('click', function () {
-                {% if not current_user %}
-                window.location.href = '/login';
-                {% else %}
-                const productId = this.dataset.productId || '';
-                const userId = this.dataset.userId || '';
-                const commentId = this.dataset.commentId || '';
-                if (typeof window.openReportModal === 'function') {
-                    window.openReportModal({ productId, userId, commentId });
-                }
-                {% endif %}
-            });
-        });
+        if (quantityInput) {
+            quantityInput.setAttribute('max', String(maxStock));
+            quantityInput.addEventListener('input', updateQuantityValidation);
+            quantityInput.addEventListener('change', updateQuantityValidation);
+        }
+        updateQuantityValidation();
 
         reviewForm?.addEventListener('submit', async function (event) {
             event.preventDefault();
@@ -278,15 +234,22 @@
 
         document.querySelectorAll('.add-to-cart').forEach((button) => {
             button.addEventListener('click', async function () {
+                if (isMyProduct || maxStock <= 0) {
+                    return;
+                }
+
                 const quantityInput = document.getElementById('cart-quantity');
                 const quantity = Math.max(1, Number(quantityInput?.value || 1));
                 const originalText = this.textContent;
+
+                this.disabled = true;
+                this.textContent = 'Додається...';
 
                 try {
                     const response = await fetch('/api/v1/cart/add', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
+                        credentials: 'same-origin',
                         body: JSON.stringify({
                             product_id: productId,
                             quantity: quantity
@@ -294,83 +257,142 @@
                     });
 
                     if (window.handleAuthRedirect && window.handleAuthRedirect(response)) {
+                        this.disabled = false;
+                        this.textContent = originalText;
                         return;
                     }
 
                     const payload = await response.json().catch(() => ({}));
                     if (!response.ok) {
-                        if (window.flashButtonText) {
-                            window.flashButtonText(this, 'Помилка ✗', originalText, 2000);
-                        }
-                        return;
+                        const detail = payload.detail || 'Не вдалося додати товар до кошика';
+                        const errorMsg = Array.isArray(detail)
+                            ? detail.map((item) => item.msg || item).join(', ')
+                            : String(detail);
+                        throw new Error(errorMsg);
                     }
 
-                    if (window.flashButtonText) {
-                        window.flashButtonText(this, 'Додано ✓', originalText, 2000);
+                    if (window.showToast) {
+                        window.showToast(payload.message || `Товар додано в кошик (${quantity} шт.)`, {
+                            type: 'success',
+                            title: 'Кошик оновлено',
+                            duration: 2800
+                        });
                     }
                     if (typeof updateCartCount === 'function') {
                         updateCartCount();
                     }
                 } catch (error) {
-                    if (window.flashButtonText) {
+                    console.error('[Product detail add to cart] error:', error);
+                    if (window.showToast) {
+                        window.showToast(error.message || 'Не вдалося додати товар до кошика', {
+                            type: 'error',
+                            title: 'Помилка додавання',
+                            duration: 4500
+                        });
+                    } else if (window.flashButtonText) {
                         window.flashButtonText(this, 'Помилка ✗', originalText, 2000);
                     }
+                } finally {
+                    this.disabled = false;
+                    this.textContent = originalText;
                 }
             });
         });
 
+        function setFavoriteButtonState(button, isFavorite) {
+            if (!button) return;
+            button.textContent = isFavorite ? 'Видалити з обраного' : 'Додати в обране';
+            button.classList.toggle('favorite-active', isFavorite);
+            button.setAttribute('aria-pressed', String(isFavorite));
+        }
+
+        async function syncFavoriteButtonState() {
+            const buttons = document.querySelectorAll('.favorite-btn[data-product-id]');
+            if (!buttons.length) return;
+
+            try {
+                const response = await fetch('/api/v1/favorites', {
+                    credentials: 'same-origin',
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (response.status === 401) return;
+                if (!response.ok) return;
+                const favorites = await response.json();
+                const favoriteIds = new Set((favorites || []).map((item) => Number(item.product_id)));
+
+                buttons.forEach((button) => {
+                    const pid = Number(button.dataset.productId);
+                    setFavoriteButtonState(button, favoriteIds.has(pid));
+                });
+            } catch (error) {
+                console.warn('[Favorite sync] failed:', error);
+                buttons.forEach((button) => setFavoriteButtonState(button, false));
+            }
+        }
+
         document.querySelectorAll('.favorite-btn').forEach((button) => {
             button.addEventListener('click', async function () {
                 const originalText = this.textContent;
+                const nextState = !this.classList.contains('favorite-active');
+
+                this.disabled = true;
+                this.textContent = nextState ? 'Додається...' : 'Видаляється...';
+
                 try {
                     const response = await fetch(`/api/v1/favorites/${productId}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include'
+                        credentials: 'same-origin',
+                        body: JSON.stringify({})
                     });
 
                     if (window.handleAuthRedirect && window.handleAuthRedirect(response)) {
+                        this.disabled = false;
+                        this.textContent = originalText;
                         return;
                     }
 
                     const payload = await response.json().catch(() => ({}));
                     if (!response.ok) {
-                        if (window.flashButtonText) {
-                            window.flashButtonText(this, 'Помилка ✗', originalText, 2000);
-                        }
-                        return;
+                        const detail = payload.detail || 'Не вдалося оновити обране';
+                        const errorMsg = Array.isArray(detail)
+                            ? detail.map((item) => item.msg || item).join(', ')
+                            : String(detail);
+                        throw new Error(errorMsg);
                     }
 
-                    const isAdded = (payload.message || '').includes('додано');
-                    if (isAdded) {
-                        button.textContent = 'В обран ✓';
-                        button.classList.remove('btn-outline');
-                        button.classList.add('btn-primary');
-                        setTimeout(() => {
-                            if (typeof updateFavoritesCount === 'function') {
-                                updateFavoritesCount();
-                            }
-                        }, 50);
-                    } else {
-                        button.textContent = 'Видалено ✓';
-                        button.classList.remove('btn-primary');
-                        button.classList.add('btn-outline');
-                        setTimeout(() => {
-                            if (typeof updateFavoritesCount === 'function') {
-                                updateFavoritesCount();
-                            }
-                        }, 50);
-                        setTimeout(() => {
-                            button.textContent = 'В обране';
-                        }, 2000);
+                    setFavoriteButtonState(this, nextState);
+                    if (typeof updateFavoritesCount === 'function') {
+                        updateFavoritesCount();
+                    }
+                    if (window.showToast) {
+                        window.showToast(payload.message || (nextState ? 'Товар додано до обраного' : 'Товар видалено з обраного'), {
+                            type: 'success',
+                            title: nextState ? 'Додано в обране' : 'Видалено з обраного',
+                            duration: 2500
+                        });
                     }
                 } catch (error) {
-                    if (window.flashButtonText) {
+                    console.error('[Favorite toggle] error:', error);
+                    if (window.showToast) {
+                        window.showToast(error.message || 'Не вдалося оновити обране', {
+                            type: 'error',
+                            title: 'Помилка',
+                            duration: 4200
+                        });
+                    } else if (window.flashButtonText) {
                         window.flashButtonText(this, 'Помилка ✗', originalText, 2000);
+                    }
+                } finally {
+                    this.disabled = false;
+                    if (!this.classList.contains('favorite-active')) {
+                        this.textContent = originalText;
                     }
                 }
             });
         });
+
+        syncFavoriteButtonState();
 
     });
 </script>
@@ -404,21 +426,6 @@
             </div>
 
             <p class="product-description">{{ product.description }}</p>
-
-            {% if product.product_type in ['digital', 'game_item'] %}
-                <div class="product-locked-content">
-                    {% if can_view_digital_content %}
-                        <h3>Вміст для покупця</h3>
-                        <pre class="digital-content-box">{{ product.digital_content or 'Вміст відсутній.' }}</pre>
-                    {% elif current_user and current_user.id != product.user_id %}
-                        <div class="info-box warning">Цей контент стане доступний тільки після оплати замовлення.</div>
-                    {% elif not current_user %}
-                        <div class="info-box warning">Увійдіть у систему, щоб побачити вміст після оплати.</div>
-                    {% else %}
-                        <div class="info-box info">Це ваш товар. Вміст доступний лише вам.</div>
-                    {% endif %}
-                </div>
-            {% endif %}
 
             <section class="review-section">
                 <h2>Відгуки</h2>
@@ -463,17 +470,6 @@
                                     <strong>{{ review.username or 'Користувач' }}</strong>
                                     <div class="stars small">{% for i in range(1, 6) %}{% if i <= review.rating %}★{% else %}☆{% endif %}{% endfor %}</div>
                                 </div>
-                                {% if current_user %}
-                                <button type="button"
-                                    class="btn btn-danger btn-sm"
-                                    data-report-target
-                                    data-comment-id="{{ review.id }}"
-                                    data-user-id="{{ review.user_id }}"
-                                    title="Поскаржитися на коментар"
-                                    aria-label="Поскаржитися на коментар">
-                                    🚩
-                                </button>
-                                {% endif %}
                             </div>
                             <p>{{ review.comment or 'Без коментаря' }}</p>
                             {% if review.media %}
@@ -487,6 +483,9 @@
                                 {% endfor %}
                             </div>
                             {% endif %}
+                            <div class="review-actions" style="margin-top: 12px;">
+                                <button type="button" class="btn btn-danger btn-small" data-report-trigger data-report-target="comment" data-report-id="{{ review.id }}" data-report-user-id="{{ review.user_id }}" aria-label="Поскаржитися на коментар">⚑</button>
+                            </div>
                         </article>
                         {% endfor %}
                     {% else %}
@@ -498,42 +497,29 @@
 
         <aside class="purchase-card">
             <div class="price-block">{{ product.price }} ₴</div>
-            {% if product.product_type == 'digital' %}
-                <span class="product-type-badge product-type-digital">📁 Цифровий</span>
-            {% elif product.product_type == 'game_item' %}
-                <span class="product-type-badge product-type-game_item">🎮 Ігровий</span>
-            {% else %}
-                <span class="product-type-badge product-type-physical">📦 Фізичний</span>
-            {% endif %}
-            <div class="stock-line">{% if product.quantity > 0 %}В наявності: {{ product.quantity }}{% else %}Немає в наявності{% endif %}</div>
+            <div class="stock-line">В наявності: {{ product.quantity }}</div>
 
-            {% set product_owner_id = product.owner_id if product.owner_id is defined else product.user_id %}
-            {% set is_product_owner = current_user and current_user.id == product_owner_id %}
-
-            {% if is_product_owner %}
-                <div class="alert alert-warning">Це ваш товар</div>
-            {% elif product.stock > 0 %}
-                <label class="quantity-field">
-                    <span>Кількість</span>
-                    <input id="cart-quantity" type="number" name="quantity" value="1" min="1" max="{{ product.stock }}" />
-                    <small id="stock-warning" class="stock-warning"></small>
-                </label>
+            {% set is_my_product = current_user and current_user.id == product.user_id %}
+            {% if is_my_product %}
+                <div class="ownership-banner" style="padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: rgba(148, 163, 184, 0.12); color: var(--muted); text-align: center;">
+                    Це ваш товар
+                </div>
             {% else %}
                 <label class="quantity-field">
                     <span>Кількість</span>
-                    <input id="cart-quantity" type="number" name="quantity" value="0" min="0" max="0" disabled />
-                    <small id="stock-warning" class="stock-warning">Максимально доступна кількість: 0</small>
+                    <input id="cart-quantity" type="number" name="quantity" value="1" min="1" max="{{ product.stock|default(product.quantity) }}" />
+                    <small id="cart-quantity-warning" style="display:none; color:#fbbf24;"></small>
                 </label>
             {% endif %}
 
             <div class="purchase-actions">
-                {% if is_product_owner %}
+                {% if is_my_product %}
                     <button type="button" class="btn btn-secondary" disabled>Це ваш товар</button>
                 {% else %}
-                    <button type="button" class="btn btn-primary add-to-cart" data-product-id="{{ product.id }}" {% if product.stock <= 0 %}disabled{% endif %}>{{ 'Додати в кошик' if product.stock > 0 else 'Немає в наявності' }}</button>
+                    <button type="button" class="btn btn-primary add-to-cart" data-product-id="{{ product.id }}" {% if product.quantity <= 0 %}disabled{% endif %}>Додати в кошик</button>
                 {% endif %}
                 <button type="button" class="btn btn-outline favorite-btn" data-product-id="{{ product.id }}">В обране</button>
-                <button type="button" class="btn btn-danger" data-report-target data-product-id="{{ product.id }}" data-user-id="{{ product.user_id }}">Поскаржитися</button>
+                <button type="button" class="btn btn-danger" data-report-trigger data-report-target="product" data-report-id="{{ product.id }}" data-report-user-id="{{ seller.id if seller else '' }}">Поскаржитися</button>
             </div>
 
             <div class="seller-box">
@@ -543,7 +529,6 @@
                     {% if product.seller_phone %}
                         <p><strong>Телефон:</strong> {{ product.seller_phone }}</p>
                     {% endif %}
-                    <button type="button" class="btn btn-danger btn-sm" data-report-target data-user-id="{{ seller.id }}">Поскаржитися на продавця</button>
                 {% else %}
                     <p>Контакти недоступні.</p>
                 {% endif %}

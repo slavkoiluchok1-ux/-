@@ -59,7 +59,7 @@
         </div>
 
         {% if not users %}
-            <div class="empty-state">Немає користувачів, що відповідають умовам пошуку.</div>
+            <div class="empty-state">Користувачів не знайдено</div>
         {% else %}
         <table class="data-table">
             <thead>
@@ -67,60 +67,40 @@
                     <th>ID</th>
                     <th>Логін</th>
                     <th>Email</th>
-                    <th>Ім'я</th>
                     <th>Роль</th>
-                    <th>Активний</th>
                     <th>Дії</th>
                 </tr>
             </thead>
             <tbody>
-                {% for u in users %}
+                {% for user in users %}
                 <tr>
-                    <td>{{ u.id }}</td>
+                    <td>{{ user.id }}</td>
                     <td class="username-cell">
-                        <strong>{{ u.username }}</strong>
+                        <strong>{{ user.username }}</strong>
                     </td>
-                    <td>{{ u.email }}</td>
-                    <td>{{ u.display_name or '—' }}</td>
+                    <td>{{ user.email }}</td>
                     <td>
-                        {% if u.is_superuser %}
-                            <span class="badge badge-super">Superadmin</span>
-                        {% elif u.is_admin %}
-                            <span class="badge badge-admin">Admin</span>
-                        {% else %}
-                            <span class="badge badge-user">User</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if u.is_active %}
-                            <span class="badge badge-active">Так</span>
-                        {% else %}
-                            <span class="badge badge-inactive">Ні</span>
-                        {% endif %}
+                        {{ user.role_label }}
                     </td>
                     <td class="actions-cell">
-                        {% if u.is_superuser %}
-                            <span class="muted">Немає доступних дій</span>
+                        {% if not user.is_admin %}
+                            <form method="post" action="/admin/promote/{{ user.id }}" class="inline-form">
+                                <button type="submit" class="btn btn-success promote-btn">
+                                    Зробити адміном
+                                </button>
+                            </form>
                         {% else %}
-                            {% if not u.is_admin %}
-                                <form method="post" action="/admin/promote/{{ u.id }}" class="inline-form">
-                                    <button type="submit" class="btn btn-success promote-btn">
-                                        Зробити адміном
-                                    </button>
-                                </form>
-                            {% else %}
-                                <form method="post" action="/admin/demote/{{ u.id }}" class="inline-form">
-                                    <button type="submit" class="btn btn-warning demote-btn">
-                                        Забрати права адміна
-                                    </button>
-                                </form>
-                            {% endif %}
-                            <form method="post" action="/admin/users/delete/{{ u.id }}" class="inline-form delete-form" data-username="{{ u.username }}">
-                                <button type="submit" class="btn btn-danger delete-btn">
-                                    Видалити
+                            <form method="post" action="/admin/demote/{{ user.id }}" class="inline-form">
+                                <button type="submit" class="btn btn-warning demote-btn">
+                                    Забрати адміна
                                 </button>
                             </form>
                         {% endif %}
+                        <form method="post" action="/admin/users/delete/{{ user.id }}" class="inline-form delete-form" data-username="{{ user.username }}">
+                            <button type="submit" class="btn btn-danger delete-btn">
+                                Видалити
+                            </button>
+                        </form>
                     </td>
                 </tr>
                 {% endfor %}

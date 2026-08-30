@@ -54,8 +54,14 @@
         text-align: center;
         align-items: stretch;
     }
+    .product-card-footer {
+        margin-top: auto;
+        padding-top: 12px;
+        width: 100%;
+    }
 
     .product-thumb {
+        position: relative;
         aspect-ratio: 4 / 3;
         background: var(--surface-soft);
         display: flex;
@@ -114,19 +120,29 @@
     }
     .card-actions {
         display: flex;
+        flex-direction: column;
         gap: 8px;
         padding: 0 16px 16px;
         justify-content: center;
         width: 100%;
+        min-width: 0;
     }
     .card-actions > a,
     .card-actions > form {
-        flex: 1;
         display: flex;
+        min-width: 0;
+        width: 100%;
     }
     .card-actions > form > button,
     .card-actions > a.btn {
         width: 100%;
+        min-width: 0;
+        font-size: 0.78rem;
+        padding: 0.7rem 0.5rem;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .empty-state {
@@ -209,14 +225,19 @@
 {% else %}
     <div class="products-grid">
         {% for p in products %}
-            <div class="product-card">
-                <div class="product-thumb">
+            <div class="product-card flex flex-col h-full bg-[#111827] rounded-xl p-4 border border-slate-800">
+                <div class="product-thumb relative">
                     {% if p.image_url %}
                         <a href="/products/{{ p.id }}">
                             <img src="{{ p.image_url }}" alt="{{ p.title|e }}" />
                         </a>
                     {% else %}
                         <a href="/products/{{ p.id }}"><span>Фото відсутнє</span></a>
+                    {% endif %}
+                    {% if p.category %}
+                        <span class="absolute top-2 right-2 bg-slate-800/90 text-slate-200 border border-slate-700 text-[10px] font-medium px-2 py-0.5 rounded shadow z-10 backdrop-blur-sm">
+                            {{ p.category.name if p.category.name else p.category }}
+                        </span>
                     {% endif %}
                 </div>
                 <div class="product-body">
@@ -228,7 +249,7 @@
                     <div class="product-meta">
                         <span>Кількість: <strong style="color:var(--text);">{{ p.quantity }}</strong></span>
                         {% if p.quantity == 0 %}
-                            <span class="badge" style="background: rgba(239, 68, 68, 0.12); color: #fca5a5;">Немає в наявності</span>
+                            <span class="badge text-xs text-center whitespace-normal mt-1 w-full" style="background: rgba(239, 68, 68, 0.12); color: #fca5a5;">Немає в наявності</span>
                         {% elif p.sales_count %}
                             <span class="badge">Продаж: {{ p.sales_count }}</span>
                         {% else %}
@@ -242,11 +263,13 @@
                         {% endif %}
                     </div>
                 </div>
-                <div class="card-actions">
-                    <a class="btn btn-outline" href="/products/{{ p.id }}/edit">Редагувати</a>
-                    <form action="/products/{{ p.id }}/delete" method="post" class="delete-product-form" data-product-id="{{ p.id }}" data-product-title="{{ p.title|e }}">
-                        <button type="submit" class="btn btn-danger">Видалити</button>
-                    </form>
+                <div class="product-card-footer mt-auto pt-3 min-w-0 w-full">
+                    <div class="flex flex-col gap-2 w-full mt-auto">
+                        <a class="btn btn-outline w-full text-center py-2 px-3" href="/products/{{ p.id }}/edit">Редагувати</a>
+                        <form action="/products/{{ p.id }}/delete" method="post" class="delete-product-form w-full" data-product-id="{{ p.id }}" data-product-title="{{ p.title|e }}">
+                            <button type="submit" class="btn btn-danger w-full text-center py-2 px-3">Видалити</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         {% endfor %}

@@ -10,6 +10,12 @@
         <p>Особиста інформація та налаштування облікового запису.</p>
     </section>
 
+    {% if has_sales %}
+    <div class="sales-tab-wrapper" style="margin-bottom: 18px;">
+        <button type="button" id="salesTab" class="btn btn-primary" style="display: inline-flex;">Мій прибуток / Продані товари</button>
+    </div>
+    {% endif %}
+
     {% if profile_message %}
         <div class="form-success">{{ profile_message }}</div>
     {% endif %}
@@ -17,13 +23,67 @@
         <div class="form-error">{{ profile_error }}</div>
     {% endif %}
 
+    <div id="salesSection" class="resume-card" style="display: none; margin-bottom: 22px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:18px; flex-wrap:wrap; margin-bottom:18px;">
+            <h3 style="margin:0;">Мій прибуток</h3>
+            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                <input type="text" id="salesSearch" placeholder="Пошук проданих товарів..." style="min-width:260px; max-width:420px; width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--border); background: rgba(15,23,42,0.16); color: var(--text);">
+            </div>
+        </div>
+
+        <div id="salesSummary" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:22px;">
+            <div class="stat-card" style="padding:18px; border:1px solid var(--border); border-radius:16px; background: rgba(16,185,129,0.08);">
+                <div style="font-size:12px; color:var(--muted); text-transform: uppercase; letter-spacing: .08em;">Загальний прибуток</div>
+                <div id="totalProfit" style="font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 800; margin-top: 8px; color: var(--success);">0 ₴</div>
+            </div>
+            <div class="stat-card" style="padding:18px; border:1px solid var(--border); border-radius:16px; background: rgba(59,130,246,0.08);">
+                <div style="font-size:12px; color:var(--muted); text-transform: uppercase; letter-spacing: .08em;">Всього продано</div>
+                <div id="soldCount" style="font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 800; margin-top: 8px;">0 шт.</div>
+            </div>
+        </div>
+
+        <div style="overflow-x:auto; border: 1px solid var(--border); border-radius: 14px;">
+            <table style="width:100%; border-collapse: collapse; min-width: 760px;">
+                <thead style="background: rgba(148,163,184,0.08);">
+                    <tr>
+                        <th style="padding:12px 10px; text-align:left;">Фото</th>
+                        <th style="padding:12px 10px; text-align:left;">Назва товару</th>
+                        <th style="padding:12px 10px; text-align:left;">Кількість</th>
+                        <th style="padding:12px 10px; text-align:left;">Ціна за шт.</th>
+                        <th style="padding:12px 10px; text-align:left;">Загальна сума</th>
+                        <th style="padding:12px 10px; text-align:left;">Дата продажу</th>
+                    </tr>
+                </thead>
+                <tbody id="salesTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
     <div class="profile-grid">
+        <section class="resume-card profile-info-card" style="margin-bottom: 18px;">
+            <h3>Аватарка</h3>
+            <div style="display:flex; flex-direction:column; align-items:flex-start; gap:16px;">
+                <img src="{{ current_user.avatar_url or '/static/images/default-avatar.png' }}" alt="Avatar" style="width:128px; height:128px; border-radius:50%; object-fit:cover; border:2px solid var(--border); background:#0b1220;">
+                <div id="avatar-actions" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+                    <label class="btn btn-primary" for="avatar-input" style="cursor:pointer; margin:0;">Змінити аватарку</label>
+                    <input id="avatar-input" type="file" accept="image/jpeg,image/png,image/webp" style="display:none;">
+                    <button type="button" id="avatar-upload-btn" class="btn btn-primary">Завантажити</button>
+                    <button type="button" id="avatar-delete-btn" class="btn btn-danger" {% if not current_user.avatar_url %}disabled{% endif %}>Видалити аватарку</button>
+                </div>
+                <div id="avatar-status" style="color: var(--muted); font-size: 0.92rem; min-height: 1.2em;"></div>
+            </div>
+        </section>
+
         <section class="resume-card profile-info-card">
             <h3>Інформація про акаунт</h3>
             <dl class="profile-details">
                 <div>
-                    <dt>Ім'я / Username</dt>
-                    <dd>{{ current_user.display_name or current_user.username }}</dd>
+                    <dt>Ім'я</dt>
+                    <dd>{{ current_user.first_name or 'Не вказано' }}</dd>
+                </div>
+                <div>
+                    <dt>Прізвище</dt>
+                    <dd>{{ current_user.last_name or 'Не вказано' }}</dd>
                 </div>
                 <div>
                     <dt>Логін</dt>
@@ -58,16 +118,12 @@
             <h3>Редагування даних акаунту</h3>
             <form method="post" action="/profile" class="profile-form">
                 <label>
-                    <span>Відображуване ім'я</span>
-                    <input type="text" name="display_name" value="{{ current_user.display_name or '' }}" placeholder="Ваше ім'я">
+                    <span>Ім'я</span>
+                    <input type="text" name="first_name" value="{{ current_user.first_name or '' }}" placeholder="Ваше ім'я">
                 </label>
                 <label>
-                    <span>Username *</span>
-                    <input type="text" name="username" value="{{ current_user.username }}" required>
-                </label>
-                <label>
-                    <span>Email *</span>
-                    <input type="email" name="email" value="{{ current_user.email }}" required>
+                    <span>Прізвище</span>
+                    <input type="text" name="last_name" value="{{ current_user.last_name or '' }}" placeholder="Ваше прізвище">
                 </label>
                 <button type="submit" class="btn btn-primary">Зберегти зміни</button>
             </form>
@@ -93,4 +149,238 @@
         </section>
     </div>
 </div>
+
+<script>
+    function copyTelegramCode() {
+        const value = document.getElementById('tg-code-value')?.textContent?.trim();
+        if (!value) return;
+        navigator.clipboard?.writeText(value).catch(() => {});
+    }
+
+    async function unbindTelegram() {
+        try {
+            const response = await fetch('/api/v1/users/unbind-telegram', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (!response.ok) {
+                alert('Не вдалося відвязати Telegram');
+                return
+            }
+            window.location.reload();
+        } catch (error) {
+            alert('Не вдалося відвязати Telegram');
+        }
+    }
+
+    async function uploadAvatar() {
+        const input = document.getElementById('avatar-input');
+        const status = document.getElementById('avatar-status');
+        if (!input || !input.files || !input.files.length) {
+            status.textContent = 'Виберіть файл зображення.';
+            return;
+        }
+
+        const file = input.files[0];
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        const allowedExt = ['.jpg', '.jpeg', '.png', '.webp'];
+        const extension = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
+        const isAllowedType = allowedTypes.includes(file.type);
+        const isAllowedExt = allowedExt.includes(extension);
+        if (!isAllowedType || !isAllowedExt) {
+            status.textContent = 'Дозволені тільки JPG, JPEG, PNG або WEBP.';
+            return;
+        }
+        if (file.size > 2 * 1024 * 1024) {
+            status.textContent = 'Розмір файлу не повинен перевищувати 2 МБ.';
+            return;
+        }
+
+        try {
+            status.textContent = 'Завантаження...';
+            const formData = new FormData();
+            formData.append('file', file);
+            const response = await fetch('/api/v1/users/me/avatar', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin',
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(payload.detail || 'Не вдалося завантажити аватарку');
+            }
+            const avatarUrl = payload.avatar_url || '/static/images/default-avatar.png';
+            const avatarImage = document.querySelector('img[alt="Avatar"]');
+            if (avatarImage) {
+                avatarImage.src = avatarUrl;
+            }
+            const deleteBtn = document.getElementById('avatar-delete-btn');
+            if (deleteBtn) deleteBtn.disabled = false;
+            status.textContent = 'Аватарка успішно оновлена.';
+            input.value = '';
+        } catch (error) {
+            status.textContent = error.message || 'Не вдалося завантажити аватарку.';
+        }
+    }
+
+    async function deleteAvatar() {
+        const status = document.getElementById('avatar-status');
+        try {
+            const response = await fetch('/api/v1/users/me/avatar', {
+                method: 'DELETE',
+                credentials: 'same-origin',
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(payload.detail || 'Не вдалося видалити аватарку');
+            }
+            const avatarImage = document.querySelector('img[alt="Avatar"]');
+            if (avatarImage) {
+                avatarImage.src = '/static/images/default-avatar.png';
+            }
+            const deleteBtn = document.getElementById('avatar-delete-btn');
+            if (deleteBtn) deleteBtn.disabled = true;
+            status.textContent = 'Аватарку видалено.';
+        } catch (error) {
+            status.textContent = error.message || 'Не вдалося видалити аватарку.';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const unbindButton = document.getElementById('unbind-telegram-btn');
+        if (unbindButton) {
+            unbindButton.addEventListener('click', unbindTelegram);
+        }
+
+        const uploadButton = document.getElementById('avatar-upload-btn');
+        if (uploadButton) {
+            uploadButton.addEventListener('click', uploadAvatar);
+        }
+
+        const deleteButton = document.getElementById('avatar-delete-btn');
+        if (deleteButton) {
+            deleteButton.addEventListener('click', deleteAvatar);
+        }
+    });
+
+    function formatCurrency(value) {
+        return `${Number(value || 0).toLocaleString('uk-UA', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ₴`;
+    }
+
+    function formatDate(value) {
+        if (!value) return '—';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return value;
+        return date.toLocaleString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function debounce(func, wait = 300) {
+        let timeout;
+        return (...args) => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func(...args), wait);
+        };
+    }
+
+    async function loadCurrentUser() {
+        try {
+            const response = await fetch('/api/v1/auth/me', { credentials: 'same-origin' });
+            if (!response.ok) return false;
+            const user = await response.json();
+            const hasSales = Boolean(user && user.has_sales);
+            const tab = document.getElementById('salesTab');
+            const section = document.getElementById('salesSection');
+            if (hasSales && tab && section) {
+                tab.style.display = 'inline-flex';
+                section.style.display = 'block';
+            }
+            return hasSales;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    function renderSalesTable(data) {
+        const tableBody = document.getElementById('salesTableBody');
+        if (!tableBody) return;
+
+        tableBody.innerHTML = '';
+
+        if (!data || !data.items || !data.items.length) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="padding: 18px; text-align: center; color: var(--muted);">Нічого не знайдено</td>
+                </tr>
+            `;
+            return;
+        }
+
+        data.items.forEach((item) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td style="padding: 12px 10px; border-top: 1px solid var(--border);">
+                    ${item.image_url ? `<img src="${item.image_url}" alt="${item.title}" style="width:64px; height:64px; object-fit:cover; border-radius: 12px; border:1px solid var(--border);">` : '<div style="width:64px; height:64px; border-radius:12px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--muted);">—</div>'}
+                </td>
+                <td style="padding: 12px 10px; border-top: 1px solid var(--border);">${item.title || '—'}</td>
+                <td style="padding: 12px 10px; border-top: 1px solid var(--border);">${item.quantity || 0}</td>
+                <td style="padding: 12px 10px; border-top: 1px solid var(--border);">${formatCurrency(item.price_per_item)}</td>
+                <td style="padding: 12px 10px; border-top: 1px solid var(--border); font-weight:700;">${formatCurrency(item.total_amount)}</td>
+                <td style="padding: 12px 10px; border-top: 1px solid var(--border);">${formatDate(item.sold_at)}</td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+
+    async function loadSalesData() {
+        const input = document.getElementById('salesSearch');
+        const query = input ? input.value.trim() : '';
+        try {
+            const response = await fetch(`/api/v1/seller/sales${query ? `?q=${encodeURIComponent(query)}` : ''}`, {
+                credentials: 'same-origin',
+            });
+            if (!response.ok) {
+                const tableBody = document.getElementById('salesTableBody');
+                if (tableBody) {
+                    tableBody.innerHTML = '<tr><td colspan="6" style="padding:18px; text-align:center; color:var(--muted);">Не вдалося отримати дані</td></tr>';
+                }
+                return;
+            }
+            const data = await response.json();
+            document.getElementById('totalProfit').textContent = formatCurrency(data.total_profit || 0);
+            document.getElementById('soldCount').textContent = `${Number(data.sold_count || 0)} шт.`;
+            renderSalesTable(data);
+        } catch (error) {
+            console.error('Sales load error:', error);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const salesTab = document.getElementById('salesTab');
+        const salesSection = document.getElementById('salesSection');
+        const salesSearch = document.getElementById('salesSearch');
+
+        const hasSales = await loadCurrentUser();
+        if (salesTab && salesSection && hasSales) {
+            salesTab.style.display = 'inline-flex';
+            salesSection.style.display = 'block';
+        }
+
+        if (salesTab && salesSection && hasSales) {
+            salesTab.addEventListener('click', () => {
+                const isVisible = salesSection.style.display !== 'none';
+                salesSection.style.display = isVisible ? 'none' : 'block';
+            });
+        }
+
+        if (salesSearch) {
+            const debouncedSearch = debounce(() => loadSalesData(), 350);
+            salesSearch.addEventListener('input', debouncedSearch);
+        }
+
+        if (hasSales) {
+            await loadSalesData();
+        }
+    });
+</script>
 {% endblock %}

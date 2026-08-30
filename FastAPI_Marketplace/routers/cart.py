@@ -7,8 +7,10 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from auth_utils import decode_access_token
+from bot import send_telegram_notification
 from database import get_db
-from dependencies import get_current_user, get_current_user_or_redirect
+from dependencies import get_current_user
 from models import CartItem, Order, OrderItem, Product, User
 from schemas import CartItemCreate, CartItemOut, MessageResponse, OrderCreate, OrderOut, ProductListOut
 
@@ -17,13 +19,20 @@ templates = Jinja2Templates(directory="Templates")
 
 
 @router.get("/cart", response_class=HTMLResponse)
-async def cart_page(
-    request: Request,
-    result: User | RedirectResponse = Depends(get_current_user_or_redirect),
-):
-    if isinstance(result, RedirectResponse):
-        return result
-    current_user = result
+async def cart_page(request: Request, db: AsyncSession = Depends(get_db)):
+    current_user = None
+    token_value = request.cookies.get("access_token")
+    if token_value:
+        try:
+            payload = decode_access_token(token_value.replace("Bearer ", "").strip())
+            user_id = payload.get("sub")
+            if user_id is not None:
+                current_user = await db.get(User, int(user_id))
+        except Exception:
+            current_user = None
+
+    if current_user is None:
+        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
 
     return templates.TemplateResponse(
         request,
@@ -53,6 +62,9 @@ async def _serialize_cart_item(db: AsyncSession, item: CartItem) -> CartItemOut 
             description=product.description,
             price=product.price,
             quantity=product.quantity,
+            stock=product.quantity,
+            in_stock=product.quantity > 0,
+            is_available=product.quantity > 0,
             seller_phone=product.seller_phone,
             user_id=product.user_id,
             sales_count=product.sales_count,
@@ -94,7 +106,6 @@ async def _parse_cart_item_create(request: Request) -> CartItemCreate:
     return CartItemCreate(product_id=int(product_id), quantity=max(1, int(quantity)))
 
 
-@router.post("/api/v1/cart/items", response_model=MessageResponse)
 @router.post("/api/v1/cart/add", response_model=MessageResponse)
 @router.post("/api/v1/cart", response_model=MessageResponse)
 async def add_to_cart(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
@@ -103,26 +114,36 @@ async def add_to_cart(request: Request, current_user: User = Depends(get_current
     product = await db.get(Product, payload.product_id)
     if product is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Товар не знайдено")
-    if product.owner_id == current_user.id:
+    if product.user_id == current_user.id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ви не можете додати свій власний товар у кошик")
-    if product.stock <= 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Товару немає в наявності")
 
-    existing_item = await db.scalar(
+    item = await db.scalar(
         select(CartItem).where(CartItem.user_id == current_user.id, CartItem.product_id == payload.product_id)
     )
-    current_cart_quantity = existing_item.quantity if existing_item else 0
-    new_total = current_cart_quantity + payload.quantity
-    if new_total > product.stock:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Максимально доступна кількість: {product.stock}")
+    current_quantity = item.quantity if item is not None else 0
+    if current_quantity + payload.quantity > product.quantity:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Максимально доступна кількість: {product.quantity}")
 
-    if existing_item is not None:
-        existing_item.quantity = new_total
+    action: str
+    new_quantity: int
+    if item is not None:
+        item.quantity += payload.quantity
+        action = "incremented"
+        new_quantity = item.quantity
     else:
-        db.add(CartItem(user_id=current_user.id, product_id=payload.product_id, quantity=payload.quantity))
+        item = CartItem(user_id=current_user.id, product_id=payload.product_id, quantity=payload.quantity)
+        db.add(item)
+        action = "added"
+        new_quantity = item.quantity
 
     await db.commit()
-    return MessageResponse(message="Товар додано до кошика")
+    await db.refresh(item)
+    return {
+        "message": "Товар додано до кошика",
+        "action": action,
+        "new_quantity": new_quantity,
+        "item_id": item.id,
+    }
 
 
 @router.post("/cart/add")
@@ -137,19 +158,16 @@ async def add_to_cart_redirect(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Товар не знайдено")
     if product.user_id == current_user.id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ви не можете додати свій власний товар у кошик")
-    if product.stock <= 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Товару немає в наявності")
 
     item = await db.scalar(
         select(CartItem).where(CartItem.user_id == current_user.id, CartItem.product_id == product_id)
     )
-    current_quantity = item.quantity if item else 0
-    new_total = current_quantity + quantity
-    if new_total > product.stock:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Максимально доступна кількість: {product.stock}")
+    current_quantity = item.quantity if item is not None else 0
+    if current_quantity + quantity > product.quantity:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Максимально доступна кількість: {product.quantity}")
 
     if item is not None:
-        item.quantity = new_total
+        item.quantity += quantity
     else:
         db.add(CartItem(user_id=current_user.id, product_id=product_id, quantity=quantity))
 
@@ -215,54 +233,51 @@ async def _parse_cart_item_update(request: Request) -> tuple[int | None, int | N
     return item_id, product_id, quantity
 
 
-@router.post("/api/v1/cart/update")
 @router.patch("/api/v1/cart/update")
-@router.patch("/api/v1/cart/{item_id}")
-async def update_cart_item(
-    request: Request,
-    item_id: int | None = None,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    body_item_id, body_product_id, body_quantity = await _parse_cart_item_update(request)
+async def update_cart_item(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    try:
+        payload = await request.json()
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Невірний формат даних кошика") from exc
 
-    effective_item_id = item_id if item_id is not None else body_item_id
-    effective_product_id = body_product_id
-    effective_quantity = body_quantity
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Невірний формат даних кошика")
 
-    target_item_id = effective_item_id
+    item_id = payload.get("item_id")
+    new_quantity = payload.get("new_quantity")
 
-    if target_item_id is None and effective_product_id is not None:
+    if item_id is None and payload.get("product_id") is not None:
         item = await db.scalar(
-            select(CartItem).where(CartItem.user_id == current_user.id, CartItem.product_id == effective_product_id)
+            select(CartItem).where(CartItem.user_id == current_user.id, CartItem.product_id == int(payload["product_id"]))
         )
-        if not item:
+        if item is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Товар у кошику не знайдено")
-        target_item_id = item.id
+        item_id = item.id
 
-    if target_item_id is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Не вказано item_id або product_id")
+    if item_id is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Не вказано item_id")
 
-    item = await db.get(CartItem, target_item_id)
-    if not item or item.user_id != current_user.id:
+    try:
+        item_id = int(item_id)
+        new_quantity = int(new_quantity)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Невірне значення item_id або new_quantity") from None
+
+    if new_quantity <= 0:
+        item = await db.get(CartItem, item_id)
+        if item is None or item.user_id != current_user.id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Товар у кошику не знайдено")
+        await db.delete(item)
+        await db.commit()
+        return {"message": "Товар видалено з кошика", "deleted": True}
+
+    item = await db.get(CartItem, item_id)
+    if item is None or item.user_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Товар у кошику не знайдено")
 
-    product = await db.get(Product, item.product_id)
-    if product is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Товар не знайдено")
-    if product.quantity <= 0 and effective_quantity > 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Товару немає в наявності")
-    if effective_quantity > product.quantity:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Максимально доступна кількість: {product.quantity}")
-
-    if effective_quantity <= 0:
-        await db.delete(item)
-    else:
-        item.quantity = effective_quantity
-
+    item.quantity = new_quantity
     await db.commit()
 
-    # Return updated cart data
     items = (await db.execute(select(CartItem).where(CartItem.user_id == current_user.id).order_by(CartItem.id.desc()))).scalars().all()
     result: list[CartItemOut] = []
     total = 0
@@ -272,11 +287,18 @@ async def update_cart_item(
             result.append(serialized)
             total += serialized.product.price * serialized.quantity
 
-    return {
-        "message": "Кількість оновлено",
-        "items": result,
-        "total": total
-    }
+    return {"message": "Кількість оновлено", "items": result, "total": total}
+
+
+@router.delete("/api/v1/cart/remove/{item_id}")
+async def remove_cart_item(item_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    item = await db.get(CartItem, item_id)
+    if item is None or item.user_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Товар у кошику не знайдено")
+
+    await db.delete(item)
+    await db.commit()
+    return {"message": "Товар видалено з кошика"}
 
 
 @router.delete("/api/v1/cart/remove/{item_id}")
@@ -363,6 +385,24 @@ async def checkout_order(
     await db.execute(delete(CartItem).where(CartItem.user_id == current_user.id))
     await db.commit()
     await db.refresh(order)
+
+    buyer_name = current_user.display_name or current_user.first_name or current_user.last_name or current_user.username or "Користувач"
+    for item in order_items:
+        product = await db.get(Product, item.product_id)
+        if product is None:
+            continue
+        seller = await db.get(User, product.user_id)
+        if seller and seller.telegram_chat_id:
+            await send_telegram_notification(
+                seller.telegram_chat_id,
+                f"🎉 Нова покупка! Товар: {product.title}, Покупець: {buyer_name}, Адреса доставки: {order.delivery_address}, Сума: {float(order.total_price):.2f} грн",
+            )
+        if product.quantity == 0:
+            if seller and seller.telegram_chat_id:
+                await send_telegram_notification(
+                    seller.telegram_chat_id,
+                    f"⚠️ Увага! Ваші товари '{product.title}' закінчилися на складі.",
+                )
 
     return OrderOut(
         id=order.id,
