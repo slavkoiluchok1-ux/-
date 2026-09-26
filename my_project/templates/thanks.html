@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+  <head>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <title>Дякуємо за замовлення!</title>
+  </head>
+  <body>
+    <div class="wrapper">
+      <div class="order-container">
+        <h1 style="color: #3f903f">Дякуємо!</h1>
+        <p style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 30px">
+          Ваше замовлення успішно оформлено.<br />
+          Наш менеджер зателефонує вам найближчим часом для підтвердження.
+        </p>
+
+        <a
+          href="/"
+          class="btn-green"
+          style="display: block; text-decoration: none"
+          >ПОВЕРНУТИСЯ НА ГОЛОВНУ</a
+        >
+      </div>
+    </div>
+  </body>
+</html>

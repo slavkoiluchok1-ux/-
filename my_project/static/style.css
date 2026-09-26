@@ -1,0 +1,180 @@
+/* Базові стилі */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f4f4;
+    /* Світло-сірий фон як на фото */
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+a {
+    text-decoration: none;
+}
+
+/* === ГОЛОВНИЙ КОНТЕЙНЕР (Центрування тексту і блоків) === */
+.wrapper {
+    width: 100%;
+    max-width: 800px;
+    /* Обмежуємо ширину, щоб текст не розтягувався */
+    margin: 40px auto;
+    /* Виставляємо блок рівно по центру екрану */
+    padding: 20px;
+    text-align: center;
+    /* Центруємо весь основний текст */
+    box-sizing: border-box;
+}
+
+/* === Сторінка оформлення замовлення === */
+.order-container {
+    background: #ffffff;
+    width: 100%;
+    max-width: 500px;
+    /* Робимо форму компактною і строго по центру */
+    margin: 40px auto;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
+}
+
+.product-center {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.product-center img {
+    max-width: 250px;
+    /* Трохи зменшив фото, щоб воно не займало пів екрану */
+    height: auto;
+    margin-bottom: 15px;
+}
+
+.product-center h2 {
+    margin: 0 0 5px 0;
+    font-size: 1.3rem;
+    color: #000;
+}
+
+.product-center .desc {
+    margin: 0 auto 10px auto;
+    font-size: 0.9rem;
+    color: #888;
+    max-width: 400px;
+    /* Обмеження ширини опису товару */
+    line-height: 1.4;
+}
+
+.product-center .price {
+    font-size: 1.2rem;
+    color: #000;
+    font-weight: bold;
+}
+
+/* === Форма замовлення === */
+.form-title {
+    text-align: center;
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+    text-align: left;
+    /* Самі підписи полів форми залишаємо зліва для зручності */
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.75rem;
+    color: #888;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    background-color: #fafafa;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-family: inherit;
+    font-size: 0.95rem;
+}
+
+input:focus {
+    outline: none;
+    border-color: #3f903f;
+    /* Підсвічування зеленим при введенні */
+}
+
+/* === Кнопки === */
+.btn-green {
+    width: 100%;
+    padding: 15px;
+    background-color: #3f903f;
+    /* Зелений колір як на фото */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: background 0.3s;
+}
+
+.btn-green:hover {
+    background-color: #327332;
+}
+
+.btn {
+    background: #333;
+    color: white;
+    padding: 12px 25px;
+    border-radius: 5px;
+    display: inline-block;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.3s;
+}
+
+.btn:hover {
+    background: #555;
+}
+
+/* === Каталог (Сітка карток) === */
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 25px;
+    margin-top: 30px;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 260px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    /* Легкий ефект підняття при наведенні */
+}
+
+.card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    margin-bottom: 15px;
+    border-radius: 4px;
+}

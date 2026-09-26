@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <h1>Пошук замовлення</h1>
+    <form action="/my-orders" method="GET">
+      <input
+        type="text"
+        name="phone"
+        value="{{ phone or '' }}"
+        placeholder="Ваш телефон"
+      />
+      <button type="submit" class="btn">Знайти</button>
+    </form>
+    <div class="container">
+      {% for order in orders %}
+      <div class="card">
+        <p>Замовлення #{{ order.id }}</p>
+        <h3>{{ order.product.name }}</h3>
+        <p>Статус: Прийнято</p>
+      </div>
+      {% endfor %}
+    </div>
+    <br /><a href="/">На головну</a>
+  </body>
+</html>
