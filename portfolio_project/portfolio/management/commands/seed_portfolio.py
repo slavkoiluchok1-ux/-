@@ -54,6 +54,96 @@ def get_github_project_items():
     return projects
 
 
+def get_featured_project_items():
+    repository = 'https://github.com/slavkoiluchok1-ux/-/tree/main'
+    return [
+        {
+            'title': 'FastAPI Marketplace',
+            'description': 'Маркетплейс на FastAPI з автентифікацією, каталогом товарів, категоріями, кошиком, обраним, замовленнями, відгуками та адміністративними маршрутами.',
+            'technologies': 'Python, FastAPI, SQLAlchemy, Alembic, JWT, SQLite/PostgreSQL',
+            'date': '2025-01-20',
+            'github': f'{repository}/astapi-marketpla',
+        },
+        {
+            'title': 'Сайт-портфоліо',
+            'description': 'Повноцінний Django-сайт портфоліо з проєктами, навичками, досвідом, блогом, тарифами, аналітикою та формою брифу із email-підтвердженням.',
+            'technologies': 'Python, Django, SQLite, Bootstrap, Email',
+            'date': '2025-02-15',
+            'github': f'{repository}/portfolio_project',
+        },
+        {
+            'title': 'Music Studio',
+            'description': 'Django-застосунок для авторизації користувачів і додавання кількох пісень через formset у персональній музичній студії.',
+            'technologies': 'Python, Django, SQLite, Bootstrap, Forms',
+            'date': '2025-02-01',
+            'github': f'{repository}/music_project',
+        },
+        {
+            'title': 'ServiceDesk',
+            'description': 'Сервіс підтримки з ролями клієнта, працівника й адміністратора, заявками, відповідями, статусами, статистикою та завантаженням зображень.',
+            'technologies': 'Python, FastAPI, SQLAlchemy, Jinja2, JWT, SQLite',
+            'date': '2025-01-10',
+            'github': f'{repository}/servicedesk_project',
+        },
+        {
+            'title': 'SkillSwap API',
+            'description': 'API для обміну навичками з користувачами, навичками, обмінами, відгуками та статистикою, організоване за repository і routes шарами.',
+            'technologies': 'Python, FastAPI, SQLAlchemy, Alembic, Pydantic',
+            'date': '2024-12-20',
+            'github': f'{repository}/skillswap_api',
+        },
+        {
+            'title': 'Online Restaurant',
+            'description': 'Вебзастосунок ресторану з меню, кошиком, оформленням замовлень, бронюванням столиків, авторизацією та адміністративним керуванням.',
+            'technologies': 'Python, Flask, SQLite, HTML, CSS',
+            'date': '2024-11-20',
+            'github': f'{repository}/online_restaurant',
+        },
+        {
+            'title': 'TechnoBlog',
+            'description': 'Django-блог із розділами, сторінками статей, статичними файлами та окремими стилями й JavaScript для інтерфейсу.',
+            'technologies': 'Python, Django, SQLite, HTML, CSS, JavaScript',
+            'date': '2024-10-10',
+            'github': f'{repository}/trchnoblog',
+        },
+        {
+            'title': 'Messenger Project',
+            'description': 'Навчальний messenger-проєкт із реєстрацією, авторизацією, профілем, друзями, запитами та повідомленнями.',
+            'technologies': 'Python, Flask, SQLite, Jinja2, HTML, CSS',
+            'date': '2024-10-20',
+            'github': f'{repository}/messenger_project',
+        },
+        {
+            'title': 'Library System',
+            'description': 'Система управління бібліотекою з моделями предметної області та базовою структурою Django-застосунку.',
+            'technologies': 'Python, Django, SQLite, ORM',
+            'date': '2024-08-30',
+            'github': f'{repository}/library_system',
+        },
+        {
+            'title': 'Student Management',
+            'description': 'Django-проєкт для зберігання й керування даними студентів через моделі, міграції та адміністративну панель.',
+            'technologies': 'Python, Django, SQLite, Django Admin',
+            'date': '2024-10-02',
+            'github': f'{repository}/student_management',
+        },
+        {
+            'title': 'Weather Project',
+            'description': 'Невеликий застосунок для роботи з погодними даними, конфігурацією та окремою моделлю збереження інформації.',
+            'technologies': 'Python, Flask, SQLite, HTML',
+            'date': '2024-09-05',
+            'github': f'{repository}/weather_proj',
+        },
+        {
+            'title': 'Games Catalog',
+            'description': 'Django-каталог ігор із деталями, новинами, файлами для завантаження, зображеннями та медіа-файлами.',
+            'technologies': 'Python, Django, SQLite, Media Files, HTML',
+            'date': '2024-09-25',
+            'github': f'{repository}/proj',
+        },
+    ]
+
+
 class Command(BaseCommand):
     help = 'Seed the portfolio with content based on existing workspace projects'
 
@@ -70,37 +160,30 @@ class Command(BaseCommand):
 
         admin_user = User.objects.create_superuser('admin', 'admin@example.com', 'admin12345')
 
-        projects = get_github_project_items()
-        if not projects:
-            projects = [
-                {
-                    'title': 'Django-портфоліо',
-                    'description': 'Мій навчальний веб-портфоліо на Django з адаптивним UI, формами замовлення та сучасним дизайном.',
-                    'technologies': 'Python, Django, Bootstrap',
-                    'date': '2024-11-15',
-                    'github': 'https://github.com/slavkoiluchok1-ux/-.git',
-                },
-                {
-                    'title': 'Firstproj',
-                    'description': 'Проєкт із базовою структурою Django для практики розробки веб-додатків і роботи з шаблонами.',
-                    'technologies': 'Python, Django, HTML',
-                    'date': '2024-07-10',
-                    'github': 'https://github.com/slavkoiluchok1-ux/-.git',
-                },
-            ]
-
-        for item in projects[:6]:
+        for item in get_featured_project_items():
             Project.objects.create(**item)
 
         skills = [
             ('Python', 9, 'backend'),
-            ('Django', 8, 'backend'),
+            ('Django', 4, 'backend'),
             ('HTML/CSS', 8, 'frontend'),
-            ('JavaScript', 7, 'frontend'),
+            ('JavaScript', 4, 'frontend'),
             ('SQLite/PostgreSQL', 7, 'database'),
-            ('Git & GitHub', 8, 'devops'),
-            ('Bootstrap', 8, 'frontend'),
+            ('Git & GitHub', 5, 'devops'),
+            ('Bootstrap', 5, 'frontend'),
             ('API інтеграції', 7, 'backend'),
+            ('Комунікація', 8, 'soft'),
+            ('Командна робота', 8, 'soft'),
+            ('Вирішення проблем', 8, 'soft'),
+            ('Тайм-менеджмент', 8, 'soft'),
+            ('Адаптивність', 7, 'soft'),
+            ('Самонавчання', 8, 'soft'),
+            ('Увага до деталей', 8, 'soft'),
+            ('Лідерські якості', 9, 'soft'),
+            ('Креативність', 8, 'soft'),
+            ('Емпатія', 8, 'soft'),
+            ('Критичне мислення', 8, 'soft'),
+            ('Відповідальність', 8, 'soft'),
         ]
         for name, level, category in skills:
             Skill.objects.create(name=name, level=level, category=category)

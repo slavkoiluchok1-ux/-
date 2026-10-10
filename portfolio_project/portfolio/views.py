@@ -1,25 +1,54 @@
 import logging
 
 from django.conf import settings
+from django.contrib.auth import login as auth_login, logout as auth_logout
+from django.contrib.auth.decorators import login_required
 from django.core.mail import EmailMultiAlternatives, get_connection
+from django.contrib import messages
 from django.shortcuts import render, get_object_or_404, redirect
 from django.template.loader import render_to_string
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.db.models import Count, Max
 from django.db.models.functions import ExtractMonth
 
 logger = logging.getLogger(__name__)
 
-from .forms import OrderForm, BlogCommentForm
+from .forms import OrderForm, BlogCommentForm, TestimonialForm, ClientRegistrationForm, ClientAuthenticationForm
 from .models import Project, Skill, Experience, Testimonial, Order, PricingPackage, BlogPost, BlogCategory, BlogTag, PageView
+
+
+def _enrich_project_techs(project):
+    raw = getattr(project, 'technologies', '') or ''
+    parts = [t.strip() for t in raw.split(',') if t.strip()]
+    project.tech_list = parts
+    project.tech_visible = parts[:3]
+    project.tech_hidden = parts[3:]
+    project.tech_hidden_count = len(project.tech_hidden)
+    return project
+
+
+_SKILL_ICONS = {
+    'frontend': '🎨',
+    'backend': '⚙️',
+    'database': '💾',
+    'devops': '🔧',
+    'soft': '🤝',
+    'other': '✨',
+}
+
+
+def _enrich_skill(skill):
+    skill.icon = _SKILL_ICONS.get(skill.category, '✨')
+    return skill
 
 
 def home(request):
     track_page(request, 'home')
-    projects = Project.objects.all().order_by('-date', 'title')
-    skills = Skill.objects.all().order_by('category', '-level')
+    projects = [_enrich_project_techs(p) for p in Project.objects.all().order_by('-date', 'title')]
+    skills = [_enrich_skill(s) for s in Skill.objects.all().order_by('category', '-level')]
     experiences = Experience.objects.all()
-    testimonials = Testimonial.objects.all()
+    testimonials = Testimonial.objects.filter(is_published=True)
     return render(request, 'portfolio/home.html', {
         'projects': projects,
         'skills': skills,
@@ -32,10 +61,20 @@ def home(request):
 def project_catalog(request):
     track_page(request, 'projects')
     technology = request.GET.get('technology', '')
-    projects = Project.objects.all().order_by('-date', 'title')
+    qs = Project.objects.all().order_by('-date', 'title')
     if technology:
-        projects = projects.filter(technologies__icontains=technology)
-    technologies = sorted({p.technologies.split(',')[0].strip() for p in Project.objects.all() if p.technologies})
+        qs = qs.filter(technologies__icontains=technology)
+    projects = [_enrich_project_techs(p) for p in qs]
+    techs_set = set()
+    for p in Project.objects.all():
+        if p.technologies:
+            for t in p.technologies.split(','):
+                t = t.strip()
+                if t:
+                    techs_set.add(t)
+    for required in ('Python', 'Django', 'SQL', 'Bootstrap', 'Email'):
+        techs_set.add(required)
+    technologies = sorted(techs_set)
     return render(request, 'portfolio/projects.html', {
         'projects': projects,
         'technologies': technologies,
@@ -45,7 +84,7 @@ def project_catalog(request):
 
 def project_detail(request, pk):
     track_page(request, f'project-{pk}')
-    project = get_object_or_404(Project, pk=pk)
+    project = _enrich_project_techs(get_object_or_404(Project, pk=pk))
     return render(request, 'portfolio/project_detail.html', {
         'project': project,
     })
@@ -53,19 +92,33 @@ def project_detail(request, pk):
 
 def skills(request):
     track_page(request, 'skills')
-    skills = Skill.objects.all().order_by('category', '-level')
+    TECH_CATEGORIES = {'frontend', 'backend', 'database', 'devops', 'other'}
+    all_skills = [_enrich_skill(s) for s in Skill.objects.all()]
+    tech_skills = [s for s in all_skills if s.category in TECH_CATEGORIES]
+    soft_skills = [s for s in all_skills if s.category == 'soft']
     return render(request, 'portfolio/skills.html', {
-        'skills': skills,
+        'skills': all_skills,
+        'tech_skills': tech_skills,
+        'soft_skills': soft_skills,
     })
 
 
 def contacts(request):
     track_page(request, 'contacts')
     experiences = Experience.objects.all()
-    testimonials = Testimonial.objects.all()
+    testimonials = Testimonial.objects.filter(is_published=True)
+    testimonial_form = TestimonialForm(request.POST or None)
+    if request.method == 'POST' and testimonial_form.is_valid():
+        testimonial = testimonial_form.save(commit=False)
+        testimonial.is_published = False
+        testimonial.save()
+        messages.success(request, 'Дякуємо! Відгук надіслано на перевірку.')
+        return redirect('portfolio:contacts')
+
     return render(request, 'portfolio/contacts.html', {
         'experiences': experiences,
         'testimonials': testimonials,
+        'testimonial_form': testimonial_form,
     })
 
 
@@ -123,8 +176,10 @@ def analytics(request):
     monthly_orders = [
         {
             'month': MONTH_NAMES[item['month'] - 1] if item['month'] else 'Невідомий',
+            'month_short': (MONTH_NAMES[item['month'] - 1][:3] + '.') if item['month'] else '—',
             'count': item['count'],
             'percent': round(item['count'] / max_month_count * 100),
+            'height_pct': max(6, round(item['count'] / max_month_count * 100)),
         }
         for item in monthly_raw
     ]
@@ -138,23 +193,130 @@ def analytics(request):
         }
         for item in page_views_raw
     ]
+    total_orders = Order.objects.count()
+    total_views = PageView.objects.count()
+    top_page = page_views[0] if page_views else None
+    top_project = popular_projects[0] if popular_projects else None
     return render(request, 'portfolio/analytics.html', {
         'popular_projects': popular_projects,
         'monthly_orders': monthly_orders,
         'page_views': page_views,
+        'total_orders': total_orders,
+        'total_views': total_views,
+        'top_page': top_page,
+        'top_project': top_project,
     })
+
+
+def _get_safe_redirect(request, default='portfolio:home'):
+    next_url = request.POST.get('next') or request.GET.get('next') or ''
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+        return next_url
+    return reverse(default)
 
 
 def order_brif(request):
     if request.method == 'POST':
-        form = OrderForm(request.POST)
+        form = OrderForm(request.POST, request.FILES)
         if form.is_valid():
-            order = form.save()
+            order = form.save(user=request.user)
             send_order_emails(order)
             return redirect('portfolio:order_thanks')
     else:
         form = OrderForm()
     return render(request, 'portfolio/order_brif.html', {'form': form})
+order_brif = login_required(login_url='portfolio:client_login')(order_brif)
+
+
+def client_register(request):
+    form = ClientRegistrationForm(request.POST or None)
+    next_url = request.POST.get('next') or request.GET.get('next') or reverse('portfolio:my_orders')
+    if request.method == 'POST' and form.is_valid():
+        user = form.save()
+        auth_login(request, user)
+        safe_next = next_url if (next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()})) else reverse('portfolio:my_orders')
+        return redirect(safe_next)
+    return render(request, 'portfolio/account_register.html', {
+        'form': form,
+        'next_url': request.GET.get('next', ''),
+    })
+
+
+def client_login(request):
+    form = ClientAuthenticationForm(request, data=request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        auth_login(request, form.get_user())
+        safe_next = _get_safe_redirect(request, default='portfolio:my_orders')
+        return redirect(safe_next)
+    return render(request, 'portfolio/account_login.html', {
+        'form': form,
+        'next_url': request.GET.get('next', ''),
+    })
+
+
+def client_logout(request):
+    if request.method == 'POST':
+        auth_logout(request)
+    return redirect('portfolio:home')
+
+
+@login_required(login_url='portfolio:client_login')
+def my_orders(request):
+    qs = request.user.portfolio_orders.prefetch_related('files').all()
+    orders = []
+    import os
+    for order in qs:
+        items = []
+        total_price = 0
+        total_hours = 0.0
+        details = order.pricing_details or {}
+        raw_items = details.get('items') or []
+        for it in raw_items:
+            price = float(it.get('price') or 0)
+            hours = float(it.get('hours') or 0)
+            total_price += price
+            total_hours += hours
+            items.append({
+                'name': it.get('name', ''),
+                'section': it.get('section', ''),
+                'style': it.get('style', ''),
+                'description': it.get('description', ''),
+                'price': int(price),
+                'hours': round(hours, 1),
+            })
+        level_name = details.get('levelName') or order.get_development_level_display() or ''
+        files_pretty = []
+        for f in order.files.all():
+            files_pretty.append({
+                'url': f.file.url,
+                'name': os.path.basename(f.file.name),
+                'uploaded_at': f.uploaded_at,
+            })
+        orders.append({
+            'pk': order.pk,
+            'project_name': order.project_name,
+            'created_at': order.created_at,
+            'status': order.status,
+            'get_status_display': order.get_status_display(),
+            'budget': order.budget,
+            'min_budget': order.min_budget or 0,
+            'deadline': order.deadline,
+            'get_development_level_display': order.get_development_level_display(),
+            'development_level': order.development_level,
+            'total_hours': order.total_hours or 0,
+            'total_days': order.total_days or 0,
+            'description': order.description,
+            'contact_name': order.contact_name,
+            'contact_email': order.contact_email,
+            'contact_phone': order.contact_phone,
+            'reference_image': order.reference_image,
+            'files_pretty': files_pretty,
+            'structure_items': items,
+            'structure_total_price': int(total_price),
+            'structure_total_hours': round(total_hours, 1),
+            'structure_level_name': level_name,
+        })
+    return render(request, 'portfolio/my_orders.html', {'orders': orders})
 
 
 def order_thanks(request):

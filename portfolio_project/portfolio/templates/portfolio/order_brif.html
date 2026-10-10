@@ -4,66 +4,183 @@
 
 {% block content %}
 <div class="row justify-content-center">
-  <div class="col-lg-10">
+  <div class="col-lg-11">
     <div class="card-soft p-4 p-md-5 shadow-sm">
       <div class="row g-4">
-        <div class="col-lg-7">
+        <div class="col-lg-8">
           <div class="mb-4">
             <span class="badge rounded-pill bg-primary-subtle text-primary mb-2">Бриф на розробку</span>
             <h1 class="display-5 fw-bold mb-3">Розкажіть про свій проєкт</h1>
-            <p class="text-muted-soft fs-6">Заповніть бриф, щоб отримати детальну пропозицію із термінами та бюджетом. Чим більше деталей — тим точніша оцінка.</p>
+            <p class="text-muted-soft fs-6">Заповніть бриф, щоб отримати детальну пропозицію. Якщо ви вже зібрали проєкт у прайсі — деталі автозаповняться самі.</p>
           </div>
-          <form method="post" novalidate>
+
+          <ul class="nav nav-tabs mb-4" role="tablist" id="briefTabs">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-main" type="button" role="tab">
+                1. Основне
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-details" type="button" role="tab">
+                2. Деталі замовлення
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-files" type="button" role="tab">
+                3. Файли
+              </button>
+            </li>
+          </ul>
+
+          <form method="post" enctype="multipart/form-data" novalidate class="brief-form" id="briefForm">
             {% csrf_token %}
             {{ form.non_field_errors }}
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label" for="id_project_name">{{ form.project_name.label }}</label>
-                {{ form.project_name }}
-                {{ form.project_name.errors }}
+
+            {{ form.min_budget }}
+            {{ form.total_hours }}
+            {{ form.total_days }}
+            {{ form.min_deadline }}
+            {{ form.development_level }}
+            {{ form.pricing_details }}
+
+            <div class="tab-content">
+              <div class="tab-pane fade show active" id="tab-main" role="tabpanel">
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label class="form-label" for="id_project_name">{{ form.project_name.label }} <span class="text-danger">*</span></label>
+                    {{ form.project_name }}
+                    {{ form.project_name.errors }}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label" for="id_contact_name">{{ form.contact_name.label }} <span class="text-danger">*</span></label>
+                    {{ form.contact_name }}
+                    {{ form.contact_name.errors }}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label" for="id_contact_phone">{{ form.contact_phone.label }}</label>
+                    {{ form.contact_phone }}
+                    {{ form.contact_phone.errors }}
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label" for="id_contact_email">{{ form.contact_email.label }} <span class="text-danger">*</span></label>
+                    {{ form.contact_email }}
+                    {{ form.contact_email.errors }}
+                  </div>
+                  <div class="col-12 d-flex justify-content-end mt-3">
+                    <button type="button" class="btn btn-outline-primary next-tab" data-next="#tab-details">Далі — Деталі →</button>
+                  </div>
+                </div>
               </div>
-              <div class="col-md-6">
-                <label class="form-label" for="id_budget">{{ form.budget.label }}</label>
-                {{ form.budget }}
-                {{ form.budget.errors }}
+
+              <div class="tab-pane fade" id="tab-details" role="tabpanel">
+                <div id="pricingInfoCard" class="mb-4 d-none">
+                  <div class="alert alert-info d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3" role="alert">
+                    <div>
+                      <div class="fw-semibold mb-1">Зібрано в прайсі</div>
+                      <div class="small text-muted mb-1" id="pricingLevel"></div>
+                      <div class="d-flex flex-wrap gap-3">
+                        <div><strong>Мін. бюджет:</strong> <span id="pricingMinBudget" class="text-primary"></span></div>
+                        <div><strong>Інженерний час:</strong> <span id="pricingHours"></span></div>
+                        <div><strong>Робочі дні:</strong> <span id="pricingDays"></span></div>
+                        <div><strong>Не раніше:</strong> <span id="pricingDate"></span></div>
+                      </div>
+                    </div>
+                    <a href="{% url 'portfolio:pricing' %}" class="btn btn-sm btn-outline-secondary">Редагувати в прайсі</a>
+                  </div>
+                </div>
+
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label" for="id_budget">{{ form.budget.label }}, USD <span class="text-danger">*</span></label>
+                    {{ form.budget }}
+                    <div class="form-text" id="budgetHint"></div>
+                    <div id="budgetError" class="invalid-feedback d-none mt-1"></div>
+                    {{ form.budget.errors }}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label" for="id_deadline">{{ form.deadline.label }}</label>
+                    {{ form.deadline }}
+                    <div class="form-text" id="deadlineHint"></div>
+                    <div id="deadlineError" class="invalid-feedback d-none mt-1"></div>
+                    {{ form.deadline.errors }}
+                  </div>
+
+                  <div class="col-12">
+                    <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-2 mb-2">
+                      <label class="form-label mb-0 fw-semibold" for="project-structure-table">Склад проєкту</label>
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="brief-field-hint" id="emptyStructureHint"></span>
+                        <button type="button" class="btn btn-sm btn-outline-danger d-none" id="clearProjectStructure">Очистити склад</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="toggleProjectStructure" aria-expanded="true" aria-controls="projectStructurePanel">Згорнути склад</button>
+                      </div>
+                    </div>
+                    <div class="table-responsive" id="projectStructurePanel">
+                      <table class="table table-sm align-middle mb-0" id="project-structure-table">
+                        <thead class="table-light">
+                          <tr>
+                            <th class="text-muted" style="width:36%">Назва</th>
+                            <th class="text-muted">Розділ</th>
+                            <th class="text-muted text-end">Ціна, $</th>
+                            <th class="text-muted text-end" style="width:18%">Час, год</th>
+                          </tr>
+                        </thead>
+                        <tbody id="projectStructureBody">
+                          <tr><td colspan="4" class="text-center py-4 text-muted small">Склад проєкту з'явиться тут, якщо ви його зібрали в <a href="{% url 'portfolio:pricing' %}">прайсі</a>.</td></tr>
+                        </tbody>
+                        <tfoot id="projectStructureFoot" class="d-none">
+                          <tr class="table-secondary fw-semibold">
+                            <td colspan="2" class="text-end">Разом за проєкт</td>
+                            <td class="text-end" id="totalPriceCell">$0</td>
+                            <td class="text-end" id="totalHoursCell">0 год</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div class="col-12">
+                    <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-2 mb-2">
+                      <label class="form-label mb-0" for="id_description">{{ form.description.label }} <span class="text-danger">*</span></label>
+                      <span class="brief-field-hint">Опишіть щонайменше 8 слів</span>
+                    </div>
+                    {{ form.description }}
+                    {{ form.description.errors }}
+                  </div>
+
+                  <div class="col-12 d-flex justify-content-between mt-3">
+                    <button type="button" class="btn btn-outline-secondary prev-tab" data-prev="#tab-main">← Назад</button>
+                    <button type="button" class="btn btn-outline-primary next-tab" data-next="#tab-files">Далі — Файли →</button>
+                  </div>
+                </div>
               </div>
-              <div class="col-md-6">
-                <label class="form-label" for="id_deadline">{{ form.deadline.label }}</label>
-                {{ form.deadline }}
-                {{ form.deadline.errors }}
+
+              <div class="tab-pane fade" id="tab-files" role="tabpanel">
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label class="form-label" for="id_reference_image">{{ form.reference_image.label }}</label>
+                    {{ form.reference_image }}
+                    <div id="referencePreview" class="brief-reference-preview mt-2"></div>
+                    {{ form.reference_image.errors }}
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label" for="id_extra_files">{{ form.extra_files.label }}</label>
+                    {{ form.extra_files }}
+                    {% if form.extra_files.help_text %}<div class="form-text">{{ form.extra_files.help_text }}</div>{% endif %}
+                    <div id="extraFilesList" class="list-group mt-3"></div>
+                  </div>
+
+                  <div class="col-12 d-flex justify-content-between mt-4">
+                    <button type="button" class="btn btn-outline-secondary prev-tab" data-prev="#tab-details">← Назад</button>
+                    <button type="submit" class="btn btn-primary btn-lg px-5">Відправити заявку</button>
+                  </div>
+                </div>
               </div>
-              <div class="col-md-6">
-                <label class="form-label" for="id_contact_name">{{ form.contact_name.label }}</label>
-                {{ form.contact_name }}
-                {{ form.contact_name.errors }}
-              </div>
-              <div class="col-md-6">
-                <label class="form-label" for="id_contact_email">{{ form.contact_email.label }}</label>
-                {{ form.contact_email }}
-                {{ form.contact_email.errors }}
-              </div>
-              <div class="col-md-6">
-                <label class="form-label" for="id_contact_phone">{{ form.contact_phone.label }}</label>
-                {{ form.contact_phone }}
-                {{ form.contact_phone.errors }}
-              </div>
-              <div class="col-12">
-                <label class="form-label" for="id_description">{{ form.description.label }}</label>
-                {{ form.description }}
-                {{ form.description.errors }}
-              </div>
-            </div>
-            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mt-4">
-              <div>
-                <p class="text-muted-soft mb-1"><strong>Порада:</strong> поділіться референсами, функціоналом та бажаними термінами.</p>
-                <p class="text-muted-soft mb-0">Це допоможе отримати точнішу і швидшу відповідь.</p>
-              </div>
-              <button class="btn btn-primary btn-lg">Відправити заявку</button>
             </div>
           </form>
         </div>
-        <div class="col-lg-5">
-          <div class="card-soft p-4 bg-primary text-white h-100">
+
+        <div class="col-lg-4">
+          <div class="card-soft brief-guide p-4 h-100">
             <h2 class="h5 fw-bold mb-3">Що краще вказати</h2>
             <ul class="list-unstyled mb-0">
               <li class="mb-3">• Мету сайту і цільову аудиторію</li>
@@ -72,6 +189,13 @@
               <li class="mb-3">• Приклади дизайну чи референси</li>
             </ul>
             <div class="mt-4">
+              <p class="fw-semibold mb-2">Як заповнити швидше</p>
+              <p class="small mb-2">✔ Спочатку зібрати проєкт у <a href="{% url 'portfolio:pricing' %}" style="color:var(--blood);font-weight:800;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;background:rgba(227,38,46,0.08);padding:1px 6px;border-radius:4px;">прайсі</a></p>
+              <p class="small mb-2">✔ Натиснути «Перейти до брифу» — все автозаповниться</p>
+              <p class="small mb-2">✔ Замінити бюджет/терміни, якщо потрібно</p>
+              <p class="small mb-0">✔ Додати файли та відправити</p>
+            </div>
+            <div class="mt-4 pt-3 border-top">
               <p class="fw-semibold mb-2">Переваги</p>
               <p class="small mb-2">✔ Точна оцінка</p>
               <p class="small mb-2">✔ Менше правок</p>
@@ -83,4 +207,516 @@
     </div>
   </div>
 </div>
+<script>
+  const getEl = (id) => document.getElementById(id);
+  const showEl = (el, show = true) => el && (show ? el.classList.remove('d-none') : el.classList.add('d-none'));
+
+  const savedBuilder = JSON.parse(localStorage.getItem('portfolioBuilder') || 'null');
+
+  const setFieldValue = (id, value) => {
+    const el = getEl(id);
+    if (el && value != null) {
+      el.value = value;
+      const ev = new Event('change', { bubbles: true });
+      el.dispatchEvent(ev);
+    }
+  };
+
+  const formatUsd = (v) => '$' + Number(v || 0).toLocaleString('en-US');
+
+  const buildStructureTable = (pricing) => {
+    const tbody = getEl('projectStructureBody');
+    const tfoot = getEl('projectStructureFoot');
+    const emptyHint = getEl('emptyStructureHint');
+    const toggle = getEl('toggleProjectStructure');
+    const clearButton = getEl('clearProjectStructure');
+    if (!tbody) return;
+    if (!pricing || !pricing.items || pricing.items.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted small">Склад проєкту з\'явиться тут, якщо ви його зібрали в <a href="/pricing/">прайсі</a>.</td></tr>';
+      showEl(tfoot, false);
+      if (emptyHint) emptyHint.textContent = '';
+      if (toggle) toggle.classList.add('d-none');
+      if (clearButton) clearButton.classList.add('d-none');
+      return;
+    }
+    if (toggle) toggle.classList.remove('d-none');
+    if (clearButton) clearButton.classList.remove('d-none');
+    tbody.innerHTML = pricing.items.map(item => {
+      const style = item.style ? ` <span class="badge bg-light text-muted border fw-normal ms-1">${item.style}</span>` : '';
+      const desc = item.description ? `<div class="text-muted small lh-sm mt-1 max-w-75">${item.description}</div>` : '';
+      return `
+        <tr>
+          <td>
+            <div class="fw-medium">${item.name}${style}</div>${desc}
+          </td>
+          <td class="text-muted small">${item.section || '—'}</td>
+          <td class="text-end">${formatUsd(item.price)}</td>
+          <td class="text-end">${Number(item.hours || 0).toFixed(1)}</td>
+        </tr>
+      `;
+    }).join('');
+    const totalP = pricing.items.reduce((s, it) => s + Number(it.price || 0), 0);
+    const totalH = pricing.items.reduce((s, it) => s + Number(it.hours || 0), 0);
+    getEl('totalPriceCell').textContent = formatUsd(totalP);
+    getEl('totalHoursCell').textContent = totalH.toFixed(1) + ' год';
+    showEl(tfoot, true);
+    if (emptyHint) emptyHint.textContent = `${pricing.items.length} ${pricing.items.length === 1 ? 'позиція' : 'позицій'}`;
+  };
+
+  const applyBudgetLimits = (pricing) => {
+    const budgetEl = getEl('id_budget');
+    const hint = getEl('budgetHint');
+    const errEl = getEl('budgetError');
+    if (!budgetEl) return;
+    const minBudget = Number(pricing?.minBudget || 0);
+    if (minBudget > 0) {
+      budgetEl.min = minBudget;
+      const prevAuto = Number(budgetEl.dataset.lastAutoBudget || 0);
+      const currentRaw = budgetEl.value;
+      const current = Number(currentRaw || 0);
+      const untouched = (currentRaw === '') || (prevAuto > 0 && current === prevAuto);
+      if (untouched || current < minBudget) {
+        budgetEl.value = minBudget;
+        budgetEl.dataset.lastAutoBudget = String(minBudget);
+      }
+      if (hint) hint.innerHTML = `<span class="text-primary">Мінімальний бюджет з прайсу: <strong>${formatUsd(minBudget)}</strong> (автоматично підставлено). Можна вказати більший.</span>`;
+    }
+    const validateBudget = () => {
+      const val = Number(budgetEl.value || 0);
+      if (minBudget > 0 && val && val < minBudget) {
+        budgetEl.classList.add('is-invalid');
+        if (errEl) { errEl.textContent = `Не менше ${formatUsd(minBudget)} (мінімальний з прайсу).`; showEl(errEl, true); }
+        budgetEl.value = minBudget;
+        budgetEl.dataset.lastAutoBudget = String(minBudget);
+        return false;
+      }
+      budgetEl.classList.remove('is-invalid');
+      showEl(errEl, false);
+      return true;
+    };
+    budgetEl.addEventListener('change', validateBudget);
+    budgetEl.addEventListener('input', validateBudget);
+    validateBudget();
+  };
+
+  const applyDeadlineLimits = (pricing) => {
+    const deadlineEl = getEl('id_deadline');
+    const hint = getEl('deadlineHint');
+    const errEl = getEl('deadlineError');
+    if (!deadlineEl) return;
+    const minDate = pricing?.minDeadline || '';
+    if (minDate) {
+      deadlineEl.min = minDate;
+      const prevAuto = deadlineEl.dataset.lastAutoDeadline || '';
+      const current = deadlineEl.value || '';
+      const untouched = !current || (prevAuto && current === prevAuto);
+      if (untouched || (current && current < minDate)) {
+        deadlineEl.value = minDate;
+        deadlineEl.dataset.lastAutoDeadline = minDate;
+      }
+      if (hint) {
+        const d = new Date(minDate + 'T00:00:00');
+        const pretty = d.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' });
+        hint.innerHTML = `<span class="text-primary">Найраніший термін: <strong>${pretty}</strong> (автоматично підставлено з прайсу).</span>`;
+      }
+    }
+    const validateDeadline = () => {
+      const val = deadlineEl.value;
+      if (minDate && val && val < minDate) {
+        deadlineEl.classList.add('is-invalid');
+        if (errEl) { errEl.textContent = `Термін не може бути раніше ${minDate}.`; showEl(errEl, true); }
+        deadlineEl.value = minDate;
+        deadlineEl.dataset.lastAutoDeadline = minDate;
+        return false;
+      }
+      deadlineEl.classList.remove('is-invalid');
+      showEl(errEl, false);
+      return true;
+    };
+    deadlineEl.addEventListener('change', validateDeadline);
+    deadlineEl.addEventListener('input', validateDeadline);
+    validateDeadline();
+  };
+
+  const fillHiddenFields = (pricing) => {
+    if (!pricing) return;
+    setFieldValue('id_min_budget', pricing.minBudget || 0);
+    setFieldValue('id_total_hours', pricing.totalHours || 0);
+    setFieldValue('id_total_days', pricing.totalDays || 0);
+    setFieldValue('id_min_deadline', pricing.minDeadline || '');
+    setFieldValue('id_development_level', pricing.developmentLevel || '');
+    const detailsInput = getEl('id_pricing_details');
+    if (detailsInput) {
+      detailsInput.value = JSON.stringify({
+        level: pricing.developmentLevel,
+        levelName: pricing.developmentLevelName,
+        levelCoef: pricing.developmentLevelCoef,
+        summary: pricing.summary,
+        budget: pricing.budget,
+        minBudget: pricing.minBudget,
+        totalHours: pricing.totalHours,
+        totalDays: pricing.totalDays,
+        minDeadline: pricing.minDeadline,
+        items: pricing.items || []
+      });
+    }
+    const infoCard = getEl('pricingInfoCard');
+    showEl(infoCard, pricing.items && pricing.items.length > 0);
+    if (pricing.developmentLevelName) getEl('pricingLevel').textContent = `Рівень: ${pricing.developmentLevelName}${pricing.developmentLevelCoef ? ' (коеф. ×' + pricing.developmentLevelCoef.toFixed(2) + ')' : ''}`;
+    if (getEl('pricingMinBudget')) getEl('pricingMinBudget').textContent = formatUsd(pricing.minBudget || pricing.budget || 0);
+    if (getEl('pricingHours')) getEl('pricingHours').textContent = `${pricing.totalHours || 0} год`;
+    if (getEl('pricingDays')) getEl('pricingDays').textContent = `${pricing.totalDays || 0} роб. днів`;
+    if (getEl('pricingDate') && pricing.minDeadline) {
+      const d = new Date(pricing.minDeadline + 'T00:00:00');
+      getEl('pricingDate').textContent = d.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+  };
+
+  const structurePanel = getEl('projectStructurePanel');
+  const structureToggle = getEl('toggleProjectStructure');
+  structureToggle?.addEventListener('click', () => {
+    const isExpanded = structureToggle.getAttribute('aria-expanded') === 'true';
+    structurePanel?.classList.toggle('d-none', isExpanded);
+    structureToggle.setAttribute('aria-expanded', String(!isExpanded));
+    structureToggle.textContent = isExpanded ? 'Розгорнути склад' : 'Згорнути склад';
+  });
+
+  getEl('clearProjectStructure')?.addEventListener('click', () => {
+    const budgetEl = getEl('id_budget');
+    const deadlineEl = getEl('id_deadline');
+    const inheritedBudget = Number(savedBuilder?.budget || savedBuilder?.minBudget || 0);
+    if (budgetEl && inheritedBudget && Number(budgetEl.value) === inheritedBudget) budgetEl.value = '';
+    if (deadlineEl && savedBuilder?.minDeadline && deadlineEl.value === savedBuilder.minDeadline) deadlineEl.value = '';
+    if (budgetEl) { try { delete budgetEl.dataset.lastAutoBudget; } catch(e) { budgetEl.dataset.lastAutoBudget = ''; } budgetEl.dataset.lastAutoBudget = ''; }
+    if (deadlineEl) { deadlineEl.dataset.lastAutoDeadline = ''; }
+
+    ['id_min_budget', 'id_total_hours', 'id_total_days'].forEach(id => setFieldValue(id, 0));
+    ['id_min_deadline', 'id_development_level', 'id_pricing_details'].forEach(id => setFieldValue(id, ''));
+    if (budgetEl) { budgetEl.min = ''; budgetEl.classList.remove('is-invalid'); }
+    if (deadlineEl) { deadlineEl.min = ''; deadlineEl.classList.remove('is-invalid'); }
+    if (getEl('budgetHint')) getEl('budgetHint').textContent = '';
+    if (getEl('deadlineHint')) getEl('deadlineHint').textContent = '';
+    showEl(getEl('budgetError'), false);
+    showEl(getEl('deadlineError'), false);
+    showEl(getEl('pricingInfoCard'), false);
+
+    const tbody = getEl('projectStructureBody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted small">Склад проєкту очищено. Його можна зібрати знову в <a href="/pricing/">прайсі</a>.</td></tr>';
+    showEl(getEl('projectStructureFoot'), false);
+    if (getEl('emptyStructureHint')) getEl('emptyStructureHint').textContent = '';
+    if (structurePanel) structurePanel.classList.remove('d-none');
+    if (structureToggle) {
+      structureToggle.classList.add('d-none');
+      structureToggle.setAttribute('aria-expanded', 'true');
+      structureToggle.textContent = 'Згорнути склад';
+    }
+    getEl('clearProjectStructure').classList.add('d-none');
+    localStorage.removeItem('portfolioBuilder');
+  });
+
+  const referenceInput = getEl('id_reference_image');
+  const referencePreview = getEl('referencePreview');
+
+  if (savedBuilder?.image?.data && referenceInput) {
+    try {
+      const [meta, encoded] = savedBuilder.image.data.split(',');
+      const mime = meta.match(/data:(.*?);/)?.[1] || savedBuilder.image.type || 'image/jpeg';
+      const bytes = Uint8Array.from(atob(encoded), character => character.charCodeAt(0));
+      const file = new File([bytes], savedBuilder.image.name || 'project-reference.jpg', { type: mime });
+      const transfer = new DataTransfer();
+      transfer.items.add(file);
+      referenceInput.files = transfer.files;
+      const image = document.createElement('img');
+      image.src = savedBuilder.image.data;
+      image.alt = 'Завантажений референс';
+      referencePreview.appendChild(image);
+    } catch (e) { /* ignore */ }
+  }
+
+  referenceInput?.addEventListener('change', () => {
+    const file = referenceInput.files?.[0];
+    if (!file) { referencePreview.innerHTML = ''; return; }
+    const reader = new FileReader();
+    reader.onload = () => { referencePreview.innerHTML = `<img src="${reader.result}" alt="Завантажений референс">`; };
+    reader.readAsDataURL(file);
+  });
+
+  const formatSize = (bytes) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  const extraFilesInput = getEl('id_extra_files');
+  const extraFilesList = getEl('extraFilesList');
+  const renderExtraFiles = () => {
+    if (!extraFilesInput || !extraFilesList) return;
+    extraFilesList.innerHTML = '';
+    const files = extraFilesInput.files || [];
+    if (!files.length) return;
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      const li = document.createElement('li');
+      li.className = 'list-group-item d-flex justify-content-between align-items-center small';
+      li.innerHTML = `
+        <div class="text-truncate me-3"><strong>${f.name}</strong> <span class="text-muted ms-2">${formatSize(f.size)}</span></div>
+        <button type="button" class="btn btn-sm btn-outline-danger remove-file" data-idx="${i}">Видалити</button>
+      `;
+      extraFilesList.appendChild(li);
+    }
+  };
+  extraFilesInput?.addEventListener('change', renderExtraFiles);
+  extraFilesList?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.remove-file');
+    if (!btn || !extraFilesInput) return;
+    const idx = Number(btn.dataset.idx);
+    const dt = new DataTransfer();
+    const files = extraFilesInput.files || [];
+    for (let i = 0; i < files.length; i++) if (i !== idx) dt.items.add(files[i]);
+    extraFilesInput.files = dt.files;
+    renderExtraFiles();
+  });
+
+  const BRIEF_DRAFT_DB = 'portfolio-brief-draft';
+  const BRIEF_DRAFT_STORE = 'drafts';
+  const BRIEF_DRAFT_KEY = 'current';
+  const briefForm = getEl('briefForm');
+  let briefDraftDbPromise;
+  let restoringBriefDraft = false;
+  let briefDraftSaveTimer;
+
+  const openBriefDraftDb = () => {
+    if (!window.indexedDB) return Promise.resolve(null);
+    if (!briefDraftDbPromise) {
+      briefDraftDbPromise = new Promise(resolve => {
+        const request = indexedDB.open(BRIEF_DRAFT_DB, 1);
+        request.onupgradeneeded = () => {
+          if (!request.result.objectStoreNames.contains(BRIEF_DRAFT_STORE)) {
+            request.result.createObjectStore(BRIEF_DRAFT_STORE);
+          }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = request.onblocked = () => resolve(null);
+      });
+    }
+    return briefDraftDbPromise;
+  };
+
+  const saveBriefDraft = async () => {
+    if (!briefForm || restoringBriefDraft) return;
+    const db = await openBriefDraftDb();
+    if (!db) return;
+
+    const values = {};
+    [...briefForm.elements].forEach(field => {
+      if (!field.id || field.type === 'file' || ['button', 'submit', 'reset'].includes(field.type) || field.name === 'csrfmiddlewaretoken') return;
+      values[field.id] = {value: field.value, checked: field.checked};
+    });
+    const files = {};
+    [referenceInput, extraFilesInput].forEach(input => {
+      if (input?.files?.length) files[input.id] = [...input.files];
+    });
+    const activeTab = document.querySelector('#briefTabs .nav-link.active')?.dataset.bsTarget || '#tab-main';
+    const transaction = db.transaction(BRIEF_DRAFT_STORE, 'readwrite');
+    transaction.objectStore(BRIEF_DRAFT_STORE).put({values, files, activeTab}, BRIEF_DRAFT_KEY);
+    await new Promise(resolve => {
+      transaction.oncomplete = transaction.onerror = transaction.onabort = () => resolve();
+    });
+  };
+
+  const scheduleBriefDraftSave = () => {
+    if (restoringBriefDraft) return;
+    clearTimeout(briefDraftSaveTimer);
+    briefDraftSaveTimer = setTimeout(saveBriefDraft, 250);
+  };
+
+  const restoreBriefDraft = async () => {
+    const db = await openBriefDraftDb();
+    if (!db) return;
+    const transaction = db.transaction(BRIEF_DRAFT_STORE, 'readonly');
+    const draft = await new Promise(resolve => {
+      const request = transaction.objectStore(BRIEF_DRAFT_STORE).get(BRIEF_DRAFT_KEY);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => resolve(null);
+    });
+
+    restoringBriefDraft = true;
+    Object.entries(draft?.values || {}).forEach(([id, saved]) => {
+      const field = getEl(id);
+      if (!field) return;
+      if (field.type === 'checkbox' || field.type === 'radio') field.checked = Boolean(saved.checked);
+      else field.value = saved.value ?? '';
+      field.dispatchEvent(new Event('change', {bubbles: true}));
+    });
+
+    Object.entries(draft?.files || {}).forEach(([id, files]) => {
+      const input = getEl(id);
+      if (!input) return;
+      const transfer = new DataTransfer();
+      files.forEach(file => transfer.items.add(file instanceof File ? file : new File([file], file.name || 'attachment', {type: file.type || 'application/octet-stream'})));
+      input.files = transfer.files;
+      input.dispatchEvent(new Event('change', {bubbles: true}));
+    });
+
+    const activeTab = [...document.querySelectorAll('#briefTabs [data-bs-target]')]
+      .find(button => button.dataset.bsTarget === draft?.activeTab);
+    if (activeTab && window.bootstrap?.Tab) bootstrap.Tab.getOrCreateInstance(activeTab).show();
+    restoringBriefDraft = false;
+    await saveBriefDraft();
+  };
+
+  briefForm?.addEventListener('input', scheduleBriefDraftSave);
+  briefForm?.addEventListener('change', scheduleBriefDraftSave);
+  briefForm?.addEventListener('submit', scheduleBriefDraftSave);
+  document.querySelectorAll('#briefTabs [data-bs-toggle="tab"]').forEach(button => button.addEventListener('shown.bs.tab', scheduleBriefDraftSave));
+  extraFilesList?.addEventListener('click', scheduleBriefDraftSave);
+  restoreBriefDraft().finally(() => {
+    if (savedBuilder) {
+      fillHiddenFields(savedBuilder);
+      buildStructureTable(savedBuilder);
+      applyBudgetLimits(savedBuilder);
+      applyDeadlineLimits(savedBuilder);
+      scheduleBriefDraftSave();
+    }
+  });
+
+  const focusInvalidField = (field, labelText) => {
+    field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    try { field.focus(); } catch(e) {}
+    field.classList.add('is-invalid');
+    field.animate?.(
+      [{boxShadow:'0 0 0 4px rgba(227,38,46,0.35)'},{boxShadow:'0 0 0 0 rgba(227,38,46,0)'}],
+      {duration: 1600, iterations: 2}
+    );
+    if (labelText && window.TRAE_toast) {
+      // Вбудована допомога в консолі — якщо є toast (маємо їх лише в UI), показуємо
+    } else {
+      const label = document.querySelector(`label[for="${field.id}"]`);
+      label?.animate?.(
+        [{color:'var(--blood)', transform:'translateX(0)'}, {transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(0)'}],
+        {duration: 450}
+      );
+    }
+  };
+
+  const validateTabRequired = (tabEl) => {
+    const required = tabEl.querySelectorAll('[required]:not(:disabled)');
+    let firstInvalid = null;
+    const wordCountFields = new Set(['id_description']);
+    required.forEach(field => {
+      if (firstInvalid) return;
+      let valid = true;
+      const type = field.type?.toLowerCase();
+      if (type === 'checkbox' || type === 'radio') {
+        const name = field.name;
+        if (name) {
+          const anyChecked = tabEl.querySelector(`input[name="${name}"]:checked`);
+          valid = !!anyChecked;
+        } else {
+          valid = !!field.checked;
+        }
+      } else {
+        const val = (field.value ?? '').trim();
+        if (!val) { valid = false; }
+        else if (field.minLength > 0 && val.length < field.minLength) { valid = false; }
+        else if (type === 'email' && val && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) { valid = false; }
+        else if (type === 'number') {
+          const n = Number(val);
+          if (Number.isNaN(n)) valid = false;
+          else if (field.min !== '' && n < Number(field.min)) valid = false;
+          else if (field.max !== '' && n > Number(field.max)) valid = false;
+        }
+        if (valid && wordCountFields.has(field.id)) {
+          const words = val.split(/\s+/).filter(Boolean).length;
+          if (words < 8) valid = false;
+        }
+      }
+      if (!valid) firstInvalid = field;
+    });
+    return firstInvalid;
+  };
+
+  document.querySelectorAll('.next-tab').forEach(btn => btn.addEventListener('click', (ev) => {
+    const sel = btn.dataset.next;
+    if (!sel) return;
+    const currentTabPane = btn.closest('.tab-pane');
+    if (currentTabPane) {
+      const invalidField = validateTabRequired(currentTabPane);
+      if (invalidField) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        focusInvalidField(invalidField);
+        return;
+      }
+    }
+    const tabButton = document.querySelector(`#briefTabs [data-bs-target="${sel}"]`);
+    if (!tabButton) return;
+    const tab = bootstrap.Tab.getOrCreateInstance(tabButton);
+    tab.show();
+    tabButton.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+  }));
+  document.querySelectorAll('.prev-tab').forEach(btn => btn.addEventListener('click', () => {
+    const sel = btn.dataset.prev;
+    if (!sel) return;
+    const tabButton = document.querySelector(`#briefTabs [data-bs-target="${sel}"]`);
+    if (!tabButton) return;
+    const tab = bootstrap.Tab.getOrCreateInstance(tabButton);
+    tab.show();
+    tabButton.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+  }));
+
+  (function focusOnFirstError() {
+    const tabMap = {
+      'id_project_name': '#tab-main',
+      'id_contact_name': '#tab-main',
+      'id_contact_phone': '#tab-main',
+      'id_contact_email': '#tab-main',
+      'id_budget': '#tab-details',
+      'id_deadline': '#tab-details',
+      'id_description': '#tab-details',
+      'id_reference_image': '#tab-files',
+      'id_extra_files': '#tab-files',
+    };
+    const errFields = [
+      ...document.querySelectorAll('.is-invalid, .errorlist, [aria-invalid="true"]'),
+      ...[...document.querySelectorAll('div.form-error, div.invalid-feedback.d-block')]
+        .map(el => {
+          const prev = el.previousElementSibling;
+          const grand = el.parentElement?.querySelector('input, select, textarea');
+          return prev?.tagName?.match(/INPUT|SELECT|TEXTAREA/) ? prev : grand;
+        }).filter(Boolean)
+    ];
+    const form = getEl('briefForm');
+    let firstBad = null;
+    if (form) {
+      const inputs = ['id_project_name','id_contact_name','id_contact_email','id_budget','id_description'];
+      for (const id of inputs) {
+        const f = getEl(id);
+        if (!f) continue;
+        const name = f.id.replace('id_','');
+        if (f.closest('.tab-pane') && f.closest('.tab-pane').querySelectorAll('.is-invalid, [aria-invalid]').length) {
+          firstBad = f; break;
+        }
+        if (f.classList.contains('is-invalid')) { firstBad = f; break; }
+      }
+      if (!firstBad) firstBad = errFields[0];
+    } else {
+      firstBad = errFields[0];
+    }
+    if (!firstBad) return;
+    const target = tabMap[firstBad.id] || '#tab-main';
+    const tabButton = document.querySelector(`#briefTabs [data-bs-target="${target}"]`);
+    if (tabButton && window.bootstrap?.Tab) {
+      bootstrap.Tab.getOrCreateInstance(tabButton).show();
+    }
+    setTimeout(() => {
+      firstBad.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (firstBad.focus) { try { firstBad.focus(); } catch(e){} }
+      firstBad.animate?.(
+        [{boxShadow:'0 0 0 4px rgba(227,38,46,0.25)'},{boxShadow:'0 0 0 0 rgba(227,38,46,0)'}],
+        {duration: 1600, iterations: 2}
+      );
+    }, 350);
+  })();
+</script>
 {% endblock %}

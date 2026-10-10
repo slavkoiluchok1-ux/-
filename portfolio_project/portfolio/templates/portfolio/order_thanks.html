@@ -3,9 +3,37 @@
 {% block title %}Дякуємо | Портфоліо{% endblock %}
 
 {% block content %}
-<div class="card p-5 shadow-sm text-center">
-  <h1 class="mb-3">Дякуємо за заявку!</h1>
-  <p>Ми отримали ваші дані і зв’яжемося з вами найближчим часом.</p>
-  <a href="{% url 'portfolio:home' %}" class="btn btn-primary">Повернутися на головну</a>
-</div>
+<section class="hero-panel row align-items-end mb-4">
+  <div class="col-lg-8">
+    <p class="eyebrow mb-3">Заявка / підтвердження</p>
+    <h1 class="mb-3">Дякуємо за заявку!</h1>
+    <p class="lead mb-4">Ми отримали ваші дані і зв’яжемося з вами найближчим часом.</p>
+    <div class="d-flex flex-wrap gap-2 justify-content-center justify-content-lg-start">
+      <a href="{% url 'portfolio:home' %}" class="btn btn-primary">На головну →</a>
+      <a class="btn btn-outline-light" href="{% url 'portfolio:projects' %}">Переглянути проєкти</a>
+    </div>
+  </div>
+  <div class="col-lg-4 mt-5 mt-lg-0">
+    <div class="stat-strip row g-3">
+      <div class="col-6"><div class="stat-value">24</div><div class="small text-white-50">годин на відповідь</div></div>
+      <div class="col-6"><div class="stat-value">1</div><div class="small text-white-50">заявка прийнята</div></div>
+    </div>
+  </div>
+</section>
+<script>
+  localStorage.removeItem('portfolioBuilder');
+  if (window.indexedDB) {
+    const request = indexedDB.open('portfolio-brief-draft', 1);
+    request.onsuccess = () => {
+      const database = request.result;
+      if (database.objectStoreNames.contains('drafts')) {
+        const transaction = database.transaction('drafts', 'readwrite');
+        transaction.objectStore('drafts').delete('current');
+        transaction.oncomplete = () => database.close();
+      } else {
+        database.close();
+      }
+    };
+  }
+</script>
 {% endblock %}

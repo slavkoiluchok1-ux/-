@@ -3,11 +3,23 @@
 {% block title %}Блог | Портфоліо{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-  <div class="card-soft p-4 mb-4">
-    <h1 class="display-5 fw-bold mb-2">Блог розробника</h1>
-    <p class="text-muted-soft mb-0">Тут я ділюся досвідом, підходами до розробки та практичними рішеннями з Python, Django та web-проєктів.</p>
+<section class="hero-panel row align-items-end mb-4">
+  <div class="col-lg-8">
+    <p class="eyebrow mb-3">Блог / нотатки / досвід</p>
+    <h1 class="mb-3">Блог розробника</h1>
+    <p class="lead mb-4">Ділюся досвідом, підходами до розробки та практичними рішеннями з Python, Django та web-проєктів.</p>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-primary" href="{% url 'portfolio:projects' %}">Дивитись проєкти →</a>
+      <a class="btn btn-outline-light" href="{% url 'portfolio:order_brif' %}">Обговорити ідею</a>
+    </div>
   </div>
+  <div class="col-lg-4 mt-5 mt-lg-0">
+    <div class="stat-strip row g-3">
+      <div class="col-6"><div class="stat-value">{{ posts|length }}</div><div class="small text-white-50">опублікованих статей</div></div>
+      <div class="col-6"><div class="stat-value">{{ categories|length }}</div><div class="small text-white-50">категорій</div></div>
+    </div>
+  </div>
+</section>
 
   <div class="row g-4">
     <div class="col-lg-8">
@@ -47,5 +59,4 @@
       </div>
     </div>
   </div>
-</div>
 {% endblock %}

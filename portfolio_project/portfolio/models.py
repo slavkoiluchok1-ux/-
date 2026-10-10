@@ -10,6 +10,7 @@ class Skill(models.Model):
         ('backend', 'Бекенд'),
         ('database', 'База даних'),
         ('devops', 'DevOps'),
+        ('soft', 'Особисті навички'),
         ('other', 'Інше'),
     ]
     name = models.CharField('Назва', max_length=100)
@@ -60,6 +61,7 @@ class Testimonial(models.Model):
     company = models.CharField('Компанія', max_length=100, blank=True)
     quote = models.TextField('Відгук')
     rating = models.PositiveIntegerField('Рейтинг', validators=[MinValueValidator(1), MaxValueValidator(5)])
+    is_published = models.BooleanField('Опубліковано', default=False)
 
     class Meta:
         verbose_name = 'Відгук'
@@ -77,15 +79,27 @@ class Order(models.Model):
         ('completed', 'Завершена'),
         ('cancelled', 'Скасована'),
     ]
+    LEVEL_CHOICES = [
+        ('base', 'Базовий'),
+        ('standard', 'Стандартний'),
+        ('premium', 'Преміум'),
+    ]
 
     project_name = models.CharField('Назва проєкту', max_length=200)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='portfolio_orders', verbose_name='Клієнтський акаунт')
     budget = models.PositiveIntegerField('Бюджет, USD')
+    min_budget = models.PositiveIntegerField('Мінімальний бюджет з прайсу, USD', default=0)
     deadline = models.DateField('Термін')
     description = models.TextField('Опис замовлення')
+    reference_image = models.ImageField('Референс', upload_to='orders/references/', blank=True, null=True)
     contact_name = models.CharField('Ім’я контакту', max_length=100)
     contact_email = models.EmailField('Email контакту')
     contact_phone = models.CharField('Телефон контакту', max_length=20)
     status = models.CharField('Статус', max_length=20, choices=STATUS_CHOICES, default='new')
+    development_level = models.CharField('Рівень розробки', max_length=20, choices=LEVEL_CHOICES, blank=True, null=True)
+    total_hours = models.FloatField('Загальний час (годин)', default=0)
+    total_days = models.PositiveIntegerField('Планові робочі дні', default=0)
+    pricing_details = models.JSONField('Деталі зібраного проєкту', blank=True, null=True, default=dict)
     created_at = models.DateTimeField('Створено', default=timezone.now)
 
     class Meta:
@@ -95,6 +109,20 @@ class Order(models.Model):
 
     def __str__(self):
         return f"{self.project_name} ({self.contact_name})"
+
+
+class OrderFile(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='files', verbose_name='Замовлення')
+    file = models.FileField('Файл', upload_to='orders/files/')
+    uploaded_at = models.DateTimeField('Завантажено', default=timezone.now)
+
+    class Meta:
+        verbose_name = 'Файл до замовлення'
+        verbose_name_plural = 'Файли до замовлень'
+        ordering = ['-uploaded_at']
+
+    def __str__(self):
+        return f"{self.file.name} до {self.order.project_name}"
 
 
 class PricingPackage(models.Model):

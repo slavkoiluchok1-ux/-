@@ -3,17 +3,33 @@
 {% block title %}{{ post.title }} | Портфоліо{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<section class="hero-panel row align-items-end mb-4">
+  <div class="col-lg-8">
+    <p class="eyebrow mb-3">Блог / стаття{% if post.category %} / {{ post.category.name }}{% endif %}</p>
+    <h1 class="mb-3">{{ post.title }}</h1>
+    <p class="lead mb-4">{% if post.excerpt %}{{ post.excerpt }}{% else %}{{ post.content|truncatewords:28 }}{% endif %}</p>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-primary" href="{% url 'portfolio:blog' %}">← Усі статті</a>
+      <a class="btn btn-outline-light" href="#comments">Коментарі</a>
+    </div>
+  </div>
+  <div class="col-lg-4 mt-5 mt-lg-0">
+    <div class="stat-strip row g-3">
+      <div class="col-6"><div class="stat-value">{{ comments|length }}</div><div class="small text-white-50">коментарів</div></div>
+      <div class="col-6"><div class="stat-value">{{ post.created_at|date:"d.m" }}</div><div class="small text-white-50">дата публікації</div></div>
+    </div>
+  </div>
+</section>
+
   <div class="row justify-content-center">
     <div class="col-lg-8">
-      <h1 class="display-6 fw-bold">{{ post.title }}</h1>
-      <p class="text-muted">{{ post.created_at|date:"d M Y" }}{% if post.category %} · {{ post.category.name }}{% endif %}</p>
-      <div class="lead">{{ post.content|linebreaks }}</div>
+      <p class="text-muted-soft mb-3">{{ post.created_at|date:"d M Y" }}{% if post.category %} · {{ post.category.name }}{% endif %}</p>
+      <div class="lead text-muted-soft">{{ post.content|linebreaks }}</div>
       <div class="mt-4">
         {% for tag in post.tags.all %}<span class="badge bg-light text-dark me-1">#{{ tag.name }}</span>{% endfor %}
       </div>
 
-      <div class="card-soft p-4 mt-5">
+      <div class="card-soft p-4 mt-5" id="comments">
         <h3 class="h5 fw-bold mb-3">Коментарі</h3>
         {% if comments %}
           {% for comment in comments %}
@@ -47,5 +63,4 @@
       </div>
     </div>
   </div>
-</div>
 {% endblock %}

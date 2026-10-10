@@ -3,19 +3,28 @@
 {% block title %}Проєкти | Портфоліо{% endblock %}
 
 {% block content %}
-<div class="row g-4">
-  <div class="col-12">
-    <div class="card-soft p-4 mb-4">
-      <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
-        <div>
-          <h1 class="section-title mb-2">Галерея проєктів</h1>
-          <p class="text-muted-soft mb-0">Набір навчальних і практичних проєктів, які демонструють мій шлях у веб-розробці.</p>
-        </div>
-        <div class="d-flex gap-2">
-          <a class="btn btn-outline-primary" href="https://github.com/slavkoiluchok1-ux/-" target="_blank" rel="noopener">Більше проектів</a>
-        </div>
+<div class="projects-page">
+  <section class="hero-panel row align-items-end mb-4">
+    <div class="col-lg-8">
+      <p class="eyebrow mb-3">Каталог робіт / портфоліо</p>
+      <h1 class="mb-3">Галерея проєктів</h1>
+      <p class="lead mb-4">Набір навчальних і практичних проєктів, які демонструють мій шлях у веб-розробці.</p>
+      <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-primary" href="https://github.com/slavkoiluchok1-ux/-" target="_blank" rel="noopener">Більше проєктів →</a>
+        <a class="btn btn-outline-light" href="{% url 'portfolio:order_brif' %}">Замовити розробку</a>
       </div>
-      <form method="get" class="row g-2 align-items-end mt-4">
+    </div>
+    <div class="col-lg-4 mt-5 mt-lg-0">
+      <div class="stat-strip row g-3">
+        <div class="col-6"><div class="stat-value">{{ projects|length }}</div><div class="small text-white-50">проєктів у каталозі</div></div>
+        <div class="col-6"><div class="stat-value">{{ technologies|length }}</div><div class="small text-white-50">технологій у фільтрі</div></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="col-12">
+    <div class="section-heading-panel projects-intro mb-5 p-4 p-md-5">
+      <form method="get" class="row g-2 align-items-end">
         <div class="col-md-4">
           <label class="form-label">Фільтр за технологією</label>
           <select name="technology" class="form-select">
@@ -25,29 +34,98 @@
             {% endfor %}
           </select>
         </div>
-        <div class="col-md-2">
-          <button class="btn btn-primary w-100">Фільтрувати</button>
+        <div class="col-md-3">
+          <button class="btn btn-primary w-100">Фільтрувати →</button>
         </div>
       </form>
+      <p class="small text-muted-soft mt-3 mb-0" aria-live="polite">
+        {% if selected_technology %}Фільтр: <strong class="text-dark">{{ selected_technology }}</strong> · {% endif %}
+        Знайдено: <strong class="text-dark">{{ projects|length }}</strong> {% if projects|length == 1 %}проєкт{% else %}проєктів{% endif %}
+      </p>
     </div>
   </div>
 
+  <div class="row g-4">
   {% for project in projects %}
     <div class="col-md-6 col-lg-4">
-      <div class="card-soft h-100">
+      <div class="card-soft project-card h-100">
         {% if project.image %}
           <img src="{{ project.image.url }}" class="img-cover" alt="{{ project.title }}">
         {% endif %}
-        <div class="card-body text-center">
-          <h5 class="card-title fs-5 fw-bold">{{ project.title }}</h5>
+        <div class="card-body d-flex flex-column">
+          <p class="project-number mb-2">PROJECT / {{ forloop.counter|stringformat:'02d' }}</p>
+          <h5 class="card-title fs-5 fw-bold"><a href="{% url 'portfolio:project_detail' project.pk %}" class="text-decoration-none">{{ project.title }}</a></h5>
           <p class="text-muted-soft fs-6 mb-3">{{ project.description|truncatewords:25 }}</p>
-          <p class="small text-muted-soft mb-3">{{ project.technologies }}</p>
-          <a href="{% url 'portfolio:project_detail' project.pk %}" class="btn btn-outline-primary btn-sm">Детальніше</a>
+
+          {% if project.tech_list %}
+            <div class="tech-stack-wrap mb-3">
+              {% for t in project.tech_visible %}
+                <span class="tech-badge" data-tech="{{ t }}">{{ t }}</span>
+              {% endfor %}
+              {% if project.tech_hidden_count > 0 %}
+                <span class="tech-more-btn" role="button" tabindex="0" data-count="{{ project.tech_hidden_count }}">
+                  +{{ project.tech_hidden_count }}
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  <span class="tech-more-popover" data-show="false">
+                    <span class="popover-title">Усі технології</span>
+                    <span class="popover-techs">
+                      {% for t in project.tech_list %}<span class="tech-badge" data-tech="{{ t }}">{{ t }}</span>{% endfor %}
+                    </span>
+                  </span>
+                </span>
+              {% endif %}
+            </div>
+          {% endif %}
+
+          <p class="small text-muted-soft mb-3">{{ project.date }}</p>
+          <div class="mt-auto d-flex gap-2 align-items-center">
+            <a href="{% url 'portfolio:project_detail' project.pk %}" class="btn btn-outline-primary btn-sm">Детальніше →</a>
+            {% if project.github %}<a href="{{ project.github }}" class="small text-decoration-none text-primary" target="_blank" rel="noopener">GitHub ↗</a>{% endif %}
+          </div>
         </div>
       </div>
     </div>
   {% empty %}
     <div class="col-12"><p class="text-muted-soft">Проєкти ще не додано.</p></div>
   {% endfor %}
+  </div>
 </div>
+
+<script>
+  (function attachTechPopovers() {
+    const btns = document.querySelectorAll('.tech-more-btn');
+    if (!btns.length) return;
+    const hideAll = (except) => {
+      btns.forEach(b => {
+        if (b === except) return;
+        b.dataset.open = 'false';
+        const p = b.querySelector('.tech-more-popover');
+        if (p) p.dataset.show = 'false';
+      });
+    };
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.tech-more-btn')) hideAll(null);
+    });
+    btns.forEach(btn => {
+      const toggle = () => {
+        const open = btn.dataset.open === 'true';
+        hideAll(open ? null : btn);
+        if (!open) {
+          btn.dataset.open = 'true';
+          const p = btn.querySelector('.tech-more-popover');
+          if (p) p.dataset.show = 'true';
+        } else {
+          btn.dataset.open = 'false';
+          const p = btn.querySelector('.tech-more-popover');
+          if (p) p.dataset.show = 'false';
+        }
+      };
+      btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+      btn.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+        if (e.key === 'Escape') hideAll(null);
+      });
+    });
+  })();
+</script>
 {% endblock %}

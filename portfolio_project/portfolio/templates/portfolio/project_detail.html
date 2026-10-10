@@ -3,23 +3,47 @@
 {% block title %}{{ project.title }} | Проєкт{% endblock %}
 
 {% block content %}
-  <div class="card-soft p-4 p-md-5">
+<section class="hero-panel row align-items-end mb-4">
+  <div class="col-lg-8">
+    <p class="eyebrow mb-3">Проєкт / деталі / портфоліо</p>
+    <h1 class="mb-3 project-detail-title">{{ project.title }}</h1>
+    <p class="lead mb-4">{{ project.description|truncatewords:36 }}</p>
+    <div class="d-flex flex-wrap gap-2">
+      {% if project.github %}
+        <a class="btn btn-primary" href="{{ project.github }}" target="_blank" rel="noopener">GitHub →</a>
+      {% endif %}
+      <a class="btn btn-outline-light" href="{% url 'portfolio:projects' %}">← До всіх проєктів</a>
+    </div>
+  </div>
+  <div class="col-lg-4 mt-5 mt-lg-0">
+    <div class="stat-strip row g-3">
+      <div class="col-6"><div class="stat-value">{% if project.date %}{{ project.date|date:"Y" }}{% else %}—{% endif %}</div><div class="small text-white-50">рік реалізації</div></div>
+      <div class="col-6"><div class="stat-value">{% if project.github %}1{% else %}—{% endif %}</div><div class="small text-white-50">публічний репозиторій</div></div>
+    </div>
+  </div>
+</section>
+
+  <div class="card-soft p-4 p-md-5 project-detail">
     <div class="row align-items-start">
-      <div class="col-lg-7 mb-4">
-        <h1 class="section-title mb-3">{{ project.title }}</h1>
+      <div class="col-lg-7 mb-4 mb-lg-0">
         <p class="text-muted-soft">{{ project.description|linebreaksbr }}</p>
-        <p><strong>Технології:</strong> {{ project.technologies }}</p>
-        <p><strong>Дата:</strong> {{ project.date }}</p>
-        {% if project.github %}
-          <p><a class="btn btn-primary" href="{{ project.github }}" target="_blank" rel="noopener">Перейти на GitHub</a></p>
+        {% if project.tech_list %}
+          <div class="tagline my-4">
+            <p class="mb-2"><strong>Технології</strong></p>
+            <div class="tech-stack-wrap">
+              {% for t in project.tech_list %}
+                <span class="tech-badge" data-tech="{{ t }}">{{ t }}</span>
+              {% endfor %}
+            </div>
+          </div>
         {% endif %}
-        <p><a href="{% url 'portfolio:projects' %}" class="btn btn-outline-secondary">← До всіх проєктів</a></p>
+        <p class="text-muted-soft mb-0"><strong class="text-dark">Дата:</strong> {{ project.date }}</p>
       </div>
       <div class="col-lg-5">
         {% if project.image %}
-          <img class="img-fluid rounded-4 shadow-sm" src="{{ project.image.url }}" alt="{{ project.title }}">
+          <img class="project-image" src="{{ project.image.url }}" alt="{{ project.title }}">
         {% else %}
-          <div class="border rounded-4 bg-light p-5 text-center text-muted">Немає зображення</div>
+          <div class="project-image-fallback">Немає зображення</div>
         {% endif %}
       </div>
     </div>
