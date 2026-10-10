@@ -1,0 +1,67 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  #content { max-width: none; }
+  #content-main { width: 100%; max-width: none; }
+  #content-main > .module { width: 100%; }
+  #content-main > .module table { width: 100%; }
+  #content-main > .module caption { text-align: left; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+
+  <div class="module" style="margin-top: 24px;">
+    <table>
+      <caption>
+        <a href="{% url 'admin:portfolio_order_changelist' %}" class="section">Останні замовлення</a>
+      </caption>
+      <thead>
+        <tr>
+          <th>Проєкт</th>
+          <th>Контакт</th>
+          <th>Бюджет</th>
+          <th>Статус</th>
+          <th>Дата</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in admin_orders %}
+        <tr>
+          <th><a href="{% url 'admin:portfolio_order_change' order.pk %}">{{ order.project_name }}</a></th>
+          <td>{{ order.contact_name }}</td>
+          <td>{{ order.budget }} USD</td>
+          <td>{{ order.get_status_display }}</td>
+          <td>{{ order.created_at|date:"d.m.Y H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">Замовлень ще немає.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="module" style="margin-top: 24px;">
+    <table>
+      <caption><span class="section">Недавні дії</span></caption>
+      <tbody>
+        {% load log %}
+        {% get_admin_log 10 as admin_log for_user user %}
+        {% for entry in admin_log %}
+        <tr>
+          <th>{{ entry.action_time|date:"d.m.Y H:i" }}</th>
+          <td>{{ entry.object_repr }}</td>
+        </tr>
+        {% empty %}
+        <tr><td>Немає недавніх дій.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

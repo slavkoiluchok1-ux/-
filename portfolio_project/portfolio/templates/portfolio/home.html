@@ -3,72 +3,86 @@
 {% block title %}Головна | Портфоліо{% endblock %}
 
 {% block content %}
-<div class="hero-panel row align-items-center mb-5">
-  <div class="col-lg-7">
-    <span class="badge rounded-pill bg-light text-dark mb-3">Python • Django • Bootstrap</span>
-    <h1 class="display-5 fw-bold mb-3">Створюю веб-продукти, які виглядають професійно й працюють на результат</h1>
+<section class="hero-panel row align-items-end mb-5">
+  <div class="col-lg-8">
+    <p class="eyebrow mb-3">Розробка / дизайн / продукт</p>
+    <h1 class="mb-3">Веб-продукти з характером і чіткою метою.</h1>
     <p class="lead mb-4">Я розробник, який поєднує технічну точність, чистий UI та практичний підхід до вирішення задач бізнесу й стартапів.</p>
     <div class="d-flex flex-wrap gap-2">
-      <a class="btn btn-light text-primary fw-semibold" href="{% url 'portfolio:projects' %}">Переглянути проєкти</a>
+      <a class="btn btn-primary" href="{% url 'portfolio:projects' %}">Переглянути проєкти →</a>
       <a class="btn btn-outline-light" href="{% url 'portfolio:order_brif' %}">Замовити розробку</a>
     </div>
   </div>
-  <div class="col-lg-5 mt-4 mt-lg-0 text-center">
-    <div class="card-soft p-4 text-dark text-start">
-      <h3 class="h5 fw-bold mb-3">Чому мені довіряють</h3>
-      <ul class="mb-0 text-muted-soft">
-        <li>Чіткий процес розробки</li>
-        <li>Адаптивний і сучасний дизайн</li>
-        <li>Фокус на користі, а не лише на “красі”</li>
-      </ul>
+  <div class="col-lg-4 mt-5 mt-lg-0">
+    <div class="stat-strip row g-3">
+      <div class="col-6"><div class="stat-value">{{ projects|length }}</div><div class="small text-white-50">проєктів у портфоліо</div></div>
+      <div class="col-6"><div class="stat-value">05+</div><div class="small text-white-50">ключових технологій</div></div>
     </div>
   </div>
-</div>
+</section>
 
-<div class="row g-4 mb-5">
+<section class="row g-4 mb-5">
   <div class="col-lg-4">
     <div class="card-soft p-4 h-100">
-      <h2 class="section-title">Швидкий доступ</h2>
+      <div class="d-flex align-items-start gap-2 mb-2">
+        <span style="font-size:1.8rem;line-height:1">🧭</span>
+        <div>
+          <p class="section-kicker text-primary mb-1">Навігація</p>
+          <h2 class="section-title">Швидкий доступ</h2>
+        </div>
+      </div>
       <p class="text-muted-soft mb-3">Перемикайтесь між основними функціями сайту: прайс, блог та аналітика.</p>
       <div class="d-grid gap-2">
-        <a class="btn btn-primary" href="{% url 'portfolio:pricing' %}">Прайс</a>
-        <a class="btn btn-outline-primary" href="{% url 'portfolio:blog' %}">Блог</a>
-        <a class="btn btn-outline-primary" href="{% url 'portfolio:analytics' %}">Аналітика</a>
+        <a class="btn btn-primary" href="{% url 'portfolio:pricing' %}">💵 Прайс</a>
+        <a class="btn btn-outline-primary" href="{% url 'portfolio:blog' %}">📝 Блог</a>
+        <a class="btn btn-outline-primary" href="{% url 'portfolio:analytics' %}">📊 Аналітика</a>
       </div>
     </div>
   </div>
   <div class="col-lg-8">
     <div class="card-soft p-4 h-100">
-      <h2 class="section-title">Я створюю рішення, які працюють</h2>
+      <div class="d-flex align-items-start gap-2 mb-2">
+        <span style="font-size:1.8rem;line-height:1">🎯</span>
+        <div>
+          <p class="section-kicker text-primary mb-1">Фокус</p>
+          <h2 class="section-title">Я створюю рішення, які працюють</h2>
+        </div>
+      </div>
       <p class="text-muted-soft mb-2">Портфоліо містить реальні проєкти, адаптивні інтерфейси і швидкі бекенд-сервіси. Розробка ведеться з акцентом на продукт, а не на складність.</p>
       <p class="text-muted-soft mb-0">На сайті ви знайдете приклади роботи, тарифи на пакети, блог про розробку та аналітику динаміки замовлень.</p>
     </div>
   </div>
-</div>
+</section>
 
 <div class="row g-4 mb-5">
   <div class="col-lg-6">
     <div class="card-soft p-4 h-100">
-      <h2 class="section-title">Про мене</h2>
+      <div class="d-flex align-items-start gap-2 mb-2">
+        <span style="font-size:1.8rem;line-height:1">👋</span>
+        <h2 class="section-title">Про мене</h2>
+      </div>
       <p class="text-muted-soft mb-2">Я прийшов у ІТ через цікавість до логіки, рішень і створення продуктів, які реально допомагають людям. Поступово розвиваю навички в Python, Django, frontend-розробці та роботі з реальними проєктами.</p>
       <p class="text-muted-soft mb-0">Моя мотивація — не просто “зробити сайт”, а створити інструмент, який зручний, швидкий і корисний для користувача. У вільний час люблю вивчати нові технології, читати документацію та покращувати свої навички.</p>
       <div class="mt-3 d-flex gap-2 flex-wrap">
-        <span class="badge rounded-pill bg-primary-subtle text-primary">Python</span>
-        <span class="badge rounded-pill bg-primary-subtle text-primary">Django</span>
-        <span class="badge rounded-pill bg-primary-subtle text-primary">Bootstrap</span>
-        <span class="badge rounded-pill bg-primary-subtle text-primary">Git</span>
-        <span class="badge rounded-pill bg-primary-subtle text-primary">Самонавчання</span>
+        <span class="badge rounded-pill bg-primary-subtle text-primary">🐍 Python</span>
+        <span class="badge rounded-pill bg-primary-subtle text-primary">🎸 Django</span>
+        <span class="badge rounded-pill bg-primary-subtle text-primary">🎨 Bootstrap</span>
+        <span class="badge rounded-pill bg-primary-subtle text-primary">🔀 Git</span>
+        <span class="badge rounded-pill bg-primary-subtle text-primary">📚 Самонавчання</span>
       </div>
     </div>
   </div>
   <div class="col-lg-6">
     <div class="card-soft p-4 h-100">
-      <h2 class="section-title">Навички</h2>
+      <div class="d-flex align-items-start gap-2 mb-2">
+        <span style="font-size:1.8rem;line-height:1">⚡</span>
+        <h2 class="section-title">Навички</h2>
+      </div>
       <ul class="mb-0 text-muted-soft">
-        <li>Python, Django, Flask</li>
-        <li>HTML, CSS, JavaScript, Bootstrap</li>
-        <li>Git, VS Code, SQL, REST API</li>
-        <li>Комунікація, робота в команді, самонавчання</li>
+        <li>🐍 Python, Django, Flask</li>
+        <li>🌐 HTML, CSS, JavaScript, Bootstrap</li>
+        <li>💾 Git, VS Code, SQL, REST API</li>
+        <li>🤝 Комунікація, робота в команді, самонавчання</li>
       </ul>
     </div>
   </div>
@@ -77,38 +91,63 @@
 <div class="row g-4 mb-5">
   <div class="col-lg-6">
     <div class="card-soft p-4 h-100">
-      <h2 class="section-title">Що я пропоную</h2>
+      <div class="d-flex align-items-start gap-2 mb-2">
+        <span style="font-size:1.8rem;line-height:1">💎</span>
+        <h2 class="section-title">Що я пропоную</h2>
+      </div>
       <ul class="mb-0 text-muted-soft">
-        <li>Сучасний дизайн на Bootstrap</li>
-        <li>Швидкі MVP, корпоративні сайти та блоги</li>
-        <li>Чітке планування, підтримка й масштабування</li>
+        <li>🎨 Сучасний дизайн на Bootstrap</li>
+        <li>🚀 Швидкі MVP, корпоративні сайти та блоги</li>
+        <li>📋 Чітке планування, підтримка й масштабування</li>
       </ul>
     </div>
   </div>
   <div class="col-lg-6">
     <div class="card-soft p-4 h-100">
-      <h2 class="section-title">Мій підхід</h2>
+      <div class="d-flex align-items-start gap-2 mb-2">
+        <span style="font-size:1.8rem;line-height:1">🚀</span>
+        <h2 class="section-title">Мій підхід</h2>
+      </div>
       <p class="text-muted-soft mb-2">Я працюю над тим, щоб кожен сайт був зрозумілим для користувача, простим у підтримці і адаптованим під бізнес-цілі.</p>
       <p class="text-muted-soft mb-0">Особливу увагу приділяю швидкості, SEO-основам і зручності адмінки, щоб ти міг легко керувати своїм продуктом.</p>
     </div>
   </div>
 </div>
 
-<div class="row mb-5">
+<section class="row mb-5">
   <div class="col-12 mb-3">
-    <h2 class="section-title">Проєкти</h2>
+    <div class="d-flex justify-content-between align-items-end gap-3"><div><p class="section-kicker text-primary mb-2">Вибране</p><h2 class="section-title mb-0">Проєкти</h2></div><a href="{% url 'portfolio:projects' %}" class="btn btn-outline-primary btn-sm">Усі проєкти →</a></div>
   </div>
   {% if projects %}
     {% for project in projects %}
       <div class="col-md-6 mb-4">
-        <div class="card-soft h-100">
+        <div class="card-soft project-card h-100">
           {% if project.image %}
             <img src="{{ project.image.url }}" class="img-cover" alt="{{ project.title }}">
           {% endif %}
-          <div class="card-body d-flex flex-column align-items-center text-center">
-            <h5 class="card-title"><a href="{% url 'portfolio:project_detail' project.pk %}" class="text-decoration-none text-primary fw-bold">{{ project.title }}</a></h5>
+          <div class="card-body d-flex flex-column">
+            <p class="project-number mb-2">PROJECT / {{ forloop.counter|stringformat:'02d' }}</p>
+            <h5 class="card-title"><a href="{% url 'portfolio:project_detail' project.pk %}" class="text-decoration-none fw-bold">{{ project.title }}</a></h5>
             <p class="text-muted-soft mb-2">{{ project.description|truncatechars:160 }}</p>
-            <p class="small mb-1"><strong>Технології:</strong> {{ project.technologies }}</p>
+            {% if project.tech_list %}
+              <div class="tech-stack-wrap mb-2">
+                {% for t in project.tech_visible %}
+                  <span class="tech-badge" data-tech="{{ t }}">{{ t }}</span>
+                {% endfor %}
+                {% if project.tech_hidden_count > 0 %}
+                  <span class="tech-more-btn" role="button" tabindex="0" data-count="{{ project.tech_hidden_count }}">
+                    +{{ project.tech_hidden_count }}
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    <span class="tech-more-popover" data-show="false">
+                      <span class="popover-title">Усі технології</span>
+                      <span class="popover-techs">
+                        {% for t in project.tech_list %}<span class="tech-badge" data-tech="{{ t }}">{{ t }}</span>{% endfor %}
+                      </span>
+                    </span>
+                  </span>
+                {% endif %}
+              </div>
+            {% endif %}
             <p class="small mb-3"><strong>Дата:</strong> {{ project.date }}</p>
             <div class="mt-auto">
               {% if project.github %}
@@ -120,26 +159,29 @@
       </div>
     {% endfor %}
   {% else %}
-    <div class="col-12"><p class="text-muted-soft">Поки що немає проектів.</p></div>
+    <div class="col-12"><p class="text-muted-soft">Поки що немає проєктів.</p></div>
   {% endif %}
-</div>
+</section>
 
-<div class="row mb-5">
-  <div class="col-12 mb-3">
-    <h2 class="section-title">Навички</h2>
+<div class="row mb-5 align-items-end">
+  <div class="col-12 mb-3 d-flex justify-content-between align-items-end gap-3">
+    <div>
+      <p class="section-kicker text-primary mb-2">Ключові компетенції</p>
+      <h2 class="section-title mb-0">Навички</h2>
+    </div>
+    <a href="{% url 'portfolio:skills' %}" class="btn btn-outline-primary btn-sm">Усі навички →</a>
   </div>
   {% if skills %}
-    {% for skill in skills %}
-      <div class="col-md-6 mb-3">
-        <div class="card-soft">
-          <div class="card-body">
-            <div class="d-flex justify-content-between mb-2">
-              <h5 class="card-title mb-0">{{ skill.name }}</h5>
-              <span class="fw-bold text-primary">{{ skill.level }}/10</span>
+    {% for skill in skills|slice:":12" %}
+      <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+        <div class="card-soft skill-card h-100">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-bold" style="font-family:var(--display);font-size:.95rem;"><span style="margin-right:.25rem;">{{ skill.icon }}</span>{{ skill.name }}</span>
+              <span class="fw-bold" style="color:var(--blood);font-size:.85rem;">{{ skill.level }}/10</span>
             </div>
-            <p class="text-muted-soft mb-2">Категорія: {{ skill.category }}</p>
-            <div class="progress">
-              <div class="progress-bar" role="progressbar" style="width: {{ skill.level }}0%;" aria-valuenow="{{ skill.level }}" aria-valuemin="1" aria-valuemax="10"></div>
+            <div class="flow-progress {% if skill.category == 'soft' %}flow-soft{% else %}flow-tech{% endif %}" role="progressbar" aria-valuenow="{{ skill.level }}" aria-valuemin="1" aria-valuemax="10">
+              <span data-progress-width="{{ skill.level }}0"></span>
             </div>
           </div>
         </div>
@@ -150,36 +192,83 @@
   {% endif %}
 </div>
 
-<div class="row mb-5">
-  <div class="col-12 mb-3">
-    <h2 class="section-title">Відгуки клієнтів</h2>
+<script>
+  (function attachTechPopovers() {
+    const btns = document.querySelectorAll('.tech-more-btn');
+    if (!btns.length) return;
+    const hideAll = (except) => {
+      btns.forEach(b => {
+        if (b === except) return;
+        b.dataset.open = 'false';
+        const p = b.querySelector('.tech-more-popover');
+        if (p) p.dataset.show = 'false';
+      });
+    };
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.tech-more-btn')) hideAll(null);
+    });
+    btns.forEach(btn => {
+      const toggle = () => {
+        const open = btn.dataset.open === 'true';
+        hideAll(open ? null : btn);
+        if (!open) {
+          btn.dataset.open = 'true';
+          const p = btn.querySelector('.tech-more-popover');
+          if (p) p.dataset.show = 'true';
+        } else {
+          btn.dataset.open = 'false';
+          const p = btn.querySelector('.tech-more-popover');
+          if (p) p.dataset.show = 'false';
+        }
+      };
+      btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+      btn.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+        if (e.key === 'Escape') hideAll(null);
+      });
+    });
+  })();
+</script>
+
+<section class="mb-5" id="testimonials">
+  <div class="section-heading-panel d-flex justify-content-between align-items-end gap-3 mb-3">
+    <div>
+      <p class="eyebrow mb-2">Довіра в деталях</p>
+      <h2 class="section-title mb-0">Відгуки клієнтів</h2>
+    </div>
+    <a class="btn btn-outline-primary btn-sm" href="{% url 'portfolio:contacts' %}#testimonials">Залишити відгук</a>
   </div>
   {% if testimonials %}
-    {% for item in testimonials %}
-      <div class="col-md-6 mb-3">
-        <div class="card-soft">
-          <div class="card-body">
-            <p class="mb-2">«{{ item.quote }}»</p>
-            <strong>{{ item.client_name }}</strong>
-            <div class="text-warning">{% for i in '12345' %}{% if forloop.counter <= item.rating %}★{% else %}☆{% endif %}{% endfor %}</div>
-          </div>
+    <div class="row g-4">
+      {% for item in testimonials %}
+        <div class="col-md-6">
+          <article class="testimonial-card h-100">
+            <div class="rating mb-3" aria-label="Рейтинг: {{ item.rating }} з 5">
+              {% for star in '12345' %}{% if forloop.counter <= item.rating %}★{% else %}☆{% endif %}{% endfor %}
+            </div>
+            <blockquote class="mb-4">«{{ item.quote }}»</blockquote>
+            <footer>
+              <strong>{{ item.client_name }}</strong>
+              {% if item.company %}<span>{{ item.company }}</span>{% endif %}
+            </footer>
+          </article>
         </div>
-      </div>
-    {% endfor %}
+      {% endfor %}
+    </div>
   {% else %}
-    <div class="col-12"><p class="text-muted-soft">Відгуки ще не додано.</p></div>
+    <div class="empty-state-panel"><p class="text-muted-soft mb-0">Відгуки ще не додано.</p></div>
   {% endif %}
-</div>
+</section>
 
 <div class="row mb-4">
   <div class="col-12 mb-3">
-    <h2 class="section-title">Досвід</h2>
+    <div class="section-heading-panel"><h2 class="section-title mb-0">Досвід</h2></div>
   </div>
   {% if experiences %}
     {% for experience in experiences %}
       <div class="col-md-12 mb-3">
         <div class="card-soft">
-          <div class="card-body">
+          <div class="card-body text-center">
             <h5 class="card-title">{{ experience.position }} — {{ experience.company }}</h5>
             <p class="text-muted-soft mb-1">{{ experience.period }}</p>
             <p class="mb-0">{{ experience.description|linebreaksbr }}</p>
@@ -188,7 +277,7 @@
       </div>
     {% endfor %}
   {% else %}
-    <div class="col-12"><p class="text-muted-soft">Записи досвіду ще не додано.</p></div>
+    <div class="col-12"><div class="empty-state-panel"><p class="text-muted-soft mb-0">Записи досвіду ще не додано.</p></div></div>
   {% endif %}
 </div>
 {% endblock %}

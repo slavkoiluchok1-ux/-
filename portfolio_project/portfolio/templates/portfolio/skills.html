@@ -3,29 +3,88 @@
 {% block title %}Навички | Портфоліо{% endblock %}
 
 {% block content %}
-  <div class="card-soft p-4 mb-4">
-    <h1 class="display-5 fw-bold mb-2">Навички</h1>
-    <p class="text-muted-soft mb-0">Технічні навички, інструменти й soft skills, які я активно розвиваю.</p>
+<section class="hero-panel row align-items-end mb-4">
+  <div class="col-lg-8">
+    <p class="eyebrow mb-3">Технології / інструменти / особисті навички</p>
+    <h1 class="mb-3">Навички</h1>
+    <p class="lead mb-4">Технології, інструменти та особисті навички — що вже вмію й що розвиваю на практиці.</p>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-primary" href="{% url 'portfolio:projects' %}">Переглянути проєкти →</a>
+      <a class="btn btn-outline-light" href="{% url 'portfolio:contacts' %}">Контакти</a>
+    </div>
   </div>
-  {% if skills %}
-    <div class="row gx-4 gy-4">
-      {% for skill in skills %}
-        <div class="col-md-6">
-          <div class="card-soft h-100 p-4">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <h5 class="card-title mb-0">{{ skill.name }}</h5>
-              <span class="text-primary fw-semibold">{{ skill.level }}/10</span>
-            </div>
-            <p class="text-muted-soft mb-3">{{ skill.get_category_display }}</p>
-            <div class="progress mb-2">
-              <div class="progress-bar" role="progressbar" style="width: {{ skill.level }}0%;" aria-valuenow="{{ skill.level }}" aria-valuemin="1" aria-valuemax="10"></div>
-            </div>
-            <p class="small mb-0">Рівень володіння: {{ skill.level }} з 10</p>
+  <div class="col-lg-4 mt-5 mt-lg-0">
+    <div class="stat-strip row g-3">
+      <div class="col-6"><div class="stat-value">{{ skills|length }}</div><div class="small text-white-50">навичок у профілі</div></div>
+      <div class="col-6"><div class="stat-value">10</div><div class="small text-white-50">бальна шкала</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="section-heading-panel projects-intro mb-3 p-3 p-md-4">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <p class="eyebrow mb-1">🛠️ Hard Skills · Технічні</p>
+          <h2 class="section-title mb-0">Програмування</h2>
+          <p class="text-muted-soft small mt-1 mb-0">Фронтенд · Бекенд · Бази даних · DevOps</p>
+        </div>
+        <span class="badge bg-primary-subtle text-primary fw-bold px-3 py-2">{{ tech_skills|length }} шт.</span>
+      </div>
+    </div>
+    <div class="d-grid gap-3">
+      {% for skill in tech_skills %}
+        <div class="card-soft skill-card p-4">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="card-title mb-0"><span style="margin-right:.35rem;">{{ skill.icon }}</span>{{ skill.name }}</h5>
+            <span class="text-primary fw-semibold">{{ skill.level }}/10</span>
           </div>
+          <p class="text-muted-soft mb-3 small">{{ skill.get_category_display }}</p>
+          <div class="flow-progress flow-tech mb-2" role="progressbar" aria-valuenow="{{ skill.level }}" aria-valuemin="1" aria-valuemax="10">
+            <span data-progress-width="{{ skill.level }}0"></span>
+          </div>
+          <p class="small mb-0">Рівень володіння: <strong>{{ skill.level }} з 10</strong></p>
+        </div>
+      {% empty %}
+        <div class="card-soft p-4">
+          <p class="text-muted-soft mb-0">Технічні навички можна додати в <a href="/admin/portfolio/skill/add/">адмінці</a> (категорія: Фронтенд / Бекенд / База даних / DevOps / Інше).</p>
         </div>
       {% endfor %}
     </div>
-  {% else %}
-    <p class="text-muted-soft">Навички ще не додано.</p>
-  {% endif %}
+  </div>
+
+  <div class="col-lg-6">
+    <div class="section-heading-panel projects-intro mb-3 p-3 p-md-4" style="background-image: linear-gradient(rgba(251, 250, 246, 0.96), rgba(251, 250, 246, 0.96)), linear-gradient(120deg, var(--gold), var(--blood), var(--gold));">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <p class="eyebrow mb-1">🤝 Soft Skills · Особисті навички</p>
+          <h2 class="section-title mb-0">Особисті навички</h2>
+          <p class="text-muted-soft small mt-1 mb-0">Комунікація · Лідерство · Робота в команді</p>
+        </div>
+        <span class="badge bg-danger-subtle fw-bold px-3 py-2" style="color:#b0306b">{{ soft_skills|length }} шт.</span>
+      </div>
+    </div>
+    <div class="d-grid gap-3">
+      {% for skill in soft_skills %}
+        <div class="card-soft skill-card p-4">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="card-title mb-0"><span style="margin-right:.35rem;">{{ skill.icon }}</span>{{ skill.name }}</h5>
+            <span class="fw-semibold" style="color: var(--blood);">{{ skill.level }}/10</span>
+          </div>
+          <p class="text-muted-soft mb-3 small">{{ skill.get_category_display }}</p>
+          <div class="flow-progress flow-soft mb-2" role="progressbar" aria-valuenow="{{ skill.level }}" aria-valuemin="1" aria-valuemax="10">
+            <span data-progress-width="{{ skill.level }}0"></span>
+          </div>
+          <p class="small mb-0">Рівень володіння: <strong>{{ skill.level }} з 10</strong></p>
+        </div>
+      {% empty %}
+        <div class="card-soft p-4">
+          <p class="text-muted-soft mb-2">Особисті навички ще не додані.</p>
+          <p class="small text-muted-soft mb-0">Додати їх можна в <a href="/admin/portfolio/skill/add/">адмінці</a>, вибравши категорію «Особисті навички».</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
 {% endblock %}

@@ -1,0 +1,206 @@
+{% extends 'portfolio/base.html' %}
+
+{% block title %}Створити акаунт | Портфоліо{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7 col-xl-6">
+    <section class="card-soft p-4 p-md-5 auth-card">
+      <div class="auth-card-header mb-4">
+        <div class="auth-logo-dot" aria-hidden="true" style="background:linear-gradient(135deg, var(--gold), var(--blood));">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+        </div>
+        <div>
+          <p class="eyebrow mb-1">Клієнтський акаунт</p>
+          <h1 class="h2 fw-bold mb-1">Створити акаунт</h1>
+          <p class="text-muted-soft mb-0">Зареєструйтеся, щоб бачити всі замовлення в одному місці.</p>
+        </div>
+      </div>
+
+      {% if next_url %}
+        <div class="alert-info-pill mb-3" role="note">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Після реєстрації ви повернетесь до запитуваної сторінки.</span>
+        </div>
+      {% endif %}
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger border-0 auth-alert">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <form method="post" novalidate class="auth-form">
+        {% csrf_token %}
+        {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+
+        <div class="row g-3">
+          {% for field in form %}
+            <div class="{% if field.name == 'password' or field.name == 'password_confirm' %}col-sm-6{% else %}col-12{% endif %} mb-1">
+              <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              <div class="auth-field-wrap" data-field="{{ field.name }}">
+                <span class="auth-field-icon" aria-hidden="true">
+                  {% if field.name == 'email' %}
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                  {% elif field.name == 'password' %}
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  {% elif field.name == 'first_name' %}
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  {% elif field.name == 'password_confirm' %}
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+                  {% else %}
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 2"/></svg>
+                  {% endif %}
+                </span>
+                {{ field }}
+              </div>
+              {% for error in field.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+            </div>
+          {% endfor %}
+        </div>
+
+        <button class="btn btn-primary w-100 mt-3 auth-submit" type="submit">
+          <span>Створити акаунт</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </form>
+
+      <div class="auth-divider" aria-hidden="true"><span>або</span></div>
+
+      <div class="auth-footer-card">
+        <p class="small text-muted-soft mb-2">Вже маєте акаунт? Увійдіть — усі замовлення автоматично підтягнуться.</p>
+        <a class="btn btn-outline-primary w-100" href="{% url 'portfolio:client_login' %}{% if next_url %}?next={{ next_url|urlencode }}{% endif %}">Увійти →</a>
+      </div>
+    </section>
+  </div>
+</div>
+
+<style>
+  .auth-card {
+    position: relative;
+    overflow: hidden;
+  }
+  .auth-card::before {
+    content: '';
+    position: absolute;
+    inset: -40% -60% auto auto;
+    width: 420px; height: 420px;
+    background: radial-gradient(closest-side, rgba(200,240,74,0.22), transparent 70%);
+    pointer-events: none;
+    filter: blur(6px);
+  }
+  .auth-card::after {
+    content: '';
+    position: absolute;
+    inset: auto auto -45% -45%;
+    width: 380px; height: 380px;
+    background: radial-gradient(closest-side, rgba(243,201,91,0.22), transparent 70%);
+    pointer-events: none;
+    filter: blur(6px);
+  }
+  .auth-card-header {
+    display: flex;
+    gap: 0.9rem;
+    align-items: flex-start;
+    position: relative;
+    z-index: 1;
+  }
+  .auth-logo-dot {
+    width: 52px; height: 52px;
+    flex-shrink: 0;
+    display: grid; place-items: center;
+    border-radius: 14px;
+    color: #fff;
+    box-shadow: 4px 4px 0 rgba(167,25,50,0.18);
+  }
+
+  .alert-info-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.75rem;
+    background: rgba(49,93,245,0.08);
+    color: #1f3fb8;
+    border: 1px solid rgba(49,93,245,0.25);
+    border-radius: 999px;
+    font: 600 0.82rem var(--body);
+  }
+  .auth-alert {
+    border-radius: 10px;
+    box-shadow: 0 2px 0 rgba(201,42,42,0.15);
+  }
+
+  .auth-form { position: relative; z-index: 1; }
+  .auth-field-wrap {
+    position: relative;
+  }
+  .auth-field-icon {
+    position: absolute;
+    top: 50%; left: 0.8rem;
+    transform: translateY(-50%);
+    color: var(--muted);
+    pointer-events: none;
+    display: grid; place-items: center;
+    transition: color .2s ease;
+  }
+  .auth-field-wrap input,
+  .auth-field-wrap textarea,
+  .auth-field-wrap select {
+    padding-left: 2.55rem;
+  }
+  .auth-field-wrap:focus-within .auth-field-icon {
+    color: var(--blue);
+  }
+
+  .auth-submit {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.8rem 1rem;
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+    box-shadow: 0 4px 0 rgba(140,170,36,0.35);
+    border-radius: 10px;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .auth-submit:hover { transform: translateY(-1px); box-shadow: 0 5px 0 rgba(140,170,36,0.35); }
+  .auth-submit:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(140,170,36,0.35); }
+
+  .auth-divider {
+    position: relative;
+    margin: 1.6rem 0 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
+  .auth-divider::before {
+    content: '';
+    position: absolute;
+    inset: 50% 0 auto;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(194,139,44,0.45), transparent);
+  }
+  .auth-divider span {
+    position: relative;
+    padding: 0 0.75rem;
+    background: #fff;
+    font: 700 0.75rem var(--display);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .auth-footer-card {
+    padding: 1rem 1.1rem;
+    border-radius: 12px;
+    background: linear-gradient(120deg, rgba(243,201,91,0.12), rgba(227,38,46,0.06));
+    border: 1px dashed rgba(243,201,91,0.55);
+    position: relative;
+    z-index: 1;
+  }
+  @media (max-width: 480px) {
+    .auth-logo-dot { width: 44px; height: 44px; }
+    .auth-logo-dot svg { width: 22px; height: 22px; }
+  }
+</style>
+{% endblock %}

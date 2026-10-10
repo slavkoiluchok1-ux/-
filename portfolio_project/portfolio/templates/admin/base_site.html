@@ -1,0 +1,25 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | Портфоліо · Адмінка{% endblock %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'admin/css/portfolio_admin.css' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block branding %}
+  <div id="site-name">
+    <a href="{% url 'admin:index' %}" style="font-family:'Playfair Display',serif;font-weight:900;letter-spacing:-0.02em;font-size:1.35rem;text-decoration:none;color:inherit;">
+      <span style="color:#c8f04a">Портфоліо</span> · Панель
+    </a>
+  </div>
+  <div style="font-size:0.75rem;opacity:.65;margin-top:4px;">
+    Керування проєктами · замовленнями · контентом
+  </div>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}

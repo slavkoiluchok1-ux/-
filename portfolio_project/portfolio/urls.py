@@ -15,4 +15,8 @@ urlpatterns = [
     path('analytics/', views.analytics, name='analytics'),
     path('brief/', views.order_brif, name='order_brif'),
     path('thanks/', views.order_thanks, name='order_thanks'),
+    path('account/register/', views.client_register, name='client_register'),
+    path('account/login/', views.client_login, name='client_login'),
+    path('account/logout/', views.client_logout, name='client_logout'),
+    path('account/orders/', views.my_orders, name='my_orders'),
 ]

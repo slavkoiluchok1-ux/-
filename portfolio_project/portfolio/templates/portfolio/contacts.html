@@ -1,44 +1,331 @@
 {% extends "portfolio/base.html" %}
 
-{% block title %}Контакти | Портфоліо{% endblock %}
+{% block title %}Контакти та досвід | Портфоліо{% endblock %}
 
 {% block content %}
-  <div class="mb-4">
-    <h1 class="section-title">Контакти та досвід</h1>
-    <p class="text-muted-soft">Тут показано мої ключові ролі, компанії, періоди роботи та контактні дані для замовлення веб-проєктів.</p>
-  </div>
-
-  <div class="row g-4 mb-5">
-    <div class="col-md-6">
-      <div class="card-soft h-100 p-4">
-        <h5 class="card-title">Контакти</h5>
-        <p class="mb-2"><strong>Email:</strong> hello@example.com</p>
-        <p class="mb-2"><strong>Телефон:</strong> +38 (050) 123-45-67</p>
-        <p class="mb-0"><strong>Локація:</strong> Київ, Україна</p>
-      </div>
-    </div>
-    <div class="col-md-6">
-      <div class="card-soft h-100 p-4">
-        <h5 class="card-title">Працюю з</h5>
-        <p class="text-muted-soft">Python, Django, Bootstrap, HTML, CSS, JavaScript, REST API.</p>
-        <a class="btn btn-primary" href="{% url 'portfolio:order_brif' %}">Заповнити бриф</a>
-      </div>
+<section class="hero-panel row align-items-end mb-5">
+  <div class="col-lg-8">
+    <p class="eyebrow mb-3">Зв’язок / Досвід / Портфоліо</p>
+    <h1 class="mb-3">Контакти та досвід</h1>
+    <p class="lead mb-4">Тут показано мої ключові ролі, компанії, періоди роботи та контактні дані для замовлення веб-проєктів. Залиште заявку або напишіть одразу — відповідаю протягом доби.</p>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-primary" href="{% url 'portfolio:pricing' %}">Зібрати свій проєкт →</a>
+      <a class="btn btn-outline-light" href="#contact-block">Написати мені</a>
     </div>
   </div>
+  <div class="col-lg-4 mt-5 mt-lg-0">
+    <div class="stat-strip row g-3">
+      <div class="col-6"><div class="stat-value">{{ years_exp|default:"05+" }}</div><div class="small text-white-50">років у веб-розробці</div></div>
+      <div class="col-6"><div class="stat-value">{{ experiences|length|default:"1" }}</div><div class="small text-white-50">ключових ролей</div></div>
+    </div>
+  </div>
+</section>
 
-  {% if experiences %}
-    <div class="row g-4">
-      {% for experience in experiences %}
-        <div class="col-md-6">
-          <div class="card-soft h-100 p-4">
-            <h5 class="card-title">{{ experience.position }}</h5>
-            <p class="text-muted-soft mb-2">{{ experience.company }} — {{ experience.period }}</p>
-            <p class="mb-0">{{ experience.description|linebreaksbr }}</p>
+<section id="experience-block" class="mb-5">
+  <div class="row align-items-end mb-4">
+    <div class="col-lg-8">
+      <p class="eyebrow mb-2">Досвід роботи</p>
+      <h2 class="section-title mb-0">Ключові ролі та проєкти</h2>
+      <p class="text-muted-soft mt-2 mb-0">Ролі, компанії та періоди — від фрілансу до лідерства маленьких команд.</p>
+    </div>
+    <div class="col-lg-4 text-lg-end">
+      <small class="text-muted-soft d-none d-md-inline">Свіжий досвід — угорі</small>
+    </div>
+  </div>
+
+  {% with items=experiences %}
+  {% if items %}
+    <div class="timeline">
+      {% for exp in items %}
+        <div class="timeline-item">
+          <div class="timeline-marker"></div>
+          <div class="card-soft p-4 p-lg-5 position-relative">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+              <div>
+                <span class="badge rounded-pill bg-primary-subtle text-primary me-2 mb-2">{{ forloop.counter }}/{{ items|length }}</span>
+                <h3 class="h4 mb-0">{{ exp.position }}</h3>
+                <p class="text-muted-soft mb-0 mt-1">
+                  <strong>{{ exp.company }}</strong>
+                  <span class="mx-2">·</span>
+                  <span>{{ exp.period }}</span>
+                </p>
+              </div>
+            </div>
+            <p class="mb-0 mt-3">{{ exp.description|linebreaksbr }}</p>
           </div>
         </div>
       {% endfor %}
     </div>
   {% else %}
-    <p class="text-muted-soft">Досвід ще не додано.</p>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-marker"></div>
+        <div class="card-soft p-4 p-lg-5 position-relative">
+          <span class="badge rounded-pill bg-primary-subtle text-primary me-2 mb-2">1/4</span>
+          <h3 class="h4 mb-0">Full-stack Django-розробник</h3>
+          <p class="text-muted-soft mb-0 mt-1"><strong>Фріланс · Київ/Віддалено</strong> <span class="mx-2">·</span> <span>2023 — дотепер</span></p>
+          <p class="mb-0 mt-3">Розробка та підтримка сайтів і веб-сервісів на Django + Bootstrap. Повний цикл: аналіз, структура, UI, моделі, адмінка, деплой на хостинг. Підключення оплати, Telegram-сповіщень, інтеграції.</p>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-marker"></div>
+        <div class="card-soft p-4 p-lg-5 position-relative">
+          <span class="badge rounded-pill bg-warning-subtle text-dark me-2 mb-2">2/4</span>
+          <h3 class="h4 mb-0">Frontend-розробник (HTML/CSS/JS)</h3>
+          <p class="text-muted-soft mb-0 mt-1"><strong>Digital-агентство</strong> <span class="mx-2">·</span> <span>2022 — 2023</span></p>
+          <p class="mb-0 mt-3">Верстка сайтів за Figma-макетами, адаптив під всі пристрої, оживлення інтерфейсів, рефакторинг старих проєктів, інтеграція готової верстки у Django, WordPress та інші CMS.</p>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-marker"></div>
+        <div class="card-soft p-4 p-lg-5 position-relative">
+          <span class="badge rounded-pill bg-success-subtle text-dark me-2 mb-2">3/4</span>
+          <h3 class="h4 mb-0">Junior Python Developer</h3>
+          <p class="text-muted-soft mb-0 mt-1"><strong>Стартовий продуктовий проєкт</strong> <span class="mx-2">·</span> <span>2021 — 2022</span></p>
+          <p class="mb-0 mt-3">Розробка REST API на Django REST Framework, адмін-панелі, парсинг сторонніх API, покриття тестами, оптимізація SQL-запитів, робота з PostgreSQL.</p>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-marker"></div>
+        <div class="card-soft p-4 p-lg-5 position-relative">
+          <span class="badge rounded-pill bg-danger-subtle text-dark me-2 mb-2">4/4</span>
+          <h3 class="h4 mb-0">Навчання + перший лендинги</h3>
+          <p class="text-muted-soft mb-0 mt-1"><strong>Самостійний розвиток / Pet-проєкти</strong> <span class="mx-2">·</span> <span>2019 — 2021</span></p>
+          <p class="mb-0 mt-3">Освоєння Python, HTML/CSS, основ JavaScript, Git, Bootstrap. Перші комерційні лендинги для місцевих бізнесів — кафе, майстрів, послуг.</p>
+        </div>
+      </div>
+    </div>
+    <div class="mt-3">
+      <div class="empty-state-panel d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
+        <div>
+          <p class="small text-muted-soft mb-1">🔐 Demo-режим</p>
+          <p class="mb-0 small">Ці приклади видно, поки ви не додали власний досвід в <a href="/admin/">адмінці</a> (меню Досвід).</p>
+        </div>
+        <a href="/admin/portfolio/experience/add/" class="btn btn-sm btn-outline-primary">Додати свій досвід в адмінці →</a>
+      </div>
+    </div>
   {% endif %}
+  {% endwith %}
+</section>
+
+<section id="contact-block" class="mb-5">
+  <div class="row align-items-end mb-4">
+    <div class="col-lg-8">
+      <p class="eyebrow mb-2">Контакти для замовлень</p>
+      <h2 class="section-title mb-0">Зв’яжіться зі мною</h2>
+      <p class="text-muted-soft mt-2 mb-0">Найшвидший спосіб отримати відповідь — заповнити бриф (через 24 години буде оцінка) або написати в месенджер.</p>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card-soft h-100 p-4 p-lg-5">
+        <h3 class="h4 mb-4">Основні контакти</h3>
+        <ul class="list-group list-group-flush contact-list mb-4">
+          <li class="list-group-item d-flex gap-3 px-0 align-items-start">
+            <div class="contact-icon">📧</div>
+            <div class="flex-grow-1">
+              <div class="small text-muted-soft text-uppercase fw-bold letter-spacing-1">Email</div>
+              <a class="fw-semibold text-decoration-none" href="mailto:slavkoiluchok1@gmail.com">slavkoiluchok1@gmail.com</a>
+              <div class="small text-muted">Відповідь протягом дня</div>
+            </div>
+          </li>
+          <li class="list-group-item d-flex gap-3 px-0 align-items-start">
+            <div class="contact-icon">📞</div>
+            <div class="flex-grow-1">
+              <div class="small text-muted-soft text-uppercase fw-bold letter-spacing-1">Телефон</div>
+              <a class="fw-semibold text-decoration-none" href="tel:+380502107062">+380 50 210 70 62</a>
+              <div class="small text-muted">Пн–Пт · 10:00–20:00</div>
+            </div>
+          </li>
+          <li class="list-group-item d-flex gap-3 px-0 align-items-start">
+            <div class="contact-icon">✈️</div>
+            <div class="flex-grow-1">
+              <div class="small text-muted-soft text-uppercase fw-bold letter-spacing-1">Telegram / Viber</div>
+              <a class="fw-semibold text-decoration-none" target="_blank" rel="noopener noreferrer" href="https://t.me/+380502107062">+380 50 210 70 62</a>
+              <div class="small text-muted">Найшвидша відповідь</div>
+            </div>
+          </li>
+          <li class="list-group-item d-flex gap-3 px-0 align-items-start border-bottom-0 pb-0 mb-0">
+            <div class="contact-icon">📍</div>
+            <div class="flex-grow-1">
+              <div class="small text-muted-soft text-uppercase fw-bold letter-spacing-1">Локація</div>
+              <div class="fw-semibold">Львів, Україна · Повністю віддалено</div>
+              <div class="small text-muted">Працюю з клієнтами з будь-якого міста</div>
+            </div>
+          </li>
+        </ul>
+        <div class="d-grid gap-2">
+          <a class="btn btn-primary btn-lg" href="{% url 'portfolio:pricing' %}">Зібрати свій проєкт · 3 хвилини</a>
+          <a class="btn btn-outline-primary" target="_blank" rel="noopener noreferrer" href="https://t.me/+380502107062">Написати в Telegram →</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card-soft h-100 p-4 p-lg-5">
+        <h3 class="h4 mb-4">Як проходить замовлення</h3>
+        <ol class="process-steps mb-0">
+          <li>
+            <div class="step-circle">1</div>
+            <div>
+              <div class="fw-semibold">Бриф або дзвінок</div>
+              <div class="small text-muted">Ви заповнюєте бриф або ми коротко дзвонимо і розуміємо мету.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-circle">2</div>
+            <div>
+              <div class="fw-semibold">Оцінка · термін · вартість</div>
+              <div class="small text-muted">Надсилаю склад проєкту: що робимо, скільки годин, днів та бюджет.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-circle">3</div>
+            <div>
+              <div class="fw-semibold">Дизайн / Верстка / Розробка</div>
+              <div class="small text-muted">Етапи з проміжними демонстраціями, ви правите — ми допрацьовуємо.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-circle">4</div>
+            <div>
+              <div class="fw-semibold">Тестування · Деплой · Підтримка</div>
+              <div class="small text-muted">Випускаємо проєкт на хостинг, підключаємо домен, залишаємося на зв’язку.</div>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="row g-4 mt-2 mb-5" id="testimonials">
+  <div class="col-lg-5">
+    <div class="card-soft h-100 p-4 p-lg-5">
+      <p class="eyebrow mb-2">Ваша думка</p>
+      <h2 class="section-title mb-3">Залиште відгук</h2>
+      <p class="text-muted-soft mb-0">Поділіться враженнями від співпраці або навчального проєкту. Після перевірки відгук з'явиться у портфоліо.</p>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card-soft p-4 p-lg-5">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% for field in testimonial_form %}
+          <div class="mb-3">
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% for error in field.errors %}
+              <div class="form-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+        <button class="btn btn-primary" type="submit">Опублікувати відгук</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+{% if testimonials %}
+  <section class="mb-5">
+    <div class="d-flex justify-content-between align-items-end gap-3 mb-3">
+      <div>
+        <p class="eyebrow mb-2">Відгуки клієнтів</p>
+        <h2 class="section-title mb-0">Що кажуть про роботу</h2>
+      </div>
+      <span class="small text-muted-soft">{{ testimonials|length }} відгуків</span>
+    </div>
+    <div class="row g-4">
+      {% for testimonial in testimonials %}
+        <div class="col-md-6">
+          <article class="testimonial-card h-100">
+            <div class="rating mb-3" aria-label="Рейтинг: {{ testimonial.rating }} з 5">
+              {% for star in '12345' %}{% if forloop.counter <= testimonial.rating %}★{% else %}☆{% endif %}{% endfor %}
+            </div>
+            <blockquote class="mb-4">«{{ testimonial.quote }}»</blockquote>
+            <footer><strong>{{ testimonial.client_name }}</strong>{% if testimonial.company %}<span>{{ testimonial.company }}</span>{% endif %}</footer>
+          </article>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+
+<style>
+  .timeline {
+    position: relative;
+    padding-left: clamp(1.25rem, 3vw, 2.25rem);
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 6px;
+    bottom: 6px;
+    width: 3px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, var(--lime), var(--gold), var(--blood), var(--gold));
+  }
+  .timeline-item {
+    position: relative;
+    padding-bottom: 1.75rem;
+  }
+  .timeline-item:last-child {
+    padding-bottom: 0;
+  }
+  .timeline-marker {
+    position: absolute;
+    left: calc(-1 * clamp(1.25rem, 3vw, 2.25rem) + 1px);
+    top: 1.1rem;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--ink);
+    border: 4px solid var(--lime);
+    box-shadow: 0 0 0 3px rgba(200, 240, 74, 0.2);
+  }
+  .contact-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    flex: 0 0 2.75rem;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, var(--gold), rgba(227,38,46,0.12));
+    border: 1px solid rgba(243, 201, 91, 0.5);
+    border-radius: 10px;
+    font-size: 1.25rem;
+  }
+  .contact-list .list-group-item {
+    border-bottom: 1px dashed rgba(243, 201, 91, 0.35) !important;
+  }
+  .contact-list .list-group-item:last-child {
+    border-bottom: 0 !important;
+  }
+  .letter-spacing-1 { letter-spacing: 0.08em; }
+  .process-steps {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 1rem;
+  }
+  .process-steps li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.9rem;
+    align-items: start;
+  }
+  .step-circle {
+    width: 2.25rem;
+    height: 2.25rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--lime);
+    font: 700 1rem var(--display);
+    box-shadow: 3px 3px 0 rgba(200, 240, 74, 0.25);
+  }
+</style>
 {% endblock %}

@@ -1,0 +1,1057 @@
+{% extends 'portfolio/base.html' %}
+
+{% block title %}Мої замовлення | Портфоліо{% endblock %}
+
+{% block content %}
+{% with orders_count=orders|length %}
+  {% with active_count=0 total_spent=0 completed_count=0 %}
+  {% endwith %}
+{% endwith %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+  <div>
+    <p class="eyebrow mb-2">Клієнтський акаунт</p>
+    <h1 class="section-title mb-1">Мої замовлення</h1>
+    <p class="text-muted-soft mb-0">Історія всіх проєктів, їх статус та склад.</p>
+  </div>
+  <a class="btn btn-primary" href="{% url 'portfolio:order_brif' %}">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform:translateY(-1px)"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Нове замовлення
+  </a>
+</div>
+
+{% if orders %}
+  <section class="kpi-grid mb-4">
+    <div class="kpi-card">
+      <p class="kpi-label">Всього</p>
+      <p class="kpi-value" style="background:linear-gradient(135deg,#315df5,#c8f04a);-webkit-background-clip:text;background-clip:text;">{{ orders|length }}</p>
+      <p class="kpi-foot">замовлень</p>
+    </div>
+    <div class="kpi-card">
+      <p class="kpi-label">Активні</p>
+      <p class="kpi-value" data-count-active style="background:linear-gradient(135deg,#315df5,#f3c95b);-webkit-background-clip:text;background-clip:text;">—</p>
+      <p class="kpi-foot">в роботі / нові</p>
+    </div>
+    <div class="kpi-card">
+      <p class="kpi-label">Бюджет всіх</p>
+      <p class="kpi-value" style="background:linear-gradient(135deg,#f3c95b,#e3262e);-webkit-background-clip:text;background-clip:text;">
+        $<span data-total-budget>—</span>
+      </p>
+      <p class="kpi-foot">USD, загалом</p>
+    </div>
+    <div class="kpi-card">
+      <p class="kpi-label">Виконано</p>
+      <p class="kpi-value" data-count-completed style="background:linear-gradient(135deg,#2b8a3e,#c8f04a);-webkit-background-clip:text;background-clip:text;">—</p>
+      <p class="kpi-foot">завершених</p>
+    </div>
+  </section>
+
+  <div class="order-filters mb-4" role="tablist" aria-label="Фільтри замовлень">
+    <button type="button" class="order-filter-btn is-active" data-filter="all">Усі <span class="order-filter-count">{{ orders|length }}</span></button>
+    <button type="button" class="order-filter-btn" data-filter="active">Активні</button>
+    <button type="button" class="order-filter-btn" data-filter="completed">Завершені</button>
+    <button type="button" class="order-filter-btn" data-filter="cancelled">Скасовані</button>
+  </div>
+
+  <div class="d-grid gap-4 orders-list-wrap">
+    {% for order in orders %}
+      {% with sk=order.status dl=order.development_level %}
+      <article class="order-card card-soft p-0 overflow-hidden"
+               data-status="{{ sk }}"
+               data-budget="{{ order.budget }}">
+        <header class="order-card-header">
+          <div class="order-card-header-glow" aria-hidden="true"></div>
+          <div class="d-flex flex-wrap align-items-center gap-3 position-relative z-1">
+            <div class="order-card-id" aria-label="Номер замовлення">
+              <span>#{{ order.pk }}</span>
+            </div>
+            <div class="flex-grow-1 min-w-0">
+              <h2 class="order-card-title mb-1 text-truncate">{{ order.project_name }}</h2>
+              <div class="d-flex flex-wrap gap-2 align-items-center">
+                <span class="order-card-meta">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  {{ order.created_at|date:'d E Y' }} · {{ order.created_at|date:'H:i' }}
+                </span>
+                {% if dl %}
+                  <span class="level-badge level-badge--{% if dl == 'base' %}base{% elif dl == 'standard' %}std{% elif dl == 'premium' %}prem{% else %}std{% endif %}">
+                    {{ order.get_development_level_display }}
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="d-flex flex-column align-items-end gap-2 position-relative z-1">
+              <span class="status-chip status-{{ sk }}" data-status-label="{{ order.get_status_display }}">{{ order.get_status_display }}</span>
+              <div class="order-card-budget">
+                $<b>{{ order.budget }}</b>
+                <small>USD</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="stepper mt-4 position-relative z-1" aria-label="Етапи виконання">
+            <div class="stepper-track" aria-hidden="true"></div>
+            <div class="stepper-progress" aria-hidden="true"
+                 data-step="{% if sk == 'new' %}1{% elif sk == 'in_progress' %}2{% elif sk == 'completed' %}4{% elif sk == 'cancelled' %}0{% else %}1{% endif %}"
+                 data-cancelled="{% if sk == 'cancelled' %}1{% else %}0{% endif %}"></div>
+            <div class="stepper-steps">
+              <div class="stepper-step is-done">
+                <div class="stepper-dot" aria-hidden="true"></div>
+                <div class="stepper-text">
+                  <b>Бриф прийнято</b>
+                  <small>Замовлення створено</small>
+                </div>
+              </div>
+              <div class="stepper-step {% if sk == 'in_progress' or sk == 'completed' %}is-current{% endif %} {% if sk == 'completed' or sk == 'in_progress' %}is-done{% endif %}">
+                <div class="stepper-dot" aria-hidden="true"></div>
+                <div class="stepper-text">
+                  <b>В обробці</b>
+                  <small>Підбір рішень</small>
+                </div>
+              </div>
+              <div class="stepper-step {% if sk == 'completed' %}is-current is-done{% endif %}">
+                <div class="stepper-dot" aria-hidden="true"></div>
+                <div class="stepper-text">
+                  <b>Розробка</b>
+                  <small>Реалізація функціоналу</small>
+                </div>
+              </div>
+              <div class="stepper-step {% if sk == 'completed' %}is-current is-done{% endif %}">
+                <div class="stepper-dot" aria-hidden="true"></div>
+                <div class="stepper-text">
+                  <b>Завершено</b>
+                  <small>Передано клієнту</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="order-card-body p-4 p-md-5">
+          <div class="row g-3 mb-4">
+            <div class="col-sm-6 col-lg-3">
+              <div class="stat-cell">
+                <span class="stat-kicker">Бюджет</span>
+                <span class="stat-value-strong">{{ order.budget }} <small>USD</small></span>
+              </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+              <div class="stat-cell">
+                <span class="stat-kicker">Термін здачі</span>
+                <span class="stat-value-strong">{{ order.deadline|date:'d.m.Y' }}</span>
+              </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+              <div class="stat-cell">
+                <span class="stat-kicker">Мін. ціна (прайс)</span>
+                <span class="stat-value-strong">{{ order.min_budget|default:0 }} <small>USD</small></span>
+              </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+              <div class="stat-cell">
+                <span class="stat-kicker">Обсяг</span>
+                <span class="stat-value-strong">{{ order.total_hours|default:0 }} <small>год · {{ order.total_days|default:0 }} днів</small></span>
+              </div>
+            </div>
+          </div>
+
+          <details class="order-details-pretty">
+            <summary>
+              <span class="summary-title">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Деталі, склад та файли
+              </span>
+              <span class="summary-chevron">⌄</span>
+            </summary>
+
+            <div class="order-details-grid mt-4">
+              <section class="detail-block">
+                <h3 class="detail-block-title">Контакти</h3>
+                <ul class="detail-list">
+                  <li><span>Ім’я</span><strong>{{ order.contact_name }}</strong></li>
+                  <li><span>Email</span><strong><a href="mailto:{{ order.contact_email }}">{{ order.contact_email }}</a></strong></li>
+                  {% if order.contact_phone %}
+                  <li><span>Телефон</span><strong><a href="tel:{{ order.contact_phone }}">{{ order.contact_phone }}</a></strong></li>
+                  {% endif %}
+                </ul>
+              </section>
+
+              <section class="detail-block">
+                <h3 class="detail-block-title">Опис</h3>
+                <div class="description-box">{{ order.description|linebreaksbr }}</div>
+              </section>
+            </div>
+
+            {% if order.structure_items %}
+              <section class="detail-block mt-4">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                  <div class="d-flex align-items-center gap-2">
+                    <h3 class="detail-block-title mb-0" style="padding-bottom:0;border:0;margin:0;">Склад проєкту</h3>
+                    {% if order.structure_level_name %}
+                      <span class="level-badge level-badge--{% if order.development_level == 'base' %}base{% elif order.development_level == 'premium' %}prem{% else %}std{% endif %}" style="margin:0;">{{ order.structure_level_name }}</span>
+                    {% endif %}
+                  </div>
+                  <div class="d-flex gap-3 small align-items-baseline">
+                    <span>Всього: <strong class="text-dark">{{ order.structure_items|length }} позицій</strong></span>
+                    <span>·</span>
+                    <span>Час: <strong class="text-dark">{{ order.structure_total_hours }} год</strong></span>
+                    <span>·</span>
+                    <span>Сума: <strong class="total-price">${{ order.structure_total_price }}</strong></span>
+                  </div>
+                </div>
+                {% regroup order.structure_items by section as item_groups %}
+                <div class="structure-groups-grid">
+                  {% for group in item_groups %}
+                    <div class="structure-group-block">
+                      <div class="structure-group-title">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                        <b>{{ group.grouper|default:'Загальне' }}</b>
+                        <small>{{ group.list|length }} шт.</small>
+                      </div>
+                      <ul class="structure-items-list">
+                        {% for item in group.list %}
+                          <li>
+                            <div class="s-item-main">
+                              <div class="s-item-head">
+                                <span class="s-item-name">{{ item.name }}</span>
+                                {% if item.style %}<span class="style-tag">{{ item.style }}</span>{% endif %}
+                              </div>
+                              {% if item.description %}
+                                <p class="s-item-desc">{{ item.description }}</p>
+                              {% endif %}
+                            </div>
+                            <div class="s-item-side">
+                              <span class="s-item-price">${{ item.price|default:0 }}</span>
+                              <span class="s-item-hours">{{ item.hours|default:0 }} год</span>
+                            </div>
+                          </li>
+                        {% endfor %}
+                      </ul>
+                    </div>
+                  {% endfor %}
+                </div>
+                <div class="structure-total-row">
+                  <span>РАЗОМ за проєкт</span>
+                  <div>
+                    <b class="total-price">${{ order.structure_total_price }}</b>
+                    <small>· {{ order.structure_total_hours }} год</small>
+                  </div>
+                </div>
+              </section>
+            {% endif %}
+
+            <div class="order-details-grid mt-4">
+              {% if order.reference_image %}
+                <section class="detail-block">
+                  <h3 class="detail-block-title">Референс / ескіз</h3>
+                  <a href="{{ order.reference_image.url }}" target="_blank" rel="noopener" class="ref-preview-link">
+                    <img src="{{ order.reference_image.url }}" alt="Референс до замовлення" class="ref-preview-img" loading="lazy">
+                    <span class="ref-preview-caption">Відкрити в повному розмірі ↗</span>
+                  </a>
+                </section>
+              {% endif %}
+
+              {% if order.files_pretty %}
+                <section class="detail-block">
+                  <h3 class="detail-block-title">Додані файли · {{ order.files_pretty|length }}</h3>
+                  <ul class="files-list">
+                    {% for file in order.files_pretty %}
+                      <li>
+                        <span class="file-icon">📎</span>
+                        <div class="file-meta">
+                          <a href="{{ file.url }}" target="_blank" rel="noopener" class="file-name">{{ file.name }}</a>
+                          <span class="small text-muted">Завантажено {{ file.uploaded_at|date:'d.m.Y H:i' }}</span>
+                        </div>
+                        <a href="{{ file.url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary download-btn">Завантажити</a>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                </section>
+              {% endif %}
+            </div>
+          </details>
+        </div>
+      </article>
+      {% endwith %}
+    {% endfor %}
+  </div>
+
+  <div class="orders-empty-state d-none" id="emptyFilteredState">
+    <div class="empty-big-emoji" aria-hidden="true">📭</div>
+    <h2 class="h4 fw-bold mb-2">Нічого не знайдено</h2>
+    <p class="text-muted-soft mb-0">У цій категорії поки немає замовлень. Перемкніть фільтр або створіть нову заявку.</p>
+  </div>
+
+{% else %}
+  <section class="empty-state-panel orders-empty">
+    <div class="orders-empty-visual" aria-hidden="true">
+      <div class="visual-card vc-top">
+        <span class="vc-line vc-line--title"></span>
+        <span class="vc-line"></span>
+        <span class="vc-line vc-line--short"></span>
+      </div>
+      <div class="visual-card vc-mid">
+        <span class="vc-check" aria-hidden="true">✓</span>
+        <span class="vc-line vc-line--title"></span>
+        <span class="vc-line vc-line--short"></span>
+      </div>
+      <div class="visual-card vc-bot">
+        <span class="vc-line vc-line--title"></span>
+        <span class="vc-line"></span>
+        <span class="vc-line"></span>
+      </div>
+      <div class="visual-spark spark-1" aria-hidden="true"></div>
+      <div class="visual-spark spark-2" aria-hidden="true"></div>
+      <div class="visual-spark spark-3" aria-hidden="true"></div>
+    </div>
+    <h2 class="h4 fw-bold mb-2">Замовлень ще немає</h2>
+    <p class="text-muted-soft mb-4" style="max-width:48ch;">
+      Коли ви надішлете бриф з цього акаунта — усі заявки будуть збиратись тут.
+      Завжди можна перевірити статус, побачити етапи, склад проєкту та завантажити файли.
+    </p>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-primary" href="{% url 'portfolio:order_brif' %}">Створити замовлення →</a>
+      <a class="btn btn-outline-primary" href="{% url 'portfolio:pricing' %}">Спочатку зібрати проєкт в прайсі</a>
+    </div>
+  </section>
+{% endif %}
+
+<style>
+  .order-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    padding: 0.35rem;
+    background: rgba(251,250,246,0.96);
+    border: 1.5px solid rgba(243,201,91,0.55);
+    border-radius: 14px;
+    box-shadow: 3px 3px 0 rgba(194,139,44,0.12);
+  }
+  .order-filter-btn {
+    flex: 1 1 auto;
+    min-width: 9rem;
+    padding: 0.65rem 0.9rem;
+    background: transparent;
+    border: 1.5px solid transparent;
+    color: var(--ink-soft);
+    border-radius: 10px;
+    font: 700 0.9rem var(--body);
+    cursor: pointer;
+    transition: all .2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+  }
+  .order-filter-btn:hover {
+    background: rgba(243,201,91,0.15);
+    color: var(--blood);
+  }
+  .order-filter-btn.is-active {
+    background: var(--ink);
+    color: var(--lime);
+    border-color: var(--ink);
+    box-shadow: 0 3px 0 rgba(16,24,32,0.18);
+  }
+  .order-filter-count {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.6rem;
+    height: 1.45rem;
+    padding: 0 0.4rem;
+    border-radius: 999px;
+    background: rgba(200,240,74,0.15);
+    font: 800 0.75rem var(--display);
+  }
+  .order-filter-btn.is-active .order-filter-count {
+    background: rgba(200,240,74,0.2);
+    color: var(--lime);
+  }
+
+  .order-card {
+    animation: rise-in .55s cubic-bezier(.2,.7,.2,1) both;
+    animation-delay: calc(var(--order-index, 0) * 60ms);
+  }
+  .orders-list-wrap > * { --order-index: 0; }
+  .orders-list-wrap > *:nth-child(1) { --order-index: 0; }
+  .orders-list-wrap > *:nth-child(2) { --order-index: 1; }
+  .orders-list-wrap > *:nth-child(3) { --order-index: 2; }
+  .orders-list-wrap > *:nth-child(4) { --order-index: 3; }
+  .orders-list-wrap > *:nth-child(5) { --order-index: 4; }
+  .orders-list-wrap > *:nth-child(6) { --order-index: 5; }
+  .orders-list-wrap > *:nth-child(n+7) { --order-index: 6; }
+
+  .order-card-header {
+    position: relative;
+    padding: 1.4rem 1.4rem 1.4rem;
+    background: linear-gradient(120deg, #0c1220 0%, #151f36 55%, #101820 100%);
+    color: #fff;
+    overflow: hidden;
+  }
+  @media (min-width: 768px) {
+    .order-card-header {
+      padding: 1.75rem 2rem 1.75rem;
+    }
+  }
+  .order-card-header-glow {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(600px 220px at 110% -20%, rgba(200,240,74,0.22), transparent 60%),
+      radial-gradient(500px 220px at -10% 120%, rgba(243,201,91,0.18), transparent 60%),
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.028) 0 22px, transparent 22px 45px);
+    pointer-events: none;
+  }
+  .order-card-id {
+    display: inline-grid;
+    place-items: center;
+    min-width: 3.6rem;
+    height: 3.6rem;
+    padding: 0 0.8rem;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--lime), var(--gold));
+    color: #0c1220;
+    font: 800 1.1rem var(--display);
+    box-shadow: 0 6px 0 rgba(200,240,74,0.18);
+  }
+  .order-card-title {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: clamp(1.2rem, 2.2vw, 1.55rem);
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: #fff;
+    margin: 0;
+  }
+  .order-card-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: rgba(255,255,255,0.68);
+    font: 600 0.78rem var(--body);
+    padding: 0.3rem 0.6rem;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 999px;
+  }
+
+  .order-card-budget {
+    display: grid;
+    gap: 0;
+    padding: 0.45rem 0.9rem;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(200,240,74,0.18), rgba(243,201,91,0.22));
+    border: 1px solid rgba(243,201,91,0.35);
+    font-family: var(--display);
+    color: #fff;
+    justify-items: end;
+    line-height: 1;
+  }
+  .order-card-budget b {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--lime);
+  }
+  .order-card-budget small {
+    font: 600 0.7rem var(--body);
+    color: rgba(255,255,255,0.65);
+  }
+
+  .status-chip {
+    --c: #315df5;
+    font-size: 0.8rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--c) 16%, #0c1220);
+    color: color-mix(in srgb, var(--c) 20%, #fff);
+    border: 1.5px solid color-mix(in srgb, var(--c) 55%, #0c1220);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+  .status-new        { --c: #5b8dff; }
+  .status-in_progress{ --c: #f3c95b; }
+  .status-completed  { --c: #c8f04a; }
+  .status-cancelled  { --c: #ff7a80; }
+
+  .stepper {
+    position: relative;
+    padding-top: 1.8rem;
+  }
+  .stepper-track,
+  .stepper-progress {
+    position: absolute;
+    top: 2.45rem;
+    left: 4%;
+    right: 4%;
+    height: 4px;
+    border-radius: 999px;
+  }
+  .stepper-track {
+    background: rgba(255,255,255,0.08);
+    z-index: 0;
+  }
+  .stepper-progress {
+    z-index: 1;
+    background: linear-gradient(90deg, var(--lime), var(--gold), var(--blood));
+    width: 0%;
+    transition: width .6s cubic-bezier(.2,.7,.2,1);
+  }
+  .stepper-steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.25rem;
+    position: relative;
+    z-index: 2;
+  }
+  .stepper-step {
+    display: grid;
+    gap: 0.5rem;
+    justify-items: start;
+    color: rgba(255,255,255,0.45);
+    position: relative;
+  }
+  .stepper-step:nth-child(2),
+  .stepper-step:nth-child(3),
+  .stepper-step:nth-child(4) {
+    justify-items: center;
+  }
+  .stepper-step:nth-child(4) {
+    justify-items: end;
+  }
+  .stepper-step .stepper-text {
+    display: grid;
+    gap: 0.05rem;
+    width: 100%;
+    max-width: 18ch;
+  }
+  .stepper-step:nth-child(2) .stepper-text,
+  .stepper-step:nth-child(3) .stepper-text {
+    text-align: center;
+  }
+  .stepper-step:nth-child(4) .stepper-text {
+    text-align: right;
+  }
+  .stepper-step b {
+    font: 800 0.82rem var(--display);
+    letter-spacing: -0.01em;
+  }
+  .stepper-step small {
+    font-size: 0.7rem;
+    opacity: 0.9;
+  }
+  .stepper-dot {
+    width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 50%;
+    background: #1a263d;
+    border: 2px solid rgba(255,255,255,0.22);
+    display: grid;
+    place-items: center;
+    position: relative;
+    transition: all .25s ease;
+  }
+  .stepper-step.is-done .stepper-dot {
+    background: linear-gradient(135deg, var(--lime), var(--gold));
+    border-color: var(--lime);
+    box-shadow: 0 0 0 4px rgba(200,240,74,0.15);
+  }
+  .stepper-step.is-done .stepper-dot::after {
+    content: '✓';
+    color: #0c1220;
+    font-size: 0.8rem;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .stepper-step.is-current .stepper-dot {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 5px rgba(243,201,91,0.15);
+    transform: scale(1.1);
+  }
+  .stepper-step.is-done,
+  .stepper-step.is-current {
+    color: #fff;
+  }
+  @media (max-width: 640px) {
+    .stepper-step b { font-size: 0.72rem; }
+    .stepper-step small { display: none; }
+  }
+
+  .order-card-body { border-top: 0; }
+
+  .stat-cell {
+    display: grid;
+    gap: 0.2rem;
+    padding: 0.9rem 1rem;
+    background: linear-gradient(135deg, rgba(251,250,246,0.98), rgba(244,240,232,0.92));
+    border: 1.5px dashed rgba(243,201,91,0.55);
+    border-radius: 12px;
+  }
+  .stat-kicker {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: var(--muted);
+  }
+  .stat-value-strong {
+    font: 800 1.2rem/1.05 var(--display);
+    color: var(--ink);
+  }
+  .stat-value-strong small {
+    font: 600 0.8rem var(--body);
+    color: var(--muted);
+  }
+
+  .order-details-pretty > summary {
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.9rem 1rem;
+    background: linear-gradient(120deg, rgba(243,201,91,0.18), rgba(227,38,46,0.08));
+    border: 1.5px solid rgba(243,201,91,0.55);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all .25s ease;
+  }
+  .order-details-pretty > summary:hover {
+    background: linear-gradient(120deg, rgba(243,201,91,0.28), rgba(227,38,46,0.14));
+    border-color: var(--blood);
+  }
+  .order-details-pretty > summary::-webkit-details-marker { display: none; }
+  .summary-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--blood);
+    font: 800 1rem var(--display);
+  }
+  .summary-chevron {
+    font-size: 1.25rem;
+    color: var(--blood);
+    transition: transform .3s ease;
+  }
+  details[open].order-details-pretty > summary .summary-chevron { transform: rotate(180deg); }
+
+  .order-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.25rem;
+  }
+  .detail-block {
+    padding: 1rem 1.1rem;
+    background: rgba(251, 250, 246, 0.98);
+    border: 1.5px solid rgba(243, 201, 91, 0.38);
+    border-radius: 12px;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.6);
+  }
+  .detail-block-title {
+    font: 800 0.92rem var(--display);
+    color: var(--blood);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: 0 0 0.75rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dashed rgba(243, 201, 91, 0.45);
+  }
+  .detail-list {
+    list-style: none; padding: 0; margin: 0;
+    display: grid; gap: 0.45rem;
+  }
+  .detail-list li {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.35rem 0;
+    border-bottom: 1px dashed rgba(194, 139, 44, 0.18);
+    align-items: baseline;
+  }
+  .detail-list li:last-child { border-bottom: 0; }
+  .detail-list li span { color: var(--muted); font-size: 0.82rem; font-weight: 600; letter-spacing: 0.04em; }
+  .detail-list li strong { color: var(--ink); }
+
+  .description-box {
+    background: rgba(244, 240, 232, 0.72);
+    padding: 0.9rem 1rem;
+    border-radius: 10px;
+    border-left: 3px solid var(--gold);
+    color: var(--ink-soft);
+    line-height: 1.65;
+    font-size: 0.94rem;
+  }
+
+  .structure-groups-grid {
+    display: grid;
+    gap: 0.8rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+  .structure-group-block {
+    background: #fff;
+    border: 1px solid rgba(194,139,44,0.25);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 0 rgba(194,139,44,0.08);
+  }
+  .structure-group-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 0.9rem;
+    background: linear-gradient(135deg, rgba(243,201,91,0.18), rgba(227,38,46,0.08));
+    border-bottom: 1.5px solid rgba(243,201,91,0.5);
+    color: var(--blood);
+    font-family: var(--display);
+  }
+  .structure-group-title b { font-size: 0.95rem; font-weight: 800; }
+  .structure-group-title small {
+    margin-left: auto;
+    font-size: 0.72rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    background: rgba(227,38,46,0.1);
+    color: var(--blood);
+    font-weight: 800;
+  }
+  .structure-items-list {
+    list-style: none;
+    padding: 0.55rem 0.7rem;
+    margin: 0;
+    display: grid;
+    gap: 0.35rem;
+  }
+  .structure-items-list li {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.75rem;
+    padding: 0.55rem 0.55rem;
+    border-radius: 8px;
+    transition: background .15s ease;
+  }
+  .structure-items-list li:hover { background: rgba(251,250,246,0.95); }
+  .s-item-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .s-item-name {
+    font: 700 0.9rem var(--body);
+    color: var(--ink);
+  }
+  .s-item-desc {
+    margin: 0.15rem 0 0;
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.45;
+  }
+  .style-tag {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    background: rgba(49,93,245,0.1);
+    border: 1px solid rgba(49,93,245,0.25);
+    color: #203fb5;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .s-item-side {
+    display: grid;
+    gap: 0.15rem;
+    justify-items: end;
+    text-align: right;
+    min-width: 6.5rem;
+  }
+  .s-item-price {
+    font: 800 0.95rem var(--display);
+    color: var(--blood);
+  }
+  .s-item-hours {
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .structure-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.8rem;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    background: linear-gradient(120deg, rgba(243,201,91,0.15), rgba(227,38,46,0.08));
+    border: 1.5px dashed rgba(243,201,91,0.65);
+    font: 700 0.95rem var(--body);
+    color: var(--ink);
+  }
+  .structure-total-row > div {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.35rem;
+  }
+  .structure-total-row small {
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .total-price {
+    font: 800 1.05rem var(--display);
+    color: var(--blood);
+  }
+
+  .ref-preview-link {
+    display: grid;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: inherit;
+  }
+  .ref-preview-img {
+    display: block;
+    width: 100%;
+    max-height: 240px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 2px solid var(--gold);
+    box-shadow: 0 3px 0 rgba(194,139,44,0.15);
+  }
+  .ref-preview-caption {
+    text-align: center;
+    font: 700 0.82rem var(--body);
+    color: var(--blood);
+  }
+
+  .files-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.55rem;
+  }
+  .files-list li {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.65rem 0.75rem;
+    background: rgba(244,240,232,0.6);
+    border-radius: 10px;
+    border: 1px dashed rgba(243,201,91,0.42);
+  }
+  .file-icon { font-size: 1.15rem; }
+  .file-meta { display: grid; gap: 0.1rem; min-width: 0; }
+  .file-name {
+    font-weight: 700;
+    text-decoration: none;
+    color: var(--blue);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .file-name:hover { color: var(--blood); }
+  .download-btn {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.78rem;
+  }
+
+  .orders-empty-state {
+    padding: 3rem 2rem;
+    text-align: center;
+    border: 1.5px dashed rgba(243,201,91,0.45);
+    border-radius: 14px;
+    background: rgba(251,250,246,0.96);
+  }
+  .empty-big-emoji {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .orders-empty {
+    position: relative;
+    padding: 3rem 2rem;
+    text-align: center;
+    overflow: hidden;
+  }
+  .orders-empty-visual {
+    position: relative;
+    width: 100%;
+    max-width: 320px;
+    height: 210px;
+    margin: 0 auto 1.5rem;
+  }
+  .visual-card {
+    position: absolute;
+    width: 62%;
+    padding: 0.85rem 0.95rem;
+    background: linear-gradient(180deg, #fff, #fff9e8);
+    border: 1.5px solid var(--gold);
+    border-radius: 12px;
+    box-shadow: 4px 4px 0 rgba(194,139,44,0.18);
+    display: grid;
+    gap: 0.45rem;
+    animation: floatY 5s ease-in-out infinite;
+  }
+  .vc-line {
+    height: 8px;
+    width: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, rgba(194,139,44,0.18), rgba(194,139,44,0.08));
+  }
+  .vc-line--title {
+    height: 11px;
+    width: 70%;
+    background: linear-gradient(90deg, rgba(227,38,46,0.22), rgba(243,201,91,0.18));
+  }
+  .vc-line--short { width: 40%; }
+  .vc-check {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--lime);
+    color: var(--ink);
+    display: grid;
+    place-items: center;
+    font-size: 1.1rem;
+    font-weight: 900;
+    box-shadow: 0 3px 0 rgba(140,170,36,0.3);
+  }
+  .vc-top { top: 0; left: 0; animation-delay: -.2s; }
+  .vc-mid { top: 60px; left: 20%; animation-delay: .4s; z-index: 2;
+    border-color: var(--blood);
+    background: linear-gradient(180deg, #fff2f3, #fff8e6);
+  }
+  .vc-bot { top: 120px; left: 38%; animation-delay: .8s; }
+
+  .visual-spark {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--lime);
+    opacity: 0.7;
+    animation: spark 3s ease-in-out infinite;
+  }
+  .spark-1 { top: 10px; right: 12px; background: var(--lime); }
+  .spark-2 { top: 110px; right: 6px; background: var(--blood); width: 8px; height: 8px; animation-delay: .8s; }
+  .spark-3 { bottom: 8px; left: 8px; background: var(--gold); width: 12px; height: 12px; animation-delay: 1.4s; }
+
+  @keyframes floatY {
+    0%,100% { transform: translateY(0); }
+    50%     { transform: translateY(-6px); }
+  }
+  @keyframes spark {
+    0%,100% { transform: scale(1); opacity: .7; }
+    50%     { transform: scale(1.45); opacity: .95; }
+  }
+
+  .order-card.is-filtered-out {
+    display: none;
+  }
+
+  @media (max-width: 767px) {
+    .structure-total-row { flex-direction: column; align-items: flex-start; }
+    .order-card-id { min-width: 3rem; height: 3rem; padding: 0 0.6rem; font-size: 0.95rem; }
+    .stepper-track, .stepper-progress { left: 5%; right: 5%; }
+  }
+</style>
+
+<script>
+  (function () {
+    const totalBudgetEl = document.querySelector('[data-total-budget]');
+    if (totalBudgetEl) {
+      let sum = 0;
+      document.querySelectorAll('.order-card').forEach((card) => {
+        const b = Number(card.dataset.budget) || 0;
+        sum += b;
+      });
+      totalBudgetEl.textContent = sum;
+    }
+
+    const activeCountEl = document.querySelector('[data-count-active]');
+    if (activeCountEl) {
+      let c = 0;
+      document.querySelectorAll('.order-card').forEach((card) => {
+        const s = card.dataset.status;
+        if (s !== 'completed' && s !== 'cancelled') c++;
+      });
+      activeCountEl.textContent = c;
+    }
+
+    const completedCountEl = document.querySelector('[data-count-completed]');
+    let completedCount = 0;
+    document.querySelectorAll('.order-card').forEach((card) => {
+      if (card.dataset.status === 'completed') completedCount++;
+    });
+    if (completedCountEl) completedCountEl.textContent = completedCount;
+
+    document.querySelectorAll('.stepper-progress').forEach((bar) => {
+      const step = Number(bar.dataset.step || 0);
+      const cancelled = bar.dataset.cancelled === '1';
+      let pct = 0;
+      if (cancelled) {
+        bar.style.background = 'linear-gradient(90deg, #c92a2a, #ff7a80)';
+        pct = 100;
+      } else if (step === 1) pct = 0;
+      else if (step === 2) pct = 33;
+      else if (step === 3) pct = 66;
+      else if (step === 4) pct = 100;
+      requestAnimationFrame(() => { bar.style.width = pct + '%'; });
+    });
+
+    const buttons = document.querySelectorAll('.order-filter-btn');
+    const cards = document.querySelectorAll('.order-card');
+    const emptyFiltered = document.getElementById('emptyFilteredState');
+
+    function applyFilter(f) {
+      let visibleCount = 0;
+      let newCount = 0, activeCount = 0, completedCount = 0, cancelledCount = 0;
+      cards.forEach((card) => {
+        const s = card.dataset.status;
+        if (s === 'new') newCount++;
+        if (s === 'new' || s === 'in_progress') activeCount++;
+        if (s === 'completed') completedCount++;
+        if (s === 'cancelled') cancelledCount++;
+
+        let show = true;
+        if (f === 'active')    show = (s === 'new' || s === 'in_progress');
+        if (f === 'completed') show = (s === 'completed');
+        if (f === 'cancelled') show = (s === 'cancelled');
+        card.classList.toggle('is-filtered-out', !show);
+        if (show) visibleCount++;
+      });
+
+      if (emptyFiltered) {
+        emptyFiltered.classList.toggle('d-none', visibleCount !== 0);
+      }
+      buttons.forEach((btn) => {
+        const bf = btn.dataset.filter;
+        const n = bf === 'all' ? cards.length
+                  : bf === 'active' ? activeCount
+                  : bf === 'completed' ? completedCount
+                  : bf === 'cancelled' ? cancelledCount : 0;
+        let countEl = btn.querySelector('.order-filter-count');
+        if (!countEl) {
+          countEl = document.createElement('span');
+          countEl.className = 'order-filter-count';
+          btn.appendChild(countEl);
+        }
+        countEl.textContent = n;
+      });
+    }
+
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        buttons.forEach((b) => b.classList.remove('is-active'));
+        btn.classList.add('is-active');
+        applyFilter(btn.dataset.filter);
+      });
+    });
+
+    applyFilter('all');
+  })();
+</script>
+{% endblock %}
